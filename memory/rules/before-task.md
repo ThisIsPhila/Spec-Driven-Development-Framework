@@ -1,0 +1,60 @@
+# Before Task Rules
+
+## Purpose
+Ensure the agent/developer has correct context and alignment before starting work.
+This checklist must be effectively completed before writing any code.
+
+## Checklist
+
+### 1. Context Review (MANDATORY)
+Before opening the editor, you **must**:
+
+- [ ] **Review the current phase specs:**
+    - `specs/phases/[current]/requirements.md`
+    - `specs/phases/[current]/design.md`
+- [ ] **Check the latest status:**
+    - `memory/current-state/progress.md` (Active blockers/risks)
+    - `memory/current-state/activeContext.md` (Current focus)
+- [ ] **Review Technical Decisions:**
+    - `memory/technical-decisions.md` (Ensure no ADRs are violated)
+
+### 2. Branch Management
+**Naming convention:**
+`feature/task-[phase]-[task]-[short-description]`
+
+**Workflow:**
+- [ ] Checkout `main` (or dev base).
+- [ ] Pull latest changes.
+- [ ] Create new branch.
+
+### 3. Constitution & Principles Check
+- [ ] **Article I - Security:** Ensure no secrets will be exposed.
+- [ ] **Article II - Spec-Driven:** Confirm requirements/design are approved.
+- [ ] **Article III - Test-First:** Have a plan for the first failing test.
+- [ ] **Article V - Local/Performance:** Consider performance constraints.
+
+### 4. Scope Confirmation
+- [ ] Re-state the task goal from `tasks.md`.
+- [ ] Identify dependencies.
+- [ ] **Wait for approval** if this is a new large task.
+
+---
+
+## Starting Work Confirmation
+
+Before implementation begins, post the following summary to the user:
+
+```markdown
+BEFORE-TASK CHECKLIST COMPLETE
+
+Task: [Phase-Task ID and short description]
+Branch: feature/task-[phase]-[task]-[slug]
+Requirements: [Reviewed]
+Design: [Reviewed]
+Tasks Plan: [Validated]
+Security/Constitution: [Checked]
+Test Strategy: [Briefly outlined]
+Blockers: [None | List blockers]
+
+Ready to proceed with Task [ID]. Awaiting confirmation to START.
+```
