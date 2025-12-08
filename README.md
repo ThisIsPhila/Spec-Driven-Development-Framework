@@ -44,7 +44,7 @@ By keeping everything in the `.sdd/` directory, this framework ensures that cont
 ### Option A: Start a New Project
 1.  **Clone the framework**:
     ```bash
-    git clone https://github.com/your-org/sdd-framework.git my-awesome-project
+    git clone https://github.com/ThisIsPhila/.sdd-framework.git my-awesome-project
     cd my-awesome-project
     ```
 2.  **Activate your Agent**:
@@ -55,7 +55,7 @@ By keeping everything in the `.sdd/` directory, this framework ensures that cont
 1.  **Download as submodule or folder**:
     ```bash
     # Run in your project root
-    git clone https://github.com/your-org/sdd-framework.git .sdd-framework
+    git clone https://github.com/ThisIsPhila/.sdd-framework.git .sdd-framework
     ```
 2.  **Activate your Agent**:
     Paste this prompt to your chat:
@@ -68,7 +68,7 @@ Use this if you prefer to run the scripts yourself without an AI agent.
 
 1.  **Get the code**:
     ```bash
-    git clone https://github.com/your-org/sdd-framework.git .sdd-framework
+    git clone https://github.com/ThisIsPhila/.sdd-framework.git .sdd-framework
     ```
 2.  **Run the setup script**:
     ```bash
