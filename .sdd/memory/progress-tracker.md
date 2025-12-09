@@ -37,10 +37,10 @@
 
 | Category | Status | Branch | Est. Hours | Notes |
 |----------|--------|--------|------------|-------|
-| 1. Profile Infrastructure | ✅ Complete | `feat/profile-infrastructure` | 6h | Merged to master (Dec 9, 2025) |
-| 2. Profile Templates | ✅ Complete | `feat/profile-templates` | 18h | All templates created (Dec 9, 2025) |
-| 3. Setup Enhancement | 🔵 Not Started | `feat/setup-enhancement` | 15h | Composition parsing + overlay |
-| 4. Validation & Docs | 🔵 Not Started | `feat/validation-docs` | 12h | Tests + documentation |
+| 1. Profile Infrastructure | ✅ Complete | `feat/profile-infrastructure` | 6h | Merged Dec 9, 2025 |
+| 2. Profile Templates | ✅ Complete | `feat/profile-templates` | 18h | Merged Dec 9, 2025 |
+| 3. Setup Enhancement | ✅ Complete | `feat/setup-enhancement` | 15h | Merged Dec 9, 2025 |
+| 4. Validation & Docs | 🔵 Not Started | `feat/validation-docs` | 15h | Helper scripts + tests + docs |
 
 **Legend:**  
 🔵 Not Started | 🟡 In Progress | ✅ Complete | ⚠️ Blocked
