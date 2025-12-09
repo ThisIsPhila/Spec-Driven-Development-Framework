@@ -20,12 +20,72 @@ By keeping everything in the `.sdd/` directory, this framework ensures that cont
 ## Directory Structure
 
 ```
-.sdd/
+.sdd-framework/
+├── AGENT_ONBOARDING.md          # AI agent workflow guide
 ├── README.md                    # This file
-├── defaults/                    # Source templates & rules
+├── CHANGELOG.md                 # Version history
+│
+├── defaults/                    # Framework source files
 │   ├── memory/                  # Default memory structure
-│   └── templates/               # Default document templates
-├── scripts/                     # Automation tools
+│   │   ├── constitutional-framework.md
+│   │   └── rules/               # Workflow rules (before/during/after)
+│   │       ├── before-task.md
+│   │       ├── during-task.md
+│   │       └── after-task.md
+│   │
+│   ├── templates/               # Core spec templates
+│   │   ├── requirements-template.md
+│   │   ├── design-template.md
+│   │   └── tasks-template.md
+│   │
+│   └── profiles/                # Composable profiles (NEW in v1.1)
+│       ├── base/                # Base profiles (choose one)
+│       │   ├── general/         # Generic projects
+│       │   ├── web/             # Web applications
+│       │   ├── mobile/          # Mobile apps
+│       │   ├── api/             # Backend APIs
+│       │   ├── cli/             # CLI tools
+│       │   └── full-stack/      # Web + API
+│       │
+│       └── modifiers/          # Optional modifiers (add any)
+│           ├── devsecops/      # Security workflows
+│           ├── mlops/          # ML governance
+│           └── devops/         # CI/CD automation
+│
+└── scripts/                    # Automation tools
+    ├── setup.sh                # Main installation script
+    ├── common.sh               # Shared utilities
+    └── validate-profiles.sh    # Profile validation
+```
+
+**After running setup.sh, your project gets:**
+```
+your-project/
+└── .sdd/                       # Project-specific SDD directory
+    ├── .profile                # Installed composition (e.g., "web+devsecops")
+    ├── AGENT_ONBOARDING.md
+    │
+    ├── templates/              # Templates (base + profile-specific)
+    │   ├── requirements-template.md
+    │   ├── design-template.md
+    │   ├── tasks-template.md
+    │   ├── component-design-template.md  # (from web profile)
+    │   └── security-design-template.md   # (from devsecops modifier)
+    │
+    ├── memory/
+    │   ├── constitutional-framework.md   # (with modifier amendments)
+    │   ├── progress-tracker.md
+    │   ├── project-overview.md
+    │   ├── technical-decisions.md
+    │   └── rules/
+    │       ├── before-task.md
+    │       ├── during-task.md
+    │       ├── after-task.md
+    │       ├── accessibility-checklist.md     # (from web)
+    │       └── security-checklist.md          # (from devsecops)
+    │
+    └── specs/                  # Your project specs go here
+        └── phases/
 ```
 
 ---
