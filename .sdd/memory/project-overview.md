@@ -29,13 +29,17 @@ A framework that:
 
 **Goal:** Enable users to initialize SDD with specialized profiles (e.g., `web+devsecops`)
 
-**Status:** Planning complete (requirements, design, tasks approved)
+**Status:** 50% complete (Categories 1-2 merged to master)
 
-**Next:** Implementation of 4 categories:
-1. Profile Infrastructure (directories + READMEs)
-2. Profile Templates (base + modifier content)
-3. Setup Script Enhancement (composition parsing + overlay)
-4. Validation & Documentation (tests + docs)
+**Completed:**
+- ✅ Category 1: Profile Infrastructure (9 profile READMEs, directory structure)
+- ✅ Category 2: Profile Templates (17 template files for all profiles)
+
+**In Progress:**
+- ⏳ Category 3: Setup Script Enhancement (composition parsing, file overlay, interactive menu)
+
+**Next:**
+- Category 4: Validation & Documentation (helper scripts, tests, docs)
 
 ---
 
