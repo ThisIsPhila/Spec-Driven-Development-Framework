@@ -21,7 +21,7 @@ echo "  - Copying templates..."
 cp -r "$FRAMEWORK_SOURCE/defaults/templates/"* "$TARGET_DIR/templates/" 2>/dev/null || echo "    (No templates found in source, skipping)"
 cp -r "$FRAMEWORK_SOURCE/defaults/memory/rules/"* "$TARGET_DIR/memory/rules/" 2>/dev/null || echo "    (No rules found in source, skipping)"
 cp "$FRAMEWORK_SOURCE/AGENT_ONBOARDING.md" "$TARGET_DIR/" 2>/dev/null || echo "    (AGENT_ONBOARDING.md not found)"
-cp "$FRAMEWORK_SOURCE/README.md" "$TARGET_DIR/" 2>/dev/null || echo "    (README.md not found)"
+
 
 # Initialize Memory Files (if not exist)
 echo "  - Initializing memory..."
