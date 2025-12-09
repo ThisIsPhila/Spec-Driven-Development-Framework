@@ -1,60 +1,57 @@
-# Before Task Rules
+# Before Task Rules - SDD Framework Development
 
 ## Purpose
-Ensure the agent/developer has correct context and alignment before starting work.
-This checklist must be effectively completed before writing any code.
+Ensure proper context before implementing framework features.
 
 ## Checklist
 
-### 1. Context Review (MANDATORY)
-Before opening the editor, you **must**:
+### 1. Review Current Phase Specs
+- [ ] Read `specs/phases/phase-1/requirements.md`
+- [ ] Read `specs/phases/phase-1/design.md`
+- [ ] Read `specs/phases/phase-1/tasks.md`
+- [ ] Understand which category you're working on (1: Infrastructure, 2: Templates, 3: Setup Script, 4: Validation)
 
-- [ ] **Review the current phase specs:**
-    - `specs/phases/[current]/requirements.md`
-    - `specs/phases/[current]/design.md`
-- [ ] **Check the latest status:**
-    - `memory/current-state/progress.md` (Active blockers/risks)
-    - `memory/current-state/activeContext.md` (Current focus)
-- [ ] **Review Technical Decisions:**
-    - `memory/technical-decisions.md` (Ensure no ADRs are violated)
+### 2. Check Project Status
+- [ ] Review `progress-tracker.md` for active blockers
+- [ ] Review `technical-decisions.md` for architectural choices
+- [ ] Check if any dependencies on other categories exist
 
-### 2. Branch Management
-**Naming convention:**
-`feature/task-[phase]-[task]-[short-description]`
+### 3. Branch Management
+**Naming:** `feat/<category-name>` (e.g., `feat/profile-infrastructure`)
 
 **Workflow:**
-- [ ] Checkout `main` (or dev base).
-- [ ] Pull latest changes.
-- [ ] Create new branch.
+- [ ] Checkout `master`
+- [ ] Pull latest changes
+- [ ] Create feature branch for the category
 
-### 3. Constitution & Principles Check
-- [ ] **Article I - Security:** Ensure no secrets will be exposed.
-- [ ] **Article II - Spec-Driven:** Confirm requirements/design are approved.
-- [ ] **Article III - Test-First:** Have a plan for the first failing test.
-- [ ] **Article V - Local/Performance:** Consider performance constraints.
+### 4. Framework-Specific Checks
+- [ ] **No breaking changes to v1.0**: Ensure backward compatibility with existing users
+- [ ] **Self-hosting dogfooding**: Changes must work for this project's own `.sdd/` directory
+- [ ] **Profile composition**: Verify changes support `base+modifier` syntax
+- [ ] **Documentation**: Plan to update README/AGENT_ONBOARDING if needed
 
-### 4. Scope Confirmation
-- [ ] Re-state the task goal from `tasks.md`.
-- [ ] Identify dependencies.
-- [ ] **Wait for approval** if this is a new large task.
+### 5. Testing Strategy
+- [ ] Identify what integration tests are needed (e.g., test `setup.sh --profile web+devsecops`)
+- [ ] Plan validation tests (e.g., check all profiles have README.md)
+- [ ] Consider edge cases (invalid profiles, missing files)
 
 ---
 
 ## Starting Work Confirmation
 
-Before implementation begins, post the following summary to the user:
+Post this summary before starting:
 
-```markdown
+```
 BEFORE-TASK CHECKLIST COMPLETE
 
-Task: [Phase-Task ID and short description]
-Branch: feature/task-[phase]-[task]-[slug]
-Requirements: [Reviewed]
-Design: [Reviewed]
-Tasks Plan: [Validated]
-Security/Constitution: [Checked]
-Test Strategy: [Briefly outlined]
-Blockers: [None | List blockers]
+Category: [1/2/3/4] - [Name]
+Branch: feat/[category-name]
+Requirements: ✅ Reviewed
+Design: ✅ Reviewed
+Tasks: ✅ Validated
+Testing Strategy: [Brief description]
+Dependencies: [None / List]
+Backward Compatibility: ✅ Checked
 
-Ready to proceed with Task [ID]. Awaiting confirmation to START.
+Ready to proceed. Awaiting START confirmation.
 ```

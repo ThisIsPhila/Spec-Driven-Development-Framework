@@ -1,81 +1,63 @@
-# After Task Rules
+# After Task Rules - SDD Framework Development
 
 ## Purpose
-These rules ensure every task ends with verified quality, updated documentation, and complete traceability.
+Ensure work is complete, tested, and properly documented before merging.
 
-## Completion Sequence (Follow In Order)
+## Completion Checklist
 
-### Step 1: Verify Code Quality Gates
+### 1. Self-Verification
+- [ ] Run `bash scripts/setup.sh --profile <test-composition>` to verify functionality
+- [ ] Check that files are created in correct locations (`.sdd/templates/`, `.sdd/memory/rules/`)
+- [ ] Verify profile metadata (`.sdd/.profile`) is correct
+- [ ] Test both interactive menu and CLI flags
 
-Run all checks in non-interactive mode. Stop immediately if any fail.
+### 2. Integration Testing
+- [ ] Run validation tests: `bash tests/validate-profiles.sh`
+- [ ] Test common compositions:
+  - `general` (baseline)
+  - `web+devsecops`
+  - `api+mlops`
+  - `full-stack+devops`
+- [ ] Verify constitution gets augmented correctly for modifiers
+- [ ] Verify template extensions are inserted
 
-```bash
-# Example checks - adjust for your stack
-npm run lint
-npm run build
-npm run test
-```
+### 3. Documentation Updates
+- [ ] Update `README.md` if user-facing features changed
+- [ ] Update `AGENT_ONBOARDING.md` if workflow changed
+- [ ] Update `CHANGELOG.md` with changes (for v1.1 release)
+- [ ] Ensure all profile README.md files have YAML frontmatter
 
-If the work touched a shared package/module, ensure it builds in isolation.
+### 4. Code Review Preparation
+- [ ] Squash WIP commits into logical units
+- [ ] Write clear commit messages with REQ references
+- [ ] Push branch to origin
+- [ ] Create PR with description of what changed and why
 
-### Step 2: Record the Task Summary
+### 5. Framework-Specific Final Checks
+- [ ] Test that this project's own `.sdd/` still works correctly
+- [ ] Verify backward compatibility: existing `setup.sh` users aren't broken
+- [ ] Check that `defaults/` structure is clean (profiles organized clearly)
+- [ ] Ensure no secrets or project-specific data leaked into examples
 
-Create `memory/completed-tasks/task-[PHASE]-[NUMBER]-summary.md` using this template.
+### 6. Progress Tracking
+- [ ] Update `progress-tracker.md` with completion status
+- [ ] Mark category as complete in `specs/phases/phase-1/tasks.md`
+- [ ] Document any new technical decisions in `technical-decisions.md`
 
-```markdown
-# Task {PHASE}-{NUMBER} Summary: {Task Title}
+---
 
-Completed: {DATE}
-Status: COMPLETE
+## Merge Criteria
 
-## Overview
-- Scope: {One paragraph of outcomes}
-- Related Requirement: {Requirement reference}
-- Related Design Section: {Document anchor}
+Before merging to `master`:
+- [ ] All integration tests passing
+- [ ] Documentation updated
+- [ ] No merge conflicts
+- [ ] Self-tested dogfooding (ran on this project)
+- [ ] Category acceptance criteria met (from tasks.md)
 
-## Deliverables
-- [ ] Code: {key file paths}
-- [ ] Tests: {test files touched}
-- [ ] Documentation: {docs or specs updated}
+---
 
-## Test Evidence
-- Lint: (pass)
-- Build: (pass)
-- Tests: (pass, {N} tests run)
-```
-
-### Step 3: Final Checklist
-
-#### 1. Verification
-- [ ] Run all tests (unit + integration).
-- [ ] Manual check of the feature (if applicable).
-
-#### 2. Documentation
-- [ ] Mark task as `[x]` in `tasks.md`.
-- [ ] Update `memory/current-state/progress.md`.
-
-#### 3. Cleanup
-- [ ] Remove unused branches.
-- [ ] Merge to `main`/`dev`.
-
-#### 4. Handoff
-- [ ] Create a brief "Work Done" summary.
-- [ ] Note next steps for the next agent/session.
-
-### Step 4: Final Communication
-
-Send a completion message to the user that includes:
-- Task status and summary link.
-- Key tests executed.
-- Any remaining risks or follow-up actions.
-
-## ⚠️ Common Violations (PREVENTION)
-
-### ❌ VIOLATION 1: Incomplete Documentation
-**Prevention:** Step 2 is MANDATORY.
-
-### ❌ VIOLATION 2: Skipping Tests
-**Prevention:** Step 1 requires ALL test categories.
-
-### ❌ VIOLATION 3: Automatic Next Task
-**Prevention:** Always wait for user approval before starting the next task.
+## Post-Merge
+- [ ] Delete feature branch
+- [ ] Pull latest `master`
+- [ ] Verify framework still works: `bash scripts/setup.sh --list-profiles`
