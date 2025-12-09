@@ -124,11 +124,18 @@
   
   **Objectives:**
   - Create profile validation tests
+  - Create helper scripts for agents and validation
   - Implement integration tests for compositions
   - Create profile listing tool
   - Update all documentation
+  - Cleanup temporary reference files
   
   **Steps:**
+  
+  **Helper Scripts** (inspired by tmp/spec-kit):
+  - Create `scripts/common.sh` (shared bash functions: get_repo_root, check_file, etc.)
+  - Create `scripts/update-agent-context.sh` (auto-generate GEMINI.md/CLAUDE.md/.github/copilot-instructions.md)
+  - Create `scripts/validate-profiles.sh` (check READMEs, templates, approval checkpoints)
   
   **Profile Listing:**
   - Create `scripts/list-profiles.sh`
@@ -161,15 +168,22 @@
   - Update `AGENT_ONBOARDING.md` with profile detection workflow
   - Update `CHANGELOG.md` for v1.1 release
   
+  **Cleanup:**
+  - Delete `tmp/spec-kit/` directory (reference material, not for production)
+  - Verify tmp/ is in .gitignore
+  
   **Acceptance Criteria:**
+  - Helper scripts created and functional
   - `scripts/list-profiles.sh` shows all 9 profiles with descriptions
   - All validation tests pass
   - Integration tests verify 6 compositions work correctly
   - Agent heuristics documented with examples
   - README, AGENT_ONBOARDING, CHANGELOG all updated
+  - No tmp/ files in git history
   
   _Requirements: REQ-1.14, REQ-1.15, REQ-1.16 (Detection, Docs, Testing)_  
-  _Estimated Time: 12 hours_
+  _Estimated Time: 15 hours (was 12h, +3h for helper scripts)_
+
 
 ---
 
