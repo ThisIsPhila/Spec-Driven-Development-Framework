@@ -7,7 +7,7 @@ Your primary goal is to be helpful while strictly adhering to the project's stru
 
 **IF** the `.sdd/` directory does not exist yet (whether this is a new project or an existing one adopting SDD):
 
-1.  **Run the Setup Script**: Execute `bash .sdd-framework/scripts/setup.sh`.
+1.  **Run the Setup Script**: Execute `bash scripts/setup.sh`.
 2.  **Verify Structure**: Ensure `.sdd/` created with `memory`, `specs`, and `templates`.
 3.  **Self-Register**: Log your presence in `memory/current-state/activeContext.md`.
 
