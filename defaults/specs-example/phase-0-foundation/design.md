@@ -47,7 +47,7 @@ This document details **HOW** we will implement the Phase 0 requirements. It spe
 │  ┌────────────────────────────────────────────────────────┐   │
 │  │            Local File System                            │   │
 │  │                                                         │   │
-│  │  smart-trader/                                         │   │
+│  │  example-app/                                         │   │
 │  │  ├── .env (gitignored secrets)                        │   │
 │  │  ├── deployment/k8s/                                  │   │
 │  │  ├── scripts/                                         │   │
@@ -94,7 +94,7 @@ This document details **HOW** we will implement the Phase 0 requirements. It spe
 
 # Option 2: k3d (k3s in Docker) - RECOMMENDED
 brew install k3d
-k3d cluster create smart-trader \
+k3d cluster create example-app \
   --agents 2 \
   --port 8080:80@loadbalancer \
   --port 8443:443@loadbalancer
@@ -106,7 +106,7 @@ k3d cluster create smart-trader \
 apiVersion: k3d.io/v1alpha4
 kind: Simple
 metadata:
-  name: smart-trader
+  name: example-app
 servers: 1
 agents: 2
 ports:
@@ -295,7 +295,7 @@ helm install tempo grafana/tempo \
 2. Service metrics (latency, throughput, errors)
 3. Kafka/Redpanda monitoring
 4. Resource usage (CPU, memory, disk)
-5. Custom Smart-Trader metrics
+5. Custom Example-App metrics
 
 **Alerting Rules:**
 - Service down > 1 minute
@@ -319,7 +319,7 @@ helm install tempo grafana/tempo \
 **Directory Structure:**
 
 ```
-smart-trader/
+example-app/
 ├── deployment/
 │   ├── docker-compose/
 │   │   ├── docker-compose.yml          # Full stack
@@ -403,7 +403,7 @@ test:  ## Run tests
 
 clean:  ## Clean up everything
 	@docker-compose -f deployment/docker-compose/docker-compose.infra.yml down -v
-	@k3d cluster delete smart-trader
+	@k3d cluster delete example-app
 ```
 
 ---
@@ -530,10 +530,10 @@ jobs:
           context: .
           push: true
           tags: |
-            your-org/smart-trader:latest
-            your-org/smart-trader:${{ github.sha }}
-          cache-from: type=registry,ref=your-org/smart-trader:buildcache
-          cache-to: type=registry,ref=your-org/smart-trader:buildcache,mode=max
+            your-org/example-app:latest
+            your-org/example-app:${{ github.sha }}
+          cache-from: type=registry,ref=your-org/example-app:buildcache
+          cache-to: type=registry,ref=your-org/example-app:buildcache,mode=max
 ```
 
 **2. Dependency Update (`.github/workflows/dependencies.yml`)**
@@ -656,7 +656,7 @@ from azure.keyvault.secrets import SecretClient
 from azure.identity import DefaultAzureCredential
 
 credential = DefaultAzureCredential()
-client = SecretClient(vault_url="https://smart-trader-kv.vault.azure.net/", credential=credential)
+client = SecretClient(vault_url="https://example-app-kv.vault.azure.net/", credential=credential)
 
 alpaca_api_key = client.get_secret("alpaca-api-key").value
 ```
@@ -672,7 +672,7 @@ alpaca_api_key = client.get_secret("alpaca-api-key").value
 #!/bin/bash
 set -e
 
-echo "🚀 Setting up Smart-Trader development environment..."
+echo "🚀 Setting up Example-App development environment..."
 
 # Check prerequisites
 echo "📋 Checking prerequisites..."
@@ -693,7 +693,7 @@ fi
 
 # Create k3d cluster
 echo "🏗️ Creating Kubernetes cluster..."
-k3d cluster create smart-trader --config deployment/k8s/k3d-config.yaml
+k3d cluster create example-app --config deployment/k8s/k3d-config.yaml
 
 # Add Helm repos
 echo "📚 Adding Helm repositories..."

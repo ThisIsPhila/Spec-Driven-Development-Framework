@@ -27,7 +27,7 @@ This document breaks down Phase 0 into **actionable tasks**. Each task includes:
 **Branch:** `feature/task-0-1-dev-environment-setup`
 
 **Objective:**  
-Create automated setup script that configures a developer's machine with all prerequisites for Smart-Trader development.
+Create automated setup script that configures a developer's machine with all prerequisites for Example-App development.
 
 **What to Build:**
 1. `scripts/setup-dev-environment.sh` - Main setup script
@@ -121,7 +121,7 @@ Set up local Kubernetes cluster using k3d with proper configuration for developm
 apiVersion: k3d.io/v1alpha4
 kind: Simple
 metadata:
-  name: smart-trader
+  name: example-app
 servers: 1
 agents: 2
 ports:
@@ -288,7 +288,7 @@ Deploy Prometheus and Grafana for metrics collection and visualization.
 - [ ] Prometheus is running and collecting metrics
 - [ ] Grafana is accessible at localhost:3000
 - [ ] Default dashboards imported (Kubernetes cluster, nodes, pods)
-- [ ] Custom Smart-Trader dashboards created
+- [ ] Custom Example-App dashboards created
 - [ ] Alerting rules configured
 - [ ] Metrics retention set to 30 days
 - [ ] Grafana configured with Prometheus data source
@@ -305,7 +305,7 @@ helm install kube-prometheus prometheus-community/kube-prometheus-stack \
 ```
 
 **Dashboards to Create:**
-1. **Smart-Trader Overview** - System health at a glance
+1. **Example-App Overview** - System health at a glance
 2. **Service Metrics** - Latency, throughput, error rate per service
 3. **Kafka Metrics** - Redpanda throughput, consumer lag
 4. **Resource Usage** - CPU, memory, disk across all services

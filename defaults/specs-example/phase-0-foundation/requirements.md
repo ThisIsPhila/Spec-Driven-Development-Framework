@@ -9,7 +9,7 @@
 
 ## 🎯 Phase Overview
 
-**Goal:** Establish the foundational infrastructure that all Smart-Trader services will build upon.
+**Goal:** Establish the foundational infrastructure that all Example-App services will build upon.
 
 **Why This Phase Matters:**  
 Without a solid foundation, we'd be building services on shifting ground. Phase 0 creates the infrastructure backbone that enables:

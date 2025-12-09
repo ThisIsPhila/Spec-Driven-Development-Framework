@@ -41,7 +41,7 @@
   - Install kube-prometheus-stack via Helm
   - Configure Prometheus with 30-day retention
   - Set up Grafana with admin access
-  - Create custom Smart-Trader dashboards
+  - Create custom Example-App dashboards
   - Configure alerting rules (service health, performance, resources)
   - _Requirements: REQ-0.3 (Observability Stack)_
   - _Estimated Time: 5-6 hours_
