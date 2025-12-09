@@ -22,19 +22,10 @@ By keeping everything in the `.sdd/` directory, this framework ensures that cont
 ```
 .sdd/
 ├── README.md                    # This file
-├── specs/                       # All project specifications
-│   └── phases/                  # Phase-specific folders (phase-{N}-{name})
-├── templates/                   # Spec creation templates
-│   ├── requirements-template.md
-│   ├── design-template.md
-│   └── tasks-template.md
+├── defaults/                    # Source templates & rules
+│   ├── memory/                  # Default memory structure
+│   └── templates/               # Default document templates
 ├── scripts/                     # Automation tools
-├── memory/                      # Project memory & tracking
-│   ├── constitutional-framework.md  # Core rules/principles
-│   ├── progress-tracker.md          # Global status
-│   ├── project-overview.md          # High-level context
-│   ├── technical-decisions.md       # ADRs (Architecture Decision Records)
-│   └── rules/                       # Rules (before/during/after task checklist)
 ```
 
 ---
