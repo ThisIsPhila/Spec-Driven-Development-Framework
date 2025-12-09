@@ -1,6 +1,6 @@
 # Contributing to the SDD Framework
 
-Statement of Intent: **We eat our own dog food.**
+Statement of Intent: **We use what we build.**
 
 If you want to contribute to the Spec-Driven Development Framework, you must follow the SDD process. This ensures that the framework evolves in a way that proves its own methodology works.
 

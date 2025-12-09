@@ -1,0 +1,9 @@
+# System Files
+.DS_Store
+Thumbs.db
+*.swp
+
+# SDD Framework Local Instance
+# We ignore the .sdd folder so that we can use the framework locally
+# without committing our work-in-progress specs/memory to the public repo.
+.sdd/

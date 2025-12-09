@@ -97,7 +97,7 @@ Use this if you prefer to run the scripts yourself without an AI agent.
 ---
 
 ## 🤝 Contributing
-We eat our own dog food. If you want to contribute, you must follow the SDD process.
+We use what we build. If you want to contribute, you must follow the SDD process.
 See [CONTRIBUTING.md](CONTRIBUTING.md) for details.
 
 ## 📄 License
