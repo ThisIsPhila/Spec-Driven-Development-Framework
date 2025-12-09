@@ -64,3 +64,11 @@
 - [ ] Missing values handled
 - [ ] Outliers investigated
 - [ ] Data types correct
+
+---
+
+## ✅ Approval Checkpoint
+
+**Respond with:**
+- ✅ "Approved"
+- 🔄 "Changes needed..."
