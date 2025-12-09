@@ -37,7 +37,7 @@
 
 | Category | Status | Branch | Est. Hours | Notes |
 |----------|--------|--------|------------|-------|
-| 1. Profile Infrastructure | 🔵 Not Started | `feat/profile-infrastructure` | 6h | Directory setup + READMEs |
+| 1. Profile Infrastructure | ✅ Complete | `feat/profile-infrastructure` | 6h | Merged to master (Dec 9, 2025) |
 | 2. Profile Templates | 🔵 Not Started | `feat/profile-templates` | 18h | Base + modifier content |
 | 3. Setup Enhancement | 🔵 Not Started | `feat/setup-enhancement` | 15h | Composition parsing + overlay |
 | 4. Validation & Docs | 🔵 Not Started | `feat/validation-docs` | 12h | Tests + documentation |
