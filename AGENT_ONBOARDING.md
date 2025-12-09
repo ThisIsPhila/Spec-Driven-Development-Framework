@@ -41,11 +41,27 @@ If you have write access to `.sdd/memory/active-context.md` (or equivalent), log
 - If the user asks for a feature, check if a spec exists in `.sdd/specs/phases/`.
 - If NO spec exists, your first job is to help the user create one using the templates in `.sdd/templates/`.
 
-### The Loop
-1.  **Plan**: Create/Update `implementation_plan.md` in the `artifacts` folder (or equivalent).
-2.  **Verify**: Ask user for approval.
-3.  **Execute**: Implement changes.
-4.  **Document**: Update `task.md` and related memory files.
+### The Spec Lifecycle (Sequential)
+**Condition**: You MUST create specs in this exact order. Do NOT create multiple files at once.
+
+1.  **Requirements (`requirements.md`)**:
+    - Create draft using `templates/requirements-template.md`.
+    - **STOP** and ask for user approval.
+    - *Do not proceed until user says "Approved".*
+
+2.  **Design (`design.md`)**:
+    - Create draft using `templates/design-template.md`.
+    - **STOP** and ask for user approval.
+    - *Do not proceed until user says "Approved".*
+
+3.  **Tasks (`tasks.md`)**:
+    - Create draft using `templates/tasks-template.md`.
+    - Ensure only **High-Level Tasks** have checkboxes.
+    - **STOP** and ask for user approval.
+
+4.  **Execute**:
+    - Verified against `tasks.md`.
+    - Update `task.md` (Artifact) as you go.
 
 ---
 
