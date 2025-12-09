@@ -30,14 +30,51 @@ By keeping everything in the `.sdd/` directory, this framework ensures that cont
 
 ---
 
-## ⚡️ Quick Start
+## 🚀 Quick Start
 
-### Option A: Start a New Project
-1.  **Clone the framework**:
-    ```bash
-    git clone https://github.com/ThisIsPhila/.sdd-framework.git my-awesome-project
-    cd my-awesome-project
-    ```
+```bash
+# Clone this repository
+git clone https://github.com/ThisIsPhila/Spec-Driven-Development-Framework.git
+
+# Initialize in your project
+./scripts/setup.sh
+
+# Follow the interactive menu or use a specific profile
+./scripts/setup.sh --profile web+devsecops
+```
+
+## 📦 Choosing a Profile
+
+The SDD Framework supports **composable profiles** to match your project type and methodology:
+
+### Base Profiles (choose one):
+- **general** - Generic software projects (baseline SDD templates)
+- **web** - Web applications (React, Vue, Next.js) with component-design and accessibility templates
+- **mobile** - Mobile apps (iOS, Android) with screen-design and platform guidelines
+- **api** - Backend APIs (REST, GraphQL) with api-design and schema templates
+- **cli** - Command-line tools with command-design and UX principles
+- **full-stack** - Web + API combined with system architecture templates
+
+### Modifiers (add zero or more):
+- **+devsecops** - Security-first workflows (threat modeling, security checklists)
+- **+mlops** - ML model governance (experiment tracking, data versioning)
+- **+devops** - Advanced CI/CD (pipeline design, infrastructure as code)
+
+### Example Compositions:
+```bash
+# Web app with security focus
+./scripts/setup.sh --profile web+devsecops
+
+# Machine learning API
+./scripts/setup.sh --profile api+mlops
+
+# Full-stack with security and CI/CD
+./scripts/setup.sh --profile full-stack+devsecops+devops
+
+# List all available profiles
+./scripts/setup.sh --list-profiles
+```
+
 2.  **Activate your Agent**:
     Paste this prompt to your chat:
     > "I want to use Spec-Driven Development. Read `.sdd-framework/AGENT_ONBOARDING.md` and set up the project for me."
