@@ -16,6 +16,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Documentation**: Comprehensive `README.md` with "Quick Start" for New/Existing projects.
 - **Compliance**: MIT `LICENSE` and `CONTRIBUTING.md` guidelines.
 
-### Changed
-- **De-branding**: Removed all specific references to legacy project data to make the framework project-agnostic.
 - **Structure**: Formalized the `.sdd/` directory structure as the single source of truth.
