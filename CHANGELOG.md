@@ -17,5 +17,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Compliance**: MIT `LICENSE` and `CONTRIBUTING.md` guidelines.
 
 ### Changed
-- **De-branding**: Removed all specific references to "CogniHome" or "CogniOne" to make the framework project-agnostic.
+- **De-branding**: Removed all specific references to legacy project data to make the framework project-agnostic.
 - **Structure**: Formalized the `.sdd/` directory structure as the single source of truth.
