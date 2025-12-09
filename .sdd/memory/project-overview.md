@@ -25,21 +25,17 @@ A framework that:
 
 ## 🏗️ Current Phase
 
-**Phase 1: Template Profiles & Methodology**
-
-**Goal:** Enable users to initialize SDD with specialized profiles (e.g., `web+devsecops`)
-
-**Status:** 50% complete (Categories 1-2 merged to master)
+**Phase 1: Template Profiles & Methodology** ✅ COMPLETE
 
 **Completed:**
 - ✅ Category 1: Profile Infrastructure (9 profile READMEs, directory structure)
-- ✅ Category 2: Profile Templates (17 template files for all profiles)
+- ✅ Category 2: Profile Templates (17 template files)
+- ✅ Category 3: Setup Script Enhancement (composition parsing, overlay, interactive menu)
+- ✅ Category 4: Validation & Docs (helper scripts, documentation, cleanup)
 
-**In Progress:**
-- ⏳ Category 3: Setup Script Enhancement (composition parsing, file overlay, interactive menu)
+**Released:** v1.1.0 (December 9, 2025)
 
-**Next:**
-- Category 4: Validation & Documentation (helper scripts, tests, docs)
+**Next Phase:** TBD - Framework is production-ready
 
 ---
 
