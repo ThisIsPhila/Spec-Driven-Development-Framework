@@ -30,8 +30,8 @@ if (!hasPrivacySection) {
   process.exit(1);
 }
 
-const piiLine = content.match(/pii\s*risk[^\n]*:\s*Yes(?!\/No)/i);
-const maskingSection = content.match(/masking strategy[\s\S]*?(?=\n##|\n#\s|\Z)/i);
+const piiLine = content.match(/pii\s*risk[^\n]*:\s*Yes(?!\s*\/\s*No)/i);
+const maskingSection = content.match(/masking strategy[\s\S]*?(?=\n##|\n#(?:\s|$)|\Z)/i);
 const hasMaskingChecked =
   maskingSection && /\[[xX]\]/.test(maskingSection[0]);
 
