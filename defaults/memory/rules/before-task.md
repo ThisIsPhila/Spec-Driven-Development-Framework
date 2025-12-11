@@ -9,9 +9,9 @@ This checklist must be effectively completed before writing any code.
 ### 1. Context Review (MANDATORY)
 Before opening the editor, you **must**:
 
-- [ ] **Review the current phase specs:**
-    - `specs/phases/[current]/requirements.md`
-    - `specs/phases/[current]/design.md`
+- [ ] **Review the current active spec:**
+    - `.sdd/specs/active/[feature]/requirements.md`
+    - `.sdd/specs/active/[feature]/design.md`
 - [ ] **Check the latest status:**
     - `memory/current-state/progress.md` (Active blockers/risks)
     - `memory/current-state/activeContext.md` (Current focus)
@@ -31,7 +31,9 @@ Before opening the editor, you **must**:
 - [ ] **Article I - Security:** Ensure no secrets will be exposed.
 - [ ] **Article II - Spec-Driven:** Confirm requirements/design are approved.
 - [ ] **Article III - Test-First:** Have a plan for the first failing test.
-- [ ] **Article V - Local/Performance:** Consider performance constraints.
+- [ ] **Article IV - Boundaries:** Validate monorepo package boundaries are respected.
+- [ ] **Article V - Blindness:** Confirm PII masking/encryption paths are defined.
+- [ ] **Article VI - AI & Context:** Keep project context files updated.
 
 ### 4. Scope Confirmation
 - [ ] Re-state the task goal from `tasks.md`.
