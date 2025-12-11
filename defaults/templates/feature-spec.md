@@ -14,7 +14,7 @@
 
 ## 3. Privacy & Security Model (The "DevSecOps" Layer)
 *   **Data Ingestion:** What new data is collected? (e.g., Audio, Text)
-*   **PII Risk:** [ ] Yes  [ ] No (Does this touch names, IDs, or locations?)
+*   **PII Risk:** [ ] Yes  [ ] No (Does this touch names, IDs, locations, emails, phone numbers, or biometrics?)
 *   **Masking Strategy:**
     *   [ ] Uses `packages/privacy-guard` to mask PII?
     *   [ ] Encryption Required? (Standard vs. E2E)
