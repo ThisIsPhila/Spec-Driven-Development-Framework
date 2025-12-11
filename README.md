@@ -69,6 +69,7 @@ The SDD Framework supports **composable profiles** to match your project type an
 - **api** - Backend APIs (REST, GraphQL) with api-design and schema templates
 - **cli** - Command-line tools with command-design and UX principles
 - **full-stack** - Web + API combined with system architecture templates
+- **monorepo** - Multi-package monorepos (apps + shared packages) with package-design and workspace management
 
 ### Modifiers (add zero or more):
 - **+devsecops** - Security-first workflows (threat modeling, security checklists)
@@ -85,6 +86,9 @@ The SDD Framework supports **composable profiles** to match your project type an
 
 # Full-stack with security and CI/CD
 ./scripts/setup.sh --profile full-stack+devsecops+devops
+
+# Monorepo with DevOps automation
+./scripts/setup.sh --profile monorepo+devops
 
 # List all available profiles
 ./scripts/setup.sh --list-profiles

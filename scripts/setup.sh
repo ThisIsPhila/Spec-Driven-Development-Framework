@@ -12,7 +12,7 @@ set -e
 FRAMEWORK_SOURCE="${BASH_SOURCE%/*}/../"
 TARGET_DIR=".sdd"
 
-VALID_BASES=("general" "web" "mobile" "api" "cli" "full-stack")
+VALID_BASES=("general" "web" "mobile" "api" "cli" "full-stack" "monorepo")
 VALID_MODIFIERS=("devsecops" "mlops" "devops")
 
 # ==============================================================================
