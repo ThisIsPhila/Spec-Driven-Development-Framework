@@ -3,18 +3,18 @@
 ## 1. Context & Goal
 *   **User Story:** As a [User], I want [Action], so that [Benefit].
 *   **Business Value:** Why are we building this?
-*   **[project] Ecosystem Role:** Does this belong to Voice, Chat, or Home?
+*   **Project Ecosystem Role:** Does this belong to Voice, Chat, or Home?
 
 ## 2. Architecture & Monorepo Impact (The "Where")
-*   **Primary App:** `apps/cogni-voice`
+*   **Primary App:** `apps/[app-name]` (e.g., `apps/cogni-voice`)
 *   **Shared Packages Modified:**
-    *   `packages/cul-schema` (Does this change the data model?)
-    *   `packages/ui-kit` (New components?)
+    *   `packages/[package-name]` (Does this change the data model?)
+    *   `packages/[package-name]` (New components?)
 *   **New Dependencies:** (List any new npm packages)
 
 ## 3. Privacy & Security Model (The "DevSecOps" Layer)
 *   **Data Ingestion:** What new data is collected? (e.g., Audio, Text)
-*   **PII Risk:** Does this touch names, IDs, or locations? [Yes/No]
+*   **PII Risk:** [ ] Yes  [ ] No (Does this touch names, IDs, or locations?)
 *   **Masking Strategy:**
     *   [ ] Uses `packages/privacy-guard` to mask PII?
     *   [ ] Encryption Required? (Standard vs. E2E)

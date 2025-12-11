@@ -30,12 +30,21 @@ if (!hasPrivacySection) {
   process.exit(1);
 }
 
-const piiLine = content.match(/pii\s*risk[^\n]*:\s*Yes(?!\s*\/\s*No)/i);
-const maskingSection = content.match(/masking strategy[\s\S]*?(?=\n##|\n#(?:\s|$)|\Z)/i);
-const hasMaskingChecked =
-  maskingSection && /\[[xX]\]/.test(maskingSection[0]);
+// Detect PII risk by allowing either a checked checkbox ("[x] Yes") or a plain "PII Risk: Yes" value.
+const piiLineMatch = content.match(/pii\s*risk[^\n]*/i);
+const piiIsYes =
+  piiLineMatch &&
+  (/\[x\]\s*Yes/i.test(piiLineMatch[0]) ||
+    /:\s*Yes\b(?!\s*\/)/i.test(piiLineMatch[0]));
 
-if (piiLine && !hasMaskingChecked) {
+// Capture only the Masking Strategy section up to the next Markdown heading.
+const maskingSection = content.match(/masking strategy[\s\S]*?(?=\n##|\n#(?:\s|$)|$)/i);
+// Require at least one masking control (privacy guard or encryption) to be checked when PII is Yes.
+const hasMaskingChecked =
+  maskingSection &&
+  /\[[xX]\]\s*(Uses\s+`packages\/privacy-guard`|Encryption Required)/i.test(maskingSection[0]);
+
+if (piiIsYes && !hasMaskingChecked) {
   console.error("❌ PII risk marked as 'Yes' but no masking strategy is checked.");
   process.exit(1);
 }
