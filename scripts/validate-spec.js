@@ -1,0 +1,60 @@
+#!/usr/bin/env node
+// UTF-8
+
+/**
+ * Spec Linter: validates privacy requirements for feature specs.
+ *
+ * Usage: node scripts/validate-spec.js path/to/spec.md
+ */
+const fs = require("fs");
+const path = require("path");
+
+const PRIVACY_SECTION_PATTERN = /privacy & security model/i;
+const PII_YES_CHECKBOX = /\[x\]\s*Yes/i;
+const PII_YES_VALUE = /:\s*Yes\b(?!\s*\/)/i;
+const MASKING_CONTROL_PATTERNS = [
+  /\[[xX]\]\s*Uses\s+`packages\/privacy-guard`/i,
+  /\[[xX]\]\s*Encryption Required/i,
+];
+
+const specPath = process.argv[2];
+
+if (!specPath) {
+  console.error("❌ Missing spec file path. Usage: node scripts/validate-spec.js path/to/spec.md");
+  process.exit(1);
+}
+
+const resolvedPath = path.resolve(specPath);
+
+if (!fs.existsSync(resolvedPath)) {
+  console.error(`❌ Spec file not found: ${resolvedPath}`);
+  process.exit(1);
+}
+
+const content = fs.readFileSync(resolvedPath, "utf8");
+
+const hasPrivacySection = PRIVACY_SECTION_PATTERN.test(content);
+if (!hasPrivacySection) {
+  console.error("❌ Spec is missing 'Privacy & Security Model' section.");
+  process.exit(1);
+}
+
+// Detect PII risk by allowing either a checked checkbox ("[x] Yes") or a plain "PII Risk: Yes" value.
+const piiLineMatch = content.match(/pii\s*risk[^\n]*/i);
+const piiIsYes =
+  piiLineMatch &&
+  (PII_YES_CHECKBOX.test(piiLineMatch[0]) || PII_YES_VALUE.test(piiLineMatch[0]));
+
+// Capture only the Masking Strategy section up to the next Markdown heading.
+const maskingSection = content.match(/masking strategy[\s\S]*?(?=\n##|\n#(?:\s|$)|$)/i);
+// Require at least one masking control (privacy guard or encryption) to be checked when PII is Yes.
+const hasMaskingChecked =
+  maskingSection &&
+  MASKING_CONTROL_PATTERNS.some((pattern) => pattern.test(maskingSection[0]));
+
+if (piiIsYes && !hasMaskingChecked) {
+  console.error("❌ PII risk marked as 'Yes' but no masking strategy is checked.");
+  process.exit(1);
+}
+
+console.log("✅ Spec passed privacy checks.");

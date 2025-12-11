@@ -21,7 +21,7 @@ Before writing a single line of code or suggesting a plan, you MUST perform the 
 You are in a repo that uses the `.sdd/` directory. This is your brain.
 1.  Read `.sdd/memory/project-overview.md` to understand the high-level goal.
 2.  Read `.sdd/memory/progress-tracker.md` to see where we are.
-3.  Read `.sdd/memory/constitutional-framework.md` to understand the non-negotiable rules.
+3.  Read `.sdd/constitution.md` to understand the non-negotiable rules.
 
 ### Step 2: Codebase Reconnaissance
 If the memory files are empty or sparse, you must fill the gaps yourself:
@@ -38,7 +38,7 @@ If you have write access to `.sdd/memory/active-context.md` (or equivalent), log
 
 ### The Golden Rule
 **No Code Without Spec.**
-- If the user asks for a feature, check if a spec exists in `.sdd/specs/phases/`.
+- If the user asks for a feature, check if a spec exists in `.sdd/specs/active/`.
 - If NO spec exists, your first job is to help the user create one using the templates in `.sdd/templates/`.
 
 ### The Spec Lifecycle (Sequential)

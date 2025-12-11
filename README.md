@@ -19,74 +19,23 @@ By keeping everything in the `.sdd/` directory, this framework ensures that cont
 
 ## Directory Structure
 
+Recommended **monorepo + DevSecOps** layout for consumer projects:
+
 ```
-.sdd-framework/
-├── AGENT_ONBOARDING.md          # AI agent workflow guide
-├── README.md                    # This file
-├── CHANGELOG.md                 # Version history
-│
-├── defaults/                    # Framework source files
-│   ├── memory/                  # Default memory structure
-│   │   ├── constitutional-framework.md
-│   │   └── rules/               # Workflow rules (before/during/after)
-│   │       ├── before-task.md
-│   │       ├── during-task.md
-│   │       └── after-task.md
-│   │
-│   ├── templates/               # Core spec templates
-│   │   ├── requirements-template.md
-│   │   ├── design-template.md
-│   │   └── tasks-template.md
-│   │
-│   └── profiles/                # Composable profiles (NEW in v1.1)
-│       ├── base/                # Base profiles (choose one)
-│       │   ├── general/         # Generic projects
-│       │   ├── web/             # Web applications
-│       │   ├── mobile/          # Mobile apps
-│       │   ├── api/             # Backend APIs
-│       │   ├── cli/             # CLI tools
-│       │   └── full-stack/      # Web + API
-│       │
-│       └── modifiers/          # Optional modifiers (add any)
-│           ├── devsecops/      # Security workflows
-│           ├── mlops/          # ML governance
-│           └── devops/         # CI/CD automation
-│
-└── scripts/                    # Automation tools
-    ├── setup.sh                # Main installation script
-    ├── common.sh               # Shared utilities
-    └── validate-profiles.sh    # Profile validation
+.sdd/
+├── constitution.md           # The Supreme Law (Updated for Monorepo)
+├── glossary.md               # Shared language (e.g., "What is CUL?")
+├── templates/
+│   ├── feature-spec.md       # The Standard Feature Contract
+│   ├── architecture-rfc.md   # For new Packages/Modules
+│   └── privacy-audit.md      # For DevSecOps compliance
+└── specs/
+    ├── active/               # In-progress specs
+    ├── archive/              # Completed specs
+    └── backlog/              # Future ideas
 ```
 
-**After running setup.sh, your project gets:**
-```
-your-project/
-└── .sdd/                       # Project-specific SDD directory
-    ├── .profile                # Installed composition (e.g., "web+devsecops")
-    ├── AGENT_ONBOARDING.md
-    │
-    ├── templates/              # Templates (base + profile-specific)
-    │   ├── requirements-template.md
-    │   ├── design-template.md
-    │   ├── tasks-template.md
-    │   ├── component-design-template.md  # (from web profile)
-    │   └── security-design-template.md   # (from devsecops modifier)
-    │
-    ├── memory/
-    │   ├── constitutional-framework.md   # (with modifier amendments)
-    │   ├── progress-tracker.md
-    │   ├── project-overview.md
-    │   ├── technical-decisions.md
-    │   └── rules/
-    │       ├── before-task.md
-    │       ├── during-task.md
-    │       ├── after-task.md
-    │       ├── accessibility-checklist.md     # (from web)
-    │       └── security-checklist.md          # (from devsecops)
-    │
-    └── specs/                  # Your project specs go here
-        └── phases/
-```
+When you run `scripts/setup.sh`, the framework copies defaults (templates, memory, and rules) into `.sdd/` so the governance engine lives at the repo root while understanding the monorepo tree.
 
 ---
 
@@ -101,6 +50,12 @@ git clone https://github.com/ThisIsPhila/Spec-Driven-Development-Framework.git
 
 # Follow the interactive menu or use a specific profile
 ./scripts/setup.sh --profile web+devsecops
+```
+
+## 🔍 Spec Linter (privacy gate)
+Run the optional linter before coding to ensure specs cover privacy controls:
+```bash
+node scripts/validate-spec.js .sdd/specs/active/feature.md
 ```
 
 ## 📦 Choosing a Profile
@@ -190,4 +145,3 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for details.
 
 ## 📄 License
 MIT License. See [LICENSE](LICENSE) for details.
-

@@ -14,7 +14,7 @@ We will close PRs that do not link to an approved Specification issue or documen
 
 1.  **Start with a Spec**:
     - For small fixes: Open an Issue describing the `Requirement`.
-    - For features: Fork the repo, create a `specs/phases/phase-XXX` folder, and write the `requirements.md`.
+    - For features: Fork the repo, create a `.sdd/specs/backlog/feature-XXX` folder, and write the `requirements.md`.
 
 2.  **Follow the Protocol**:
     - Use the `before-task.md` checklist.

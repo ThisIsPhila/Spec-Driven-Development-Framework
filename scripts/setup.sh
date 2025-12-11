@@ -168,7 +168,7 @@ install_base_files() {
     echo "📦 Installing base framework..."
     
     # Create directory structure
-    mkdir -p "$TARGET_DIR/specs/phases"
+    mkdir -p "$TARGET_DIR/specs/active" "$TARGET_DIR/specs/archive" "$TARGET_DIR/specs/backlog"
     mkdir -p "$TARGET_DIR/memory/rules"
     mkdir -p "$TARGET_DIR/templates"
     
@@ -179,6 +179,10 @@ install_base_files() {
     
     # Copy AGENT_ONBOARDING
     cp "$FRAMEWORK_SOURCE/AGENT_ONBOARDING.md" "$TARGET_DIR/" 2>/dev/null || true
+    
+    # Copy top-level governance files
+    cp "$FRAMEWORK_SOURCE/defaults/memory/constitutional-framework.md" "$TARGET_DIR/constitution.md" 2>/dev/null || true
+    cp "$FRAMEWORK_SOURCE/defaults/memory/glossary.md" "$TARGET_DIR/glossary.md" 2>/dev/null || true
 }
 
 # Apply base profile overlay
