@@ -101,6 +101,8 @@ The SDD Framework supports **composable profiles** to match your project type an
 - **full-stack** - Web + API combined with system architecture templates
 - **monorepo** - Multi-package monorepos (apps + shared packages) with package-design and workspace management
 
+**Not sure which to pick (or scope is small)?** Start with **general** and add modifiers later if needed.
+
 ### Modifiers (add zero or more):
 - **+devsecops** - Security-first workflows (threat modeling, security checklists)
 - **+mlops** - ML model governance (experiment tracking, data versioning)
