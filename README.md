@@ -19,12 +19,12 @@ By keeping everything in the `.sdd/` directory, this framework ensures that cont
 
 ## Directory Structure
 
-Recommended **monorepo + DevSecOps** layout for consumer projects:
+Example **.sdd** layout for consumer projects:
 
 ```
 .sdd/
-├── constitution.md           # The Supreme Law (Updated for Monorepo)
-├── glossary.md               # Shared language (e.g., "What is CUL?")
+├── constitution.md           # The Supreme Law
+├── glossary.md               # Shared language
 ├── templates/
 │   ├── feature-spec.md       # The Standard Feature Contract
 │   ├── architecture-rfc.md   # For new Packages/Modules
