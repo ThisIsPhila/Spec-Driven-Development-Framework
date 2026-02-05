@@ -42,7 +42,7 @@ Example **.sdd** layout for consumer projects:
     └── backlog/              # Future ideas
 ```
 
-When you run `scripts/setup.sh`, the framework copies defaults (templates, memory, and rules) into `.sdd/` so the governance engine lives at the repo root while understanding the monorepo tree.
+When you run `scripts/setup.sh`, the framework copies defaults (templates, memory, and rules) into `.sdd/` at the repo root so governance applies across the entire project.
 
 ---
 
