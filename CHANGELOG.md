@@ -2,6 +2,41 @@
 
 All notable changes to the SDD Framework are documented here.
 
+## [1.2.3] - 2026-02-05
+
+### Added
+- `--fix` option for `scripts/scan-strays.sh` (moves stray specs into quarantine)
+- Doctor now runs stray scan and reports warnings
+
+## [1.2.2] - 2026-02-05
+
+### Added
+- `scripts/scan-strays.sh` to flag spec files outside `.sdd/`
+- `memory/rules/file-placement.md` for spec placement rules
+
+### Changed
+- Updated onboarding and during-task rules to enforce spec placement
+
+## [1.2.1] - 2026-02-05
+
+### Added
+- `scripts/doctor.sh` for validating `.sdd` structure and profile artifacts
+- `scripts/migrate-structure.sh` to normalize legacy layouts and backfill memory files
+- `--yes` and `--with-examples` flags for `scripts/setup.sh`
+
+## [1.2.0] - 2026-02-05
+
+### Added
+- Memory scaffolding defaults (project overview, progress tracker, ADRs, current state, completed tasks)
+- Full profile assets for API, CLI, and Full-Stack (templates + rules)
+- Privacy section in `requirements-template.md` to align with spec linter
+- Modifier rule extensions (`before-task_extends.md`) for DevSecOps and MLOps
+
+### Changed
+- Full-Stack profile now composes Web + API templates during setup
+- Setup menu includes `monorepo` base profile option
+- Example spec updated with privacy section
+
 ## [1.1.0] - 2025-12-09
 
 ### Added

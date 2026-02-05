@@ -12,9 +12,12 @@ Before opening the editor, you **must**:
 - [ ] **Review the current active spec:**
     - `.sdd/specs/active/[feature]/requirements.md`
     - `.sdd/specs/active/[feature]/design.md`
+- [ ] **Review project context:**
+    - `memory/project-overview.md` (High-level goal and scope)
+    - `memory/progress-tracker.md` (Phase status)
 - [ ] **Check the latest status:**
     - `memory/current-state/progress.md` (Active blockers/risks)
-    - `memory/current-state/activeContext.md` (Current focus)
+    - `memory/current-state/active-context.md` (Current focus)
 - [ ] **Review Technical Decisions:**
     - `memory/technical-decisions.md` (Ensure no ADRs are violated)
 

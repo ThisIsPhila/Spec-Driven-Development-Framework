@@ -382,6 +382,20 @@ service-template/
 
 ---
 
+## 🔐 Privacy & Security Model
+
+**Data Classification:** Internal
+
+**PII Risk:** No
+
+### Masking Strategy
+- [ ] Uses `packages/privacy-guard`
+- [ ] Encryption Required
+- [ ] Tokenization/Pseudonymization
+- [x] Data minimization (collect only what is needed)
+
+---
+
 ## ✅ Approval Checkpoint
 
 **🛑 STOP - DO NOT PROCEED TO DESIGN WITHOUT APPROVAL**

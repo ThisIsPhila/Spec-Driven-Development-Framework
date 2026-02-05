@@ -27,6 +27,8 @@ The **Mobile** profile is optimized for iOS and Android application development.
   - Navigation patterns
   - State management
   - Offline behavior
+
+### Rules
 - `platform-guidelines.md` - Platform compliance rules
   - iOS: Human Interface Guidelines (HIG)
   - Android: Material Design guidelines

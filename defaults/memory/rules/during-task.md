@@ -17,7 +17,9 @@ Maintain quality and traceability while coding.
 
 ### 3. Documentation
 - Update `tasks.md` status to `In Progress` for current task.
+- Update `memory/current-state/progress.md` with blockers or key updates.
 - Update `progress-tracker.md` if significant progress or blockers occur.
+- Ensure any spec artifacts are saved under `.sdd/specs/` (not `docs/`).
 
 ### 4. Stuck?
 - If stuck > 15 mins, stop.

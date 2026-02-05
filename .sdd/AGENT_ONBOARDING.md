@@ -9,7 +9,7 @@ Your primary goal is to be helpful while strictly adhering to the project's stru
 
 1.  **Run the Setup Script**: Execute `bash scripts/setup.sh`.
 2.  **Verify Structure**: Ensure `.sdd/` created with `memory`, `specs`, and `templates`.
-3.  **Self-Register**: Log your presence in `memory/current-state/activeContext.md`.
+3.  **Self-Register**: Log your presence in `memory/current-state/active-context.md`.
 
 ---
 
@@ -30,7 +30,7 @@ If the memory files are empty or sparse, you must fill the gaps yourself:
 3.  **Check Conventions**: Look for existing patterns in the code. How are functions named? Where are tests located?
 
 ### Step 3: Self-Registration
-If you have write access to `.sdd/memory/active-context.md` (or equivalent), log your session start and what task you are picking up.
+If you have write access to `.sdd/memory/current-state/active-context.md` (or equivalent), log your session start and what task you are picking up.
 
 ---
 
@@ -70,3 +70,11 @@ If you have write access to `.sdd/memory/active-context.md` (or equivalent), log
 - **Be Concise**: Do not hallucinate files.
 - **Be Explicit**: When referring to a file, use its full path.
 - **Be Agentic**: Don't just ask "what do you want?". Propose the next logical step based on the SDD framework.
+
+---
+
+## File Placement Rules
+
+- **Specs live in `.sdd/specs/` only.** Do not place `requirements.md`, `design.md`, or `tasks.md` under `docs/`.
+- **Project docs live in `docs/`**, and may link to specs instead of duplicating them.
+- If unsure, run: `bash scripts/scan-strays.sh`.

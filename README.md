@@ -25,10 +25,17 @@ Example **.sdd** layout for consumer projects:
 .sdd/
 ├── constitution.md           # The Supreme Law
 ├── glossary.md               # Shared language
+├── memory/
+│   ├── project-overview.md   # High-level context
+│   ├── progress-tracker.md   # Phase status
+│   ├── technical-decisions.md# ADR log
+│   ├── current-state/        # Active focus + blockers
+│   ├── completed-tasks/      # Task summaries
+│   └── rules/                # Before/During/After task checklists
 ├── templates/
-│   ├── feature-spec.md       # The Standard Feature Contract
-│   ├── architecture-rfc.md   # For new Packages/Modules
-│   └── privacy-audit.md      # For DevSecOps compliance
+│   ├── requirements-template.md
+│   ├── design-template.md
+│   └── tasks-template.md
 └── specs/
     ├── active/               # In-progress specs
     ├── archive/              # Completed specs
@@ -56,6 +63,29 @@ git clone https://github.com/ThisIsPhila/Spec-Driven-Development-Framework.git
 Run the optional linter before coding to ensure specs cover privacy controls:
 ```bash
 node scripts/validate-spec.js .sdd/specs/active/feature.md
+```
+
+## 🧰 Maintenance Utilities
+
+Validate your `.sdd/` structure:
+```bash
+bash scripts/doctor.sh
+```
+
+Scan for misplaced spec files:
+```bash
+bash scripts/scan-strays.sh
+```
+
+Auto-move misplaced specs into a quarantine folder:
+```bash
+bash scripts/scan-strays.sh --fix
+```
+
+Migrate legacy layouts (dry-run by default):
+```bash
+bash scripts/migrate-structure.sh
+bash scripts/migrate-structure.sh --yes
 ```
 
 ## 📦 Choosing a Profile
@@ -92,6 +122,12 @@ The SDD Framework supports **composable profiles** to match your project type an
 
 # List all available profiles
 ./scripts/setup.sh --list-profiles
+
+# Include example specs
+./scripts/setup.sh --profile general --with-examples
+
+# Run non-interactively
+./scripts/setup.sh --profile web+devsecops --yes
 ```
 
 2.  **Activate your Agent**:

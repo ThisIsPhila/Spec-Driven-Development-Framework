@@ -40,6 +40,11 @@ The monorepo profile is designed for projects that manage multiple packages, app
 - **monorepo-testing.md** - Testing strategies for monorepos
 - **package-boundaries.md** - Guidelines for package organization
 
+### Coordination
+- `coordination/` - Cross-app status, shared package dependencies, and blockers
+  - `coordination/progress/current-phase-status.md`
+  - `coordination/apps/` (per-app phase notes)
+
 ## 🏗️ Typical Monorepo Structure
 
 ```

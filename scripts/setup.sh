@@ -74,13 +74,14 @@ list_profiles() {
 interactive_menu() {
     if command -v whiptail &> /dev/null; then
         # Use whiptail for TUI
-        BASE_PROFILE=$(whiptail --title "Select Base Profile" --menu "Choose your project type:" 18 70 6 \
+        BASE_PROFILE=$(whiptail --title "Select Base Profile" --menu "Choose your project type:" 20 70 7 \
             "general" "Generic software project (default)" \
             "web" "Web application (React, Vue, Next.js)" \
             "mobile" "Mobile app (iOS, Android, React Native)" \
             "api" "Backend API service (REST, GraphQL)" \
             "cli" "Command-line tool" \
             "full-stack" "Web + API combined" \
+            "monorepo" "Multi-package monorepo (apps + packages)" \
             3>&1 1>&2 2>&3)
         
         if [ $? -ne 0 ]; then
@@ -110,7 +111,8 @@ interactive_menu() {
         echo "  4) api       - Backend API service"
         echo "  5) cli       - Command-line tool"
         echo "  6) full-stack - Web + API combined"
-        read -p "Select base profile (1-6): " base_choice
+        echo "  7) monorepo   - Multi-package monorepo (apps + packages)"
+        read -p "Select base profile (1-7): " base_choice
         
         case $base_choice in
             1) BASE_PROFILE="general" ;;
@@ -119,6 +121,7 @@ interactive_menu() {
             4) BASE_PROFILE="api" ;;
             5) BASE_PROFILE="cli" ;;
             6) BASE_PROFILE="full-stack" ;;
+            7) BASE_PROFILE="monorepo" ;;
             *) echo "Invalid choice. Using 'general'"; BASE_PROFILE="general" ;;
         esac
         
@@ -169,7 +172,7 @@ install_base_files() {
     
     # Create directory structure
     mkdir -p "$TARGET_DIR/specs/active" "$TARGET_DIR/specs/archive" "$TARGET_DIR/specs/backlog"
-    mkdir -p "$TARGET_DIR/memory/rules"
+    mkdir -p "$TARGET_DIR/memory/rules" "$TARGET_DIR/memory/current-state" "$TARGET_DIR/memory/completed-tasks"
     mkdir -p "$TARGET_DIR/templates"
     
     # Layer 1: Base templates and memory
@@ -187,6 +190,14 @@ install_base_files() {
 
 # Apply base profile overlay
 apply_base_profile() {
+    if [ "$BASE_PROFILE" = "full-stack" ]; then
+        echo "  2/3 Applying base profile: full-stack (web + api + full-stack)"
+        rsync -a --exclude "README.md" "$FRAMEWORK_SOURCE/defaults/profiles/base/web/" "$TARGET_DIR/" 2>/dev/null || true
+        rsync -a --exclude "README.md" "$FRAMEWORK_SOURCE/defaults/profiles/base/api/" "$TARGET_DIR/" 2>/dev/null || true
+        rsync -a "$FRAMEWORK_SOURCE/defaults/profiles/base/full-stack/" "$TARGET_DIR/" 2>/dev/null || true
+        return
+    fi
+
     if [ -d "$FRAMEWORK_SOURCE/defaults/profiles/base/$BASE_PROFILE" ]; then
         echo "  2/3 Applying base profile: $BASE_PROFILE"
         rsync -a "$FRAMEWORK_SOURCE/defaults/profiles/base/$BASE_PROFILE/" "$TARGET_DIR/" 2>/dev/null || true
@@ -210,6 +221,14 @@ apply_modifiers() {
                     echo "---" >> "$TARGET_DIR/memory/constitutional-framework.md"
                     echo "" >> "$TARGET_DIR/memory/constitutional-framework.md"
                     cat "$FRAMEWORK_SOURCE/defaults/profiles/modifiers/$modifier/memory/constitutional-amendment.md" >> "$TARGET_DIR/memory/constitutional-framework.md"
+                fi
+
+                # Append before-task rule extensions if present
+                if [ -f "$FRAMEWORK_SOURCE/defaults/profiles/modifiers/$modifier/memory/rules/before-task_extends.md" ]; then
+                    echo "" >> "$TARGET_DIR/memory/rules/before-task.md"
+                    echo "---" >> "$TARGET_DIR/memory/rules/before-task.md"
+                    echo "" >> "$TARGET_DIR/memory/rules/before-task.md"
+                    cat "$FRAMEWORK_SOURCE/defaults/profiles/modifiers/$modifier/memory/rules/before-task_extends.md" >> "$TARGET_DIR/memory/rules/before-task.md"
                 fi
             fi
         done
@@ -240,11 +259,21 @@ generate_metadata() {
 
 # Parse arguments
 PROFILE_ARG=""
+WITH_EXAMPLES=false
+AUTO_YES=false
 while [[ $# -gt 0 ]]; do
     case $1 in
         --profile)
             PROFILE_ARG="$2"
             shift 2
+            ;;
+        --with-examples)
+            WITH_EXAMPLES=true
+            shift 1
+            ;;
+        --yes|-y)
+            AUTO_YES=true
+            shift 1
             ;;
         --list-profiles|--list)
             list_profiles
@@ -258,6 +287,8 @@ while [[ $# -gt 0 ]]; do
             echo "Options:"
             echo "  --profile COMPOSITION    Use specific profile composition"
             echo "                           (e.g., web+devsecops, api+mlops)"
+            echo "  --with-examples          Copy example specs into .sdd/specs/examples"
+            echo "  --yes                    Skip confirmation prompts"
             echo "  --list-profiles          Show all available profiles"
             echo "  --help                   Show this help message"
             echo ""
@@ -265,6 +296,8 @@ while [[ $# -gt 0 ]]; do
             echo "  $0                                    # Interactive menu"
             echo "  $0 --profile web+devsecops           # Web with security"
             echo "  $0 --profile api+mlops               # API with ML governance"
+            echo "  $0 --profile general --with-examples # Include example specs"
+            echo "  $0 --profile general --yes           # No prompts"
             echo "  $0 --list-profiles                   # Show all profiles"
             exit 0
             ;;
@@ -280,14 +313,40 @@ done
 if [ -n "$PROFILE_ARG" ]; then
     parse_profile "$PROFILE_ARG"
 else
-    interactive_menu
+    if [ "$AUTO_YES" = true ]; then
+        BASE_PROFILE="general"
+        MODIFIERS=()
+    else
+        interactive_menu
+    fi
 fi
 
 # Show preview and confirm
-show_preview
+if [ "$AUTO_YES" = true ]; then
+    echo ""
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo "📦 Profile Composition: $BASE_PROFILE"
+    if [ ${#MODIFIERS[@]} -gt 0 ]; then
+        echo "   Modifiers: +${MODIFIERS[*]}"
+    fi
+    if [ "$WITH_EXAMPLES" = true ]; then
+        echo "   Examples: enabled"
+    fi
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo ""
+else
+    show_preview
+fi
 
 # Install files
 install_base_files
 apply_base_profile
 apply_modifiers
+
+if [ "$WITH_EXAMPLES" = true ]; then
+    echo "📄 Copying example specs..."
+    mkdir -p "$TARGET_DIR/specs/examples"
+    rsync -a "$FRAMEWORK_SOURCE/defaults/specs-example/" "$TARGET_DIR/specs/examples/" 2>/dev/null || true
+fi
+
 generate_metadata
