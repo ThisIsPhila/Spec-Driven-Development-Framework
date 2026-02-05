@@ -77,6 +77,21 @@ As a [user role], I need [feature] so that [benefit].
 
 ---
 
+## 🔐 Privacy & Security Model
+
+**Data Classification:** [Public / Internal / Confidential / Restricted]
+
+**PII Risk:** [ ] Yes / [ ] No  
+_If Yes, complete Masking Strategy below._
+
+### Masking Strategy
+- [ ] Uses `packages/privacy-guard`
+- [ ] Encryption Required
+- [ ] Tokenization/Pseudonymization
+- [ ] Data minimization (collect only what is needed)
+
+---
+
 ## ✅ Approval Checkpoint
 
 **🛑 STOP - DO NOT PROCEED TO DESIGN WITHOUT APPROVAL**
