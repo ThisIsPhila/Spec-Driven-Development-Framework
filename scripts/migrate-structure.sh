@@ -109,4 +109,10 @@ copy_if_missing "$FRAMEWORK_SOURCE/defaults/memory/current-state/active-context.
 copy_if_missing "$FRAMEWORK_SOURCE/defaults/memory/current-state/progress.md" "$TARGET_DIR/memory/current-state/progress.md"
 copy_if_missing "$FRAMEWORK_SOURCE/defaults/memory/completed-tasks/README.md" "$TARGET_DIR/memory/completed-tasks/README.md"
 
+# Sync templates (non-destructive; only adds missing files)
+mkdir_if_missing "$TARGET_DIR/templates"
+copy_if_missing "$FRAMEWORK_SOURCE/defaults/templates/requirements-template.md" "$TARGET_DIR/templates/requirements-template.md"
+copy_if_missing "$FRAMEWORK_SOURCE/defaults/templates/design-template.md" "$TARGET_DIR/templates/design-template.md"
+copy_if_missing "$FRAMEWORK_SOURCE/defaults/templates/tasks-template.md" "$TARGET_DIR/templates/tasks-template.md"
+
 say "Done"
