@@ -20,6 +20,8 @@ Before opening the editor, you **must**:
     - `memory/current-state/active-context.md` (Current focus)
 - [ ] **Review Technical Decisions:**
     - `memory/technical-decisions.md` (Ensure no ADRs are violated)
+- [ ] **Confirm spec naming convention:**
+    - `memory/rules/spec-naming.md`
 
 ### 2. Branch Management
 **Naming convention:**

@@ -22,6 +22,7 @@ You are in a repo that uses the `.sdd/` directory. This is your brain.
 1.  Read `.sdd/memory/project-overview.md` to understand the high-level goal.
 2.  Read `.sdd/memory/progress-tracker.md` to see where we are.
 3.  Read `.sdd/constitution.md` to understand the non-negotiable rules.
+4.  Read `.sdd/memory/rules/spec-naming.md` to follow the required spec folder naming convention.
 
 ### Step 2: Codebase Reconnaissance
 If the memory files are empty or sparse, you must fill the gaps yourself:
@@ -43,6 +44,9 @@ If you have write access to `.sdd/memory/current-state/active-context.md` (or eq
 
 ### The Spec Lifecycle (Sequential)
 **Condition**: You MUST create specs in this exact order. Do NOT create multiple files at once.
+
+**Spec Folder Rule (Mandatory)**:
+- Specs MUST live in `.sdd/specs/{active,archive,backlog}/` under a folder that matches the naming convention in `memory/rules/spec-naming.md`.
 
 1.  **Requirements (`requirements.md`)**:
     - Create draft using `templates/requirements-template.md`.
@@ -70,6 +74,25 @@ If you have write access to `.sdd/memory/current-state/active-context.md` (or eq
 - **Be Concise**: Do not hallucinate files.
 - **Be Explicit**: When referring to a file, use its full path.
 - **Be Agentic**: Don't just ask "what do you want?". Propose the next logical step based on the SDD framework.
+
+---
+
+## Logging Example (Active Context)
+
+When updating `memory/current-state/active-context.md`, keep it crisp and actionable:
+
+```
+Current Phase: Phase 002 - Feature X
+Current Task: 2-3 Add schema validation
+Branch: feature/task-2-3-schema-validation
+
+Focus:
+- Define validation rules
+- Update tests
+
+Recent Decisions:
+- Use Zod for schema validation
+```
 
 ---
 

@@ -2,6 +2,17 @@
 
 All notable changes to the SDD Framework are documented here.
 
+## [1.2.4] - 2026-02-05
+
+### Added
+- `memory/rules/spec-naming.md` to enforce configurable spec folder naming
+- Spec naming validation in `scripts/doctor.sh`
+
+### Changed
+- README clarifies spec naming rule
+- Example spec folder renamed to `phase-000-foundation`
+- Agent onboarding includes spec naming rule and active-context logging example
+
 ## [1.2.3] - 2026-02-05
 
 ### Added

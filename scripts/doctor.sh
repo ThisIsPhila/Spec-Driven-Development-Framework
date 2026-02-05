@@ -183,6 +183,35 @@ else
     WARNINGS=$((WARNINGS+1))
 fi
 
+say ""
+say "Spec Naming Check"
+SPEC_RULE="$TARGET_DIR/memory/rules/spec-naming.md"
+SPEC_REGEX=""
+if [[ -f "$SPEC_RULE" ]]; then
+    SPEC_REGEX=$(grep -i "^Regex:" "$SPEC_RULE" | head -n1 | cut -d: -f2- | xargs)
+fi
+if [[ -z "$SPEC_REGEX" ]]; then
+    SPEC_REGEX="^phase-[0-9]{3}-[a-z0-9-]+$"
+    say "WARN spec-naming rule missing Regex; using default: $SPEC_REGEX"
+    WARNINGS=$((WARNINGS+1))
+fi
+
+for scope in active archive backlog; do
+    dir="$TARGET_DIR/specs/$scope"
+    if [[ -d "$dir" ]]; then
+        while IFS= read -r subdir; do
+            name=$(basename "$subdir")
+            if [[ "$name" == _* ]]; then
+                continue
+            fi
+            if ! [[ "$name" =~ $SPEC_REGEX ]]; then
+                say "MISS $scope spec folder '$name' does not match: $SPEC_REGEX"
+                ERRORS=$((ERRORS+1))
+            fi
+        done < <(find "$dir" -mindepth 1 -maxdepth 1 -type d 2>/dev/null)
+    fi
+done
+
 if [[ $ERRORS -eq 0 ]]; then
     say "Result: OK"
 else

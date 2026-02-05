@@ -125,6 +125,8 @@ bash .sdd-framework/scripts/setup.sh --profile web+devsecops --yes
 
 **Rule:** You cannot proceed to the next stage until the current artifact is approved.
 
+**Spec Naming:** Specs are organized in folders under `.sdd/specs/` and must follow the naming convention in `.sdd/memory/rules/spec-naming.md` (customizable).
+
 ---
 
 ## Maintenance Utilities
