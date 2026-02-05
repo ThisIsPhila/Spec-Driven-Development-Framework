@@ -179,6 +179,18 @@ Use this if you prefer to run the scripts yourself without an AI agent.
 
 ---
 
+## 🔮 Future Ideas (Not Implemented Yet)
+
+These are exploratory concepts to improve SDD; they are not committed features:
+
+- **Frontend Design System Profile**: A UI‑focused profile with design tokens, component contracts, and layout guidelines to keep UI work aligned with design constraints.
+- **MCP Integration (Optional)**: An MCP server to expose SDD artifacts (list/create/validate specs) and enforce file placement for AI agents.
+- **Design Constraint Validators**: Lightweight checks that flag unapproved colors/spacing or missing spec references.
+
+If you want to contribute to any of these, open an issue with a brief proposal.
+
+---
+
 ## 🤝 Contributing
 We use what we build. If you want to contribute, you must follow the SDD process.
 See [CONTRIBUTING.md](CONTRIBUTING.md) for details.
