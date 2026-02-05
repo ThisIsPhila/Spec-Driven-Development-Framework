@@ -5,7 +5,7 @@
 
 ## Overview
 
-The **Spec-Driven Development (SDD) Framework** is a bridge between human creativity and AI execution. It provides a structured environment where specifications act as the 'source of truth', allowing AI agents to work autonomously with high precision while helping human developers quickly grasp project context. Whether you're building with agents or just want a cleaner way to manage projects, SDD keeps everyone aligned.
+The **Spec-Driven Development (SDD) Framework** provides a structured environment where specifications act as the source of truth. It keeps humans and AI agents aligned by making requirements, design, and tasks explicit and traceable.
 
 It acts as the **single unified source of truth** for:
 
@@ -13,7 +13,7 @@ It acts as the **single unified source of truth** for:
 - **Memory** – Project tracking, architectural decisions, and rules.
 - **Rules** – The codified habits (checklists) that ensure quality.
 
-By keeping everything in the `.sdd/` directory, this framework ensures that context is never lost and that every code change is traceable to a specific requirement.
+By keeping everything in the `.sdd/` directory, this framework ensures that context is never lost and every code change is traceable to a requirement.
 
 ---
 
@@ -42,51 +42,32 @@ Example **.sdd** layout for consumer projects:
     └── backlog/              # Future ideas
 ```
 
-When you run `scripts/setup.sh`, the framework copies defaults (templates, memory, and rules) into `.sdd/` at the repo root so governance applies across the entire project.
+When you run the setup script, defaults (templates, memory, and rules) are copied into `.sdd/` at your repo root so governance applies across the entire project.
 
 ---
 
-## 🚀 Quick Start
+## 🚀 Install (Manual)
+
+Use this if you prefer to run scripts yourself.
 
 ```bash
-# Clone this repository
-git clone https://github.com/ThisIsPhila/Spec-Driven-Development-Framework.git
-
-# Initialize in your project
-./scripts/setup.sh
-
-# Follow the interactive menu or use a specific profile
-./scripts/setup.sh --profile web+devsecops
+# From your project root
+git clone https://github.com/ThisIsPhila/Spec-Driven-Development-Framework.git .sdd-framework
+bash .sdd-framework/scripts/setup.sh
 ```
 
-## 🔍 Spec Linter (privacy gate)
-Run the optional linter before coding to ensure specs cover privacy controls:
-```bash
-node scripts/validate-spec.js .sdd/specs/active/feature.md
-```
+---
 
-## 🧰 Maintenance Utilities
+## 🤖 Install (With AI Agent)
 
-Validate your `.sdd/` structure:
-```bash
-bash scripts/doctor.sh
-```
+If you use an AI agent, point it to the onboarding file:
 
-Scan for misplaced spec files:
-```bash
-bash scripts/scan-strays.sh
-```
+- `/Users/phila/Desktop/coding/projects/Spec-Driven-Development-Framework/AGENT_ONBOARDING.md`
 
-Auto-move misplaced specs into a quarantine folder:
-```bash
-bash scripts/scan-strays.sh --fix
-```
+Suggested prompt:
+> "I want to use Spec-Driven Development. Read `.sdd-framework/AGENT_ONBOARDING.md` and set up the project for me."
 
-Migrate legacy layouts (dry-run by default):
-```bash
-bash scripts/migrate-structure.sh
-bash scripts/migrate-structure.sh --yes
-```
+---
 
 ## 📦 Choosing a Profile
 
@@ -111,55 +92,28 @@ The SDD Framework supports **composable profiles** to match your project type an
 ### Example Compositions:
 ```bash
 # Web app with security focus
-./scripts/setup.sh --profile web+devsecops
+bash .sdd-framework/scripts/setup.sh --profile web+devsecops
 
 # Machine learning API
-./scripts/setup.sh --profile api+mlops
+bash .sdd-framework/scripts/setup.sh --profile api+mlops
 
 # Full-stack with security and CI/CD
-./scripts/setup.sh --profile full-stack+devsecops+devops
+bash .sdd-framework/scripts/setup.sh --profile full-stack+devsecops+devops
 
 # Monorepo with DevOps automation
-./scripts/setup.sh --profile monorepo+devops
+bash .sdd-framework/scripts/setup.sh --profile monorepo+devops
 
 # List all available profiles
-./scripts/setup.sh --list-profiles
+bash .sdd-framework/scripts/setup.sh --list-profiles
 
 # Include example specs
-./scripts/setup.sh --profile general --with-examples
+bash .sdd-framework/scripts/setup.sh --profile general --with-examples
 
 # Run non-interactively
-./scripts/setup.sh --profile web+devsecops --yes
+bash .sdd-framework/scripts/setup.sh --profile web+devsecops --yes
 ```
 
-2.  **Activate your Agent**:
-    Paste this prompt to your chat:
-    > "I want to use Spec-Driven Development. Read `.sdd-framework/AGENT_ONBOARDING.md` and set up the project for me."
-
-### Option B: Add to Existing Project
-1.  **Download as submodule or folder**:
-    ```bash
-    # Run in your project root
-    git clone https://github.com/ThisIsPhila/.sdd-framework.git .sdd-framework
-    ```
-2.  **Activate your Agent**:
-    Paste this prompt to your chat:
-    > "I want to use Spec-Driven Development. Read `.sdd-framework/AGENT_ONBOARDING.md` and set up the project for me."
-
 ---
-
-## 🛠️ Manual Setup
-Use this if you prefer to run the scripts yourself without an AI agent.
-
-1.  **Get the code**:
-    ```bash
-    git clone https://github.com/ThisIsPhila/.sdd-framework.git .sdd-framework
-    ```
-2.  **Run the setup script**:
-    ```bash
-    bash .sdd-framework/scripts/setup.sh
-    ```
-
 
 ## Spec Lifecycle
 
@@ -173,11 +127,45 @@ Use this if you prefer to run the scripts yourself without an AI agent.
 
 ---
 
+## Maintenance Utilities
+
+### Spec Linter (privacy gate)
+Run the optional linter before coding to ensure specs cover privacy controls:
+```bash
+node .sdd-framework/scripts/validate-spec.js .sdd/specs/active/<feature>/requirements.md
+```
+
+### Structure Check
+Validate your `.sdd/` structure:
+```bash
+bash .sdd-framework/scripts/doctor.sh
+```
+
+### Stray Spec Scan
+Scan for misplaced spec files:
+```bash
+bash .sdd-framework/scripts/scan-strays.sh
+```
+
+Auto-move misplaced specs into a quarantine folder:
+```bash
+bash .sdd-framework/scripts/scan-strays.sh --fix
+```
+
+### Migration
+Migrate legacy layouts (dry-run by default):
+```bash
+bash .sdd-framework/scripts/migrate-structure.sh
+bash .sdd-framework/scripts/migrate-structure.sh --yes
+```
+
+---
+
 ## Principles
 
-1.  **Context First**: Never write code without understanding existing patterns.
-2.  **Spec-Driven**: Code exists to fulfill a spec. No spec, no code.
-3.  **Traceability**: Every task traces back to a design decision, which traces back to a requirement.
+1. **Context First**: Never write code without understanding existing patterns.
+2. **Spec-Driven**: Code exists to fulfill a spec. No spec, no code.
+3. **Traceability**: Every task traces back to a design decision, which traces back to a requirement.
 
 ---
 
@@ -185,7 +173,7 @@ Use this if you prefer to run the scripts yourself without an AI agent.
 
 These are exploratory concepts to improve SDD; they are not committed features:
 
-- **Frontend Design System Profile**: A UI‑focused profile with design tokens, component contracts, and layout guidelines to keep UI work aligned with design constraints.
+- **Frontend Design System Profile**: A UI-focused profile with design tokens, component contracts, and layout guidelines to keep UI work aligned with design constraints.
 - **MCP Integration (Optional)**: An MCP server to expose SDD artifacts (list/create/validate specs) and enforce file placement for AI agents.
 - **Design Constraint Validators**: Lightweight checks that flag unapproved colors/spacing or missing spec references.
 
