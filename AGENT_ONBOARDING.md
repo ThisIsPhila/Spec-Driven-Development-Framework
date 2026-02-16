@@ -23,6 +23,9 @@ You are in a repo that uses the `.sdd/` directory. This is your brain.
 2.  Read `.sdd/memory/progress-tracker.md` to see where we are.
 3.  Read `.sdd/constitution.md` to understand the non-negotiable rules.
 4.  Read `.sdd/memory/rules/spec-naming.md` to follow the required spec folder naming convention.
+5.  If monorepo coordination exists, read:
+    - `.sdd/memory/rules/monorepo-governance.md`
+    - `.sdd/coordination/progress/current-phase-status.md`
 
 ### Step 2: Codebase Reconnaissance
 If the memory files are empty or sparse, you must fill the gaps yourself:
@@ -47,6 +50,7 @@ If you have write access to `.sdd/memory/current-state/active-context.md` (or eq
 
 **Spec Folder Rule (Mandatory)**:
 - Specs MUST live in `.sdd/specs/{active,archive,backlog}/` under a folder that matches the naming convention in `memory/rules/spec-naming.md`.
+- For monorepos, keep root coordination artifacts updated in `.sdd/coordination/`.
 
 1.  **Requirements (`requirements.md`)**:
     - Create draft using `templates/requirements-template.md`.

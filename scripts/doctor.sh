@@ -161,6 +161,14 @@ if [[ -f "$PROFILE_FILE" ]]; then
 
     if echo "$PROFILE" | grep -q "monorepo"; then
         check_dir "$TARGET_DIR/coordination" "coordination/"
+        check_dir "$TARGET_DIR/coordination/apps" "coordination/apps/"
+        check_dir "$TARGET_DIR/coordination/services" "coordination/services/"
+        check_dir "$TARGET_DIR/coordination/progress" "coordination/progress/"
+        check_file "$TARGET_DIR/coordination/progress/current-phase-status.md" "coordination/progress/current-phase-status.md"
+        check_file "$TARGET_DIR/coordination/progress/weekly-updates.md" "coordination/progress/weekly-updates.md"
+        check_file "$TARGET_DIR/coordination/blockers.md" "coordination/blockers.md"
+        check_file "$TARGET_DIR/coordination/breaking-changes.md" "coordination/breaking-changes.md"
+        check_file "$TARGET_DIR/memory/rules/monorepo-governance.md" "memory/rules/monorepo-governance.md"
     fi
 
     if echo "$PROFILE" | grep -q "devsecops"; then
@@ -181,6 +189,19 @@ if "$SCRIPT_DIR/scan-strays.sh"; then
     say "OK   No stray specs detected"
 else
     WARNINGS=$((WARNINGS+1))
+fi
+
+if [[ -f "$PROFILE_FILE" ]]; then
+    if echo "$PROFILE" | grep -q "monorepo"; then
+        say ""
+        say "Monorepo Audit"
+        if "$SCRIPT_DIR/audit-monorepo.sh"; then
+            say "OK   Monorepo coordination audit passed"
+        else
+            say "MISS Monorepo coordination audit reported critical findings"
+            ERRORS=$((ERRORS+1))
+        fi
+    fi
 fi
 
 say ""

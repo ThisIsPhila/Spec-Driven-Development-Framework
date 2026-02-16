@@ -2,6 +2,24 @@
 
 All notable changes to the SDD Framework are documented here.
 
+## [1.2.5] - 2026-02-16
+
+### Added
+- `scripts/audit-monorepo.sh` for cross-component coordination audits
+- Expanded monorepo coordination scaffolding:
+  - `coordination/apps/` + card template
+  - `coordination/services/`
+  - `coordination/progress/{weekly-updates,sdd-compliance-latest,sdd-compliance-history}.md`
+  - `coordination/{blockers,breaking-changes}.md`
+- Monorepo governance rule: `memory/rules/monorepo-governance.md`
+- Automation prompt templates for monorepo compliance and weekly rollups
+
+### Changed
+- `scripts/doctor.sh` now runs monorepo-specific checks and invokes `audit-monorepo.sh` when profile includes `monorepo`
+- README now documents monorepo governance audit commands
+- Agent onboarding now includes monorepo coordination guidance
+- `scripts/validate-profiles.sh` validates monorepo coordination scaffolding
+
 ## [1.2.4] - 2026-02-05
 
 ### Added

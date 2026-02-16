@@ -62,7 +62,7 @@ bash .sdd-framework/scripts/setup.sh
 
 If you use an AI agent, point it to the onboarding file:
 
-- `/Users/phila/Desktop/coding/projects/Spec-Driven-Development-Framework/AGENT_ONBOARDING.md`
+- `.sdd-framework/AGENT_ONBOARDING.md`
 
 Suggested prompt:
 > "I want to use Spec-Driven Development. Read `.sdd-framework/AGENT_ONBOARDING.md` and set up the project for me."
@@ -159,6 +159,17 @@ Migrate legacy layouts (dry-run by default):
 ```bash
 bash .sdd-framework/scripts/migrate-structure.sh
 bash .sdd-framework/scripts/migrate-structure.sh --yes
+```
+
+### Monorepo Governance Audit
+For monorepos, run coordination coverage and consistency checks:
+```bash
+bash .sdd-framework/scripts/audit-monorepo.sh
+```
+
+Update the rolling compliance report files:
+```bash
+bash .sdd-framework/scripts/audit-monorepo.sh --write-report
 ```
 
 ---

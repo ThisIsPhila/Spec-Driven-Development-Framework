@@ -1,7 +1,10 @@
 # App Coordination Notes
 
-Create one file per app or service to track phase start/completion notes.
+Create one folder per app. Each app folder should include:
 
-Example filenames:
-- `web-app-phase-001-start.md`
-- `api-service-phase-002-complete.md`
+- `{component}-coordination.md`
+- `phase-XXX-start.md`
+- `phase-XXX-complete.md`
+
+Template:
+- `component-coordination-template.md`

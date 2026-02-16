@@ -105,6 +105,38 @@ if [[ $missing_checkpoints -eq 0 ]]; then
 fi
 
 echo ""
+echo "🧭 Monorepo Coordination Scaffolding:"
+MONOREPO_DIR="$PROFILES_DIR/base/monorepo"
+MONOREPO_FILES=(
+    "$MONOREPO_DIR/coordination/README.md"
+    "$MONOREPO_DIR/coordination/apps/README.md"
+    "$MONOREPO_DIR/coordination/apps/component-coordination-template.md"
+    "$MONOREPO_DIR/coordination/services/README.md"
+    "$MONOREPO_DIR/coordination/progress/current-phase-status.md"
+    "$MONOREPO_DIR/coordination/progress/weekly-updates.md"
+    "$MONOREPO_DIR/coordination/progress/sdd-compliance-latest.md"
+    "$MONOREPO_DIR/coordination/progress/sdd-compliance-history.md"
+    "$MONOREPO_DIR/coordination/blockers.md"
+    "$MONOREPO_DIR/coordination/breaking-changes.md"
+    "$MONOREPO_DIR/coordination/phase-start-template.md"
+    "$MONOREPO_DIR/coordination/phase-complete-template.md"
+    "$MONOREPO_DIR/memory/rules/monorepo-governance.md"
+    "$MONOREPO_DIR/workflows/automations/sdd-compliance-audit.md"
+    "$MONOREPO_DIR/workflows/automations/weekly-coordination-rollup.md"
+)
+
+for file in "${MONOREPO_FILES[@]}"; do
+    rel_path="${file#$MONOREPO_DIR/}"
+    if ! check_file "$file" "monorepo/$rel_path"; then
+        ((ERRORS++))
+    fi
+done
+
+if ! check_file "$REPO_ROOT/scripts/audit-monorepo.sh" "scripts/audit-monorepo.sh"; then
+    ((ERRORS++))
+fi
+
+echo ""
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 if [[ $ERRORS -eq 0 ]]; then
     echo "✅ Validation passed!"

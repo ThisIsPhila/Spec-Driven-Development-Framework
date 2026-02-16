@@ -8,6 +8,9 @@ includes:
   - package-design-template.md
   - workspace-dependencies.md
   - monorepo-testing.md
+  - monorepo-governance.md
+  - coordination templates (apps/services/progress/blockers/breaking-changes)
+  - automation prompt templates (compliance audit, weekly rollup)
 examples:
   - Turborepo with Next.js apps + shared UI packages
   - Nx workspace with multiple microservices
@@ -39,11 +42,24 @@ The monorepo profile is designed for projects that manage multiple packages, app
 ### Rules
 - **monorepo-testing.md** - Testing strategies for monorepos
 - **package-boundaries.md** - Guidelines for package organization
+- **monorepo-governance.md** - Root coordination + local `.sdd` governance rules
 
 ### Coordination
 - `coordination/` - Cross-app status, shared package dependencies, and blockers
   - `coordination/progress/current-phase-status.md`
-  - `coordination/apps/` (per-app phase notes)
+  - `coordination/progress/weekly-updates.md`
+  - `coordination/progress/sdd-compliance-latest.md`
+  - `coordination/progress/sdd-compliance-history.md`
+  - `coordination/apps/` (per-app coordination cards + phase records)
+  - `coordination/services/` (per-service coordination cards + phase records)
+  - `coordination/blockers.md`
+  - `coordination/breaking-changes.md`
+  - `coordination/phase-start-template.md`
+  - `coordination/phase-complete-template.md`
+
+### Workflows
+- `workflows/automations/sdd-compliance-audit.md` - Prompt template for recurring compliance audits
+- `workflows/automations/weekly-coordination-rollup.md` - Prompt template for weekly rollups
 
 ## 🏗️ Typical Monorepo Structure
 
@@ -125,3 +141,11 @@ This profile works with:
 - **Rush** (Microsoft's monorepo manager)
 
 The templates are tool-agnostic and focus on architectural patterns rather than specific tooling.
+
+## ✅ Recommended Validation
+
+Run the monorepo governance audit:
+
+```bash
+bash .sdd-framework/scripts/audit-monorepo.sh
+```

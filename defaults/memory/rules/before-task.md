@@ -22,6 +22,9 @@ Before opening the editor, you **must**:
     - `memory/technical-decisions.md` (Ensure no ADRs are violated)
 - [ ] **Confirm spec naming convention:**
     - `memory/rules/spec-naming.md`
+- [ ] **If monorepo coordination is used, review:**
+    - `memory/rules/monorepo-governance.md`
+    - `coordination/progress/current-phase-status.md`
 
 ### 2. Branch Management
 **Naming convention:**
