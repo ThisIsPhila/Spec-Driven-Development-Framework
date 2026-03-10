@@ -83,6 +83,14 @@ else
     fi
 fi
 check_dir "$TARGET_DIR/templates" ".sdd/templates"
+if [[ "$IS_FRAMEWORK" == false ]]; then
+    check_dir "$TARGET_DIR/skills" ".sdd/skills"
+else
+    if [[ ! -d "$TARGET_DIR/skills" ]]; then
+        say "WARN .sdd/skills missing (framework repo)"
+        WARNINGS=$((WARNINGS+1))
+    fi
+fi
 check_dir "$TARGET_DIR/memory" ".sdd/memory"
 check_dir "$TARGET_DIR/memory/rules" ".sdd/memory/rules"
 if [[ "$IS_FRAMEWORK" == false ]]; then
@@ -101,6 +109,7 @@ fi
 
 say ""
 say "Memory Files"
+check_file "$TARGET_DIR/AGENT_ONBOARDING.md" ".sdd/AGENT_ONBOARDING.md"
 check_file "$TARGET_DIR/memory/project-overview.md" "memory/project-overview.md"
 check_file "$TARGET_DIR/memory/progress-tracker.md" "memory/progress-tracker.md"
 check_file "$TARGET_DIR/memory/technical-decisions.md" "memory/technical-decisions.md"
@@ -132,11 +141,65 @@ check_file "$TARGET_DIR/templates/requirements-template.md" "templates/requireme
 check_file "$TARGET_DIR/templates/design-template.md" "templates/design-template.md"
 check_file "$TARGET_DIR/templates/tasks-template.md" "templates/tasks-template.md"
 
+say ""
+say "Skills"
+if [[ -d "$TARGET_DIR/skills" ]]; then
+    SKILL_COUNT=$(find "$TARGET_DIR/skills" -type f -name "SKILL.md" | wc -l | xargs)
+    if [[ "$SKILL_COUNT" -gt 0 ]]; then
+        say "OK   .sdd/skills ($SKILL_COUNT SKILL.md file(s))"
+    else
+        say "WARN .sdd/skills has no SKILL.md files"
+        WARNINGS=$((WARNINGS+1))
+    fi
+else
+    if [[ "$IS_FRAMEWORK" == true ]]; then
+        say "WARN .sdd/skills missing"
+        WARNINGS=$((WARNINGS+1))
+    fi
+fi
+
 if [[ -f "$TARGET_DIR/templates/requirements-template.md" ]]; then
     if ! grep -qi "Privacy & Security Model" "$TARGET_DIR/templates/requirements-template.md"; then
         say "WARN requirements-template.md missing Privacy & Security Model section"
         WARNINGS=$((WARNINGS+1))
     fi
+fi
+
+say ""
+say "Agent Entry Points (Recommended)"
+if [[ -f "$REPO_ROOT/AGENTS.md" ]]; then
+    say "OK   AGENTS.md"
+else
+    say "WARN AGENTS.md missing (recommended for agent interoperability)"
+    WARNINGS=$((WARNINGS+1))
+fi
+
+if [[ -f "$REPO_ROOT/CLAUDE.md" ]]; then
+    say "OK   CLAUDE.md"
+else
+    say "WARN CLAUDE.md missing (optional, recommended)"
+    WARNINGS=$((WARNINGS+1))
+fi
+
+if [[ -f "$REPO_ROOT/GEMINI.md" ]]; then
+    say "OK   GEMINI.md"
+else
+    say "WARN GEMINI.md missing (optional, recommended)"
+    WARNINGS=$((WARNINGS+1))
+fi
+
+if [[ -f "$REPO_ROOT/.gemini/GEMINI.md" ]]; then
+    say "OK   .gemini/GEMINI.md"
+else
+    say "WARN .gemini/GEMINI.md missing (optional, recommended)"
+    WARNINGS=$((WARNINGS+1))
+fi
+
+if [[ -f "$REPO_ROOT/.github/copilot-instructions.md" ]]; then
+    say "OK   .github/copilot-instructions.md"
+else
+    say "WARN .github/copilot-instructions.md missing (optional, recommended)"
+    WARNINGS=$((WARNINGS+1))
 fi
 
 PROFILE_FILE="$TARGET_DIR/.profile"

@@ -2,6 +2,28 @@
 
 All notable changes to the SDD Framework are documented here.
 
+## [1.2.6] - 2026-03-10
+
+### Added
+- Agent entrypoint templates under `defaults/agent-entrypoints/`:
+  - `AGENTS.md`
+  - `CLAUDE.md`
+  - `GEMINI.md`
+  - `.gemini/GEMINI.md`
+  - `.github/copilot-instructions.md`
+- Root agent entrypoint files in this repository for immediate compatibility with Codex, Claude, Gemini, and GitHub Copilot.
+- Canonical skills defaults under `defaults/skills/` with sample `sdd-workflow/SKILL.md`.
+- `scripts/sync-skills.sh` to mirror `.sdd/skills` into `.agents/skills`, `.claude/skills`, `.github/skills`, and `.gemini/skills`.
+
+### Changed
+- `scripts/setup.sh` now installs agent entrypoint files by default (non-destructive; existing files are kept).
+- `scripts/setup.sh` now installs canonical skills in `.sdd/skills/`.
+- Added `--no-agent-files` option to `scripts/setup.sh` for teams that do not want generated root agent wrappers.
+- `scripts/migrate-structure.sh` now backfills missing agent entrypoints and top-level SDD governance files.
+- `scripts/migrate-structure.sh` now backfills canonical skills from framework defaults.
+- `scripts/doctor.sh` now validates `.sdd/AGENT_ONBOARDING.md`, checks `.sdd/skills`, and reports agent entrypoint presence as recommended checks.
+- README documents the cross-agent entrypoint behavior and new setup option.
+
 ## [1.2.5] - 2026-02-16
 
 ### Added

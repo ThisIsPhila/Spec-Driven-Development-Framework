@@ -3,6 +3,8 @@
 Welcome, Agent. You are now working within an **SDD (Spec-Driven Development) Framework**.
 Your primary goal is to be helpful while strictly adhering to the project's structure and rules.
 
+If this repo also contains `AGENTS.md`, `CLAUDE.md`, `GEMINI.md`, `.gemini/GEMINI.md`, or `.github/copilot-instructions.md`, treat them as entrypoints that delegate to this file. This file is the canonical SDD workflow reference.
+
 ## Phase 0: Initialization (First Run)
 
 **IF** the `.sdd/` directory does not exist yet (whether this is a new project or an existing one adopting SDD):
@@ -26,6 +28,7 @@ You are in a repo that uses the `.sdd/` directory. This is your brain.
 5.  If monorepo coordination exists, read:
     - `.sdd/memory/rules/monorepo-governance.md`
     - `.sdd/coordination/progress/current-phase-status.md`
+6.  If `.sdd/skills/` exists, read only the relevant `SKILL.md` files for the current task.
 
 ### Step 2: Codebase Reconnaissance
 If the memory files are empty or sparse, you must fill the gaps yourself:

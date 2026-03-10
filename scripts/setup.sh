@@ -11,6 +11,7 @@ set -e
 
 FRAMEWORK_SOURCE="${BASH_SOURCE%/*}/../"
 TARGET_DIR=".sdd"
+PROJECT_ROOT="$(pwd)"
 
 VALID_BASES=("general" "web" "mobile" "api" "cli" "full-stack" "monorepo")
 VALID_MODIFIERS=("devsecops" "mlops" "devops")
@@ -156,6 +157,10 @@ show_preview() {
     echo "  📁 .sdd/templates/      (base + profile templates)"
     echo "  📁 .sdd/memory/         (project memory)"
     echo "  📁 .sdd/memory/rules/   (workflow rules)"
+    echo "  📁 .sdd/skills/         (canonical agent skills)"
+    if [ "$INSTALL_AGENT_FILES" = true ]; then
+        echo "  🧭 AGENTS.md / CLAUDE.md / GEMINI.md / .gemini/GEMINI.md / .github/copilot-instructions.md"
+    fi
     echo ""
     
     read -p "Proceed with installation? [Y/n] " -n 1 -r
@@ -174,11 +179,13 @@ install_base_files() {
     mkdir -p "$TARGET_DIR/specs/active" "$TARGET_DIR/specs/archive" "$TARGET_DIR/specs/backlog"
     mkdir -p "$TARGET_DIR/memory/rules" "$TARGET_DIR/memory/current-state" "$TARGET_DIR/memory/completed-tasks"
     mkdir -p "$TARGET_DIR/templates"
+    mkdir -p "$TARGET_DIR/skills"
     
     # Layer 1: Base templates and memory
     echo "  1/3 Copying base framework files..."
     rsync -a "$FRAMEWORK_SOURCE/defaults/templates/" "$TARGET_DIR/templates/" 2>/dev/null || true
     rsync -a "$FRAMEWORK_SOURCE/defaults/memory/" "$TARGET_DIR/memory/" 2>/dev/null || true
+    rsync -a "$FRAMEWORK_SOURCE/defaults/skills/" "$TARGET_DIR/skills/" 2>/dev/null || true
     
     # Copy AGENT_ONBOARDING
     cp "$FRAMEWORK_SOURCE/AGENT_ONBOARDING.md" "$TARGET_DIR/" 2>/dev/null || true
@@ -186,6 +193,40 @@ install_base_files() {
     # Copy top-level governance files
     cp "$FRAMEWORK_SOURCE/defaults/memory/constitutional-framework.md" "$TARGET_DIR/constitution.md" 2>/dev/null || true
     cp "$FRAMEWORK_SOURCE/defaults/memory/glossary.md" "$TARGET_DIR/glossary.md" 2>/dev/null || true
+}
+
+# Install root-level agent entrypoints for common coding agents
+install_agent_entrypoints() {
+    if [ "$INSTALL_AGENT_FILES" != true ]; then
+        echo "🧭 Skipping agent entrypoints (--no-agent-files)"
+        return
+    fi
+
+    local entries=(
+        "AGENTS.md"
+        "CLAUDE.md"
+        "GEMINI.md"
+        ".gemini/GEMINI.md"
+        ".github/copilot-instructions.md"
+    )
+
+    echo "🧭 Installing agent entrypoints..."
+    for rel_path in "${entries[@]}"; do
+        local src="$FRAMEWORK_SOURCE/defaults/agent-entrypoints/$rel_path"
+        local dst="$PROJECT_ROOT/$rel_path"
+
+        if [[ ! -f "$src" ]]; then
+            continue
+        fi
+
+        mkdir -p "$(dirname "$dst")"
+        if [[ -f "$dst" ]]; then
+            echo "      KEEP $rel_path (already exists)"
+        else
+            cp "$src" "$dst"
+            echo "      ADD  $rel_path"
+        fi
+    done
 }
 
 # Apply base profile overlay
@@ -251,6 +292,7 @@ generate_metadata() {
     echo "📖 Next steps:"
     echo "   1. Read .sdd/AGENT_ONBOARDING.md for workflow guidance"
     echo "   2. Start with .sdd/templates/ for spec creation"
+    echo "   3. Optionally sync skills: bash .sdd-framework/scripts/sync-skills.sh"
 }
 
 # ==============================================================================
@@ -261,6 +303,7 @@ generate_metadata() {
 PROFILE_ARG=""
 WITH_EXAMPLES=false
 AUTO_YES=false
+INSTALL_AGENT_FILES=true
 while [[ $# -gt 0 ]]; do
     case $1 in
         --profile)
@@ -273,6 +316,10 @@ while [[ $# -gt 0 ]]; do
             ;;
         --yes|-y)
             AUTO_YES=true
+            shift 1
+            ;;
+        --no-agent-files)
+            INSTALL_AGENT_FILES=false
             shift 1
             ;;
         --list-profiles|--list)
@@ -289,6 +336,7 @@ while [[ $# -gt 0 ]]; do
             echo "                           (e.g., web+devsecops, api+mlops)"
             echo "  --with-examples          Copy example specs into .sdd/specs/examples"
             echo "  --yes                    Skip confirmation prompts"
+            echo "  --no-agent-files         Skip creating root agent entrypoint files"
             echo "  --list-profiles          Show all available profiles"
             echo "  --help                   Show this help message"
             echo ""
@@ -298,6 +346,7 @@ while [[ $# -gt 0 ]]; do
             echo "  $0 --profile api+mlops               # API with ML governance"
             echo "  $0 --profile general --with-examples # Include example specs"
             echo "  $0 --profile general --yes           # No prompts"
+            echo "  $0 --profile general --no-agent-files"
             echo "  $0 --list-profiles                   # Show all profiles"
             exit 0
             ;;
@@ -332,6 +381,9 @@ if [ "$AUTO_YES" = true ]; then
     if [ "$WITH_EXAMPLES" = true ]; then
         echo "   Examples: enabled"
     fi
+    if [ "$INSTALL_AGENT_FILES" = false ]; then
+        echo "   Agent files: disabled"
+    fi
     echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     echo ""
 else
@@ -340,6 +392,7 @@ fi
 
 # Install files
 install_base_files
+install_agent_entrypoints
 apply_base_profile
 apply_modifiers
 

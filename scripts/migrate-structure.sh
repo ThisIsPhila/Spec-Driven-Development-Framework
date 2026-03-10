@@ -97,11 +97,15 @@ move_path "$TARGET_DIR/memory/current-state/activeContext.md" "$TARGET_DIR/memor
 mkdir_if_missing "$TARGET_DIR/specs/active"
 mkdir_if_missing "$TARGET_DIR/specs/archive"
 mkdir_if_missing "$TARGET_DIR/specs/backlog"
+mkdir_if_missing "$TARGET_DIR/skills"
 mkdir_if_missing "$TARGET_DIR/memory/rules"
 mkdir_if_missing "$TARGET_DIR/memory/current-state"
 mkdir_if_missing "$TARGET_DIR/memory/completed-tasks"
 
 # Backfill missing memory files from defaults
+copy_if_missing "$FRAMEWORK_SOURCE/AGENT_ONBOARDING.md" "$TARGET_DIR/AGENT_ONBOARDING.md"
+copy_if_missing "$FRAMEWORK_SOURCE/defaults/memory/constitutional-framework.md" "$TARGET_DIR/constitution.md"
+copy_if_missing "$FRAMEWORK_SOURCE/defaults/memory/glossary.md" "$TARGET_DIR/glossary.md"
 copy_if_missing "$FRAMEWORK_SOURCE/defaults/memory/project-overview.md" "$TARGET_DIR/memory/project-overview.md"
 copy_if_missing "$FRAMEWORK_SOURCE/defaults/memory/progress-tracker.md" "$TARGET_DIR/memory/progress-tracker.md"
 copy_if_missing "$FRAMEWORK_SOURCE/defaults/memory/technical-decisions.md" "$TARGET_DIR/memory/technical-decisions.md"
@@ -114,5 +118,20 @@ mkdir_if_missing "$TARGET_DIR/templates"
 copy_if_missing "$FRAMEWORK_SOURCE/defaults/templates/requirements-template.md" "$TARGET_DIR/templates/requirements-template.md"
 copy_if_missing "$FRAMEWORK_SOURCE/defaults/templates/design-template.md" "$TARGET_DIR/templates/design-template.md"
 copy_if_missing "$FRAMEWORK_SOURCE/defaults/templates/tasks-template.md" "$TARGET_DIR/templates/tasks-template.md"
+
+# Backfill canonical skills from defaults
+if [[ -d "$FRAMEWORK_SOURCE/defaults/skills" ]]; then
+    while IFS= read -r skill_file; do
+        rel_path="${skill_file#$FRAMEWORK_SOURCE/defaults/skills/}"
+        copy_if_missing "$skill_file" "$TARGET_DIR/skills/$rel_path"
+    done < <(find "$FRAMEWORK_SOURCE/defaults/skills" -type f -name "SKILL.md")
+fi
+
+# Backfill agent entrypoints in repo root (non-destructive)
+copy_if_missing "$FRAMEWORK_SOURCE/defaults/agent-entrypoints/AGENTS.md" "$REPO_ROOT/AGENTS.md"
+copy_if_missing "$FRAMEWORK_SOURCE/defaults/agent-entrypoints/CLAUDE.md" "$REPO_ROOT/CLAUDE.md"
+copy_if_missing "$FRAMEWORK_SOURCE/defaults/agent-entrypoints/GEMINI.md" "$REPO_ROOT/GEMINI.md"
+copy_if_missing "$FRAMEWORK_SOURCE/defaults/agent-entrypoints/.gemini/GEMINI.md" "$REPO_ROOT/.gemini/GEMINI.md"
+copy_if_missing "$FRAMEWORK_SOURCE/defaults/agent-entrypoints/.github/copilot-instructions.md" "$REPO_ROOT/.github/copilot-instructions.md"
 
 say "Done"

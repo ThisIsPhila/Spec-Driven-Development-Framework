@@ -69,6 +69,50 @@ Suggested prompt:
 
 ---
 
+## Agent Interoperability Files
+
+By default, setup also creates root instruction files for common agents:
+
+- `AGENTS.md`
+- `CLAUDE.md`
+- `GEMINI.md`
+- `.gemini/GEMINI.md`
+- `.github/copilot-instructions.md`
+
+These wrappers keep `.sdd/AGENT_ONBOARDING.md` as the canonical workflow source while making SDD discoverable by different agent runtimes.
+
+If any file already exists, setup keeps your existing file and does not overwrite it.
+
+To skip creating these files:
+```bash
+bash .sdd-framework/scripts/setup.sh --profile general --no-agent-files
+```
+
+---
+
+## Skills Support
+
+SDD now supports a canonical skills source in `.sdd/skills/`.
+
+- Setup copies framework-provided skills from `defaults/skills/` into `.sdd/skills/`.
+- The framework currently includes a sample skill: `sdd-workflow`.
+- Use `scripts/sync-skills.sh` to mirror canonical skills into common agent locations:
+  - `.agents/skills` (Codex-style)
+  - `.claude/skills` (Claude)
+  - `.github/skills` (Copilot)
+  - `.gemini/skills` (Gemini)
+
+Sample (`.sdd/skills/sdd-workflow/SKILL.md`):
+
+```md
+---
+name: sdd-workflow
+description: Use this skill when a task should follow Spec-Driven Development with requirements, design, tasks, and memory updates.
+---
+```
+
+---
+
 ## 📦 Choosing a Profile
 
 The SDD Framework supports **composable profiles** to match your project type and methodology:
@@ -111,6 +155,9 @@ bash .sdd-framework/scripts/setup.sh --profile general --with-examples
 
 # Run non-interactively
 bash .sdd-framework/scripts/setup.sh --profile web+devsecops --yes
+
+# Skip agent entrypoint files
+bash .sdd-framework/scripts/setup.sh --profile general --no-agent-files
 ```
 
 ---
@@ -138,7 +185,7 @@ node .sdd-framework/scripts/validate-spec.js .sdd/specs/active/<feature>/require
 ```
 
 ### Structure Check
-Validate your `.sdd/` structure:
+Validate your `.sdd/` structure and agent entrypoint files:
 ```bash
 bash .sdd-framework/scripts/doctor.sh
 ```
@@ -155,10 +202,18 @@ bash .sdd-framework/scripts/scan-strays.sh --fix
 ```
 
 ### Migration
-Migrate legacy layouts (dry-run by default):
+Migrate legacy layouts (dry-run by default). This also backfills missing agent entrypoints:
 ```bash
 bash .sdd-framework/scripts/migrate-structure.sh
 bash .sdd-framework/scripts/migrate-structure.sh --yes
+```
+
+### Skills Sync
+Mirror canonical `.sdd/skills` into agent-specific skills folders:
+```bash
+bash .sdd-framework/scripts/sync-skills.sh
+bash .sdd-framework/scripts/sync-skills.sh --target copilot
+bash .sdd-framework/scripts/sync-skills.sh --dry-run
 ```
 
 ### Monorepo Governance Audit
