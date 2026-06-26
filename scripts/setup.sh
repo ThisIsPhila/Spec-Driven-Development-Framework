@@ -195,6 +195,12 @@ install_base_files() {
     rsync -a "$FRAMEWORK_SOURCE/defaults/memory/" "$TARGET_DIR/memory/" 2>/dev/null || true
     rsync -a "$FRAMEWORK_SOURCE/defaults/skills/" "$PROJECT_ROOT/skills/" 2>/dev/null || true
     
+    # Copy scripts to .sdd/scripts for self-containment
+    echo "      Copying framework scripts to .sdd/scripts..."
+    mkdir -p "$TARGET_DIR/scripts"
+    rsync -a "$FRAMEWORK_SOURCE/scripts/" "$TARGET_DIR/scripts/" 2>/dev/null || true
+    chmod +x "$TARGET_DIR/scripts"/*.sh 2>/dev/null || true
+    
     # Copy AGENT_ONBOARDING
     cp "$FRAMEWORK_SOURCE/AGENT_ONBOARDING.md" "$TARGET_DIR/" 2>/dev/null || true
     

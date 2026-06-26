@@ -70,9 +70,26 @@ If you have write access to `.sdd/memory/current-state/active-context.md` (or eq
     - Ensure only **High-Level Tasks** have checkboxes.
     - **STOP** and ask for user approval.
 
-4.  **Execute**:
-    - Verified against `tasks.md`.
-    - Update `task.md` (Artifact) as you go.
+4.  **Execute Phase Sprint (Task by Task)**:
+    When instructed to work on an approved spec/phase, you MUST follow these automated steps:
+    *   **Startup Hook**: Initialize the phase branch and register active context by running:
+        ```bash
+        bash .sdd/scripts/phase.sh start <phase-name>
+        ```
+        Then, post the printed `BEFORE-TASK CHECKLIST COMPLETE` block directly to the user and wait for approval.
+    *   **Development Hook**: For each checkbox item you implement:
+        - Mark the task in-progress: `bash .sdd/scripts/phase.sh task <task_id> doing`
+        - Implement code, self-test, and commit locally. Make small commits referencing the requirement (e.g. `feat: add database validation (REQ-1.2)`).
+        - Mark the task complete: `bash .sdd/scripts/phase.sh task <task_id> done`
+        - Check progress anytime: `bash .sdd/scripts/phase.sh status`
+    *   **Completion Hook**: Once all tasks are checked, verify codebase structure and validation by running:
+        ```bash
+        bash .sdd/scripts/phase.sh finish
+        ```
+    *   **Archiving**: Do NOT archive the folder manually. Request the user to merge. Only run the archiving command if the user explicitly instructs you to:
+        ```bash
+        bash .sdd/scripts/phase.sh archive <phase-name>
+        ```
 
 ---
 

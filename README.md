@@ -220,6 +220,25 @@ bash scripts/skills.sh validate
 bash scripts/skills.sh add vercel-labs/agent-skills --skill react-best-practices
 ```
 
+### Phase Sprint Runner (Phase Hook)
+Manage, track, and validate Spec-Driven Development sprints (phases) programmatically. Agents and developers run this tool to execute specifications in active/backlog folders:
+```bash
+# Initialize branch, validate spec files status, and print before-task checklist
+bash .sdd/scripts/phase.sh start <phase-name>
+
+# Check completed/pending tasks in the active spec's tasks.md
+bash .sdd/scripts/phase.sh status
+
+# Programmatically mark a task checkbox as complete and sync active-context focus
+bash .sdd/scripts/phase.sh task <task-id> <done|doing|todo>
+
+# Run full project validation, update progress metrics, and complete the sprint
+bash .sdd/scripts/phase.sh finish
+
+# Explicitly archive the phase directory to specs/archive/ (requires user action)
+bash .sdd/scripts/phase.sh archive <phase-name>
+```
+
 ### Git Pre-Commit Hook (Quality Gate)
 When `setup.sh` is executed, it automatically installs a Git pre-commit hook in the target project. 
 This hook enforces the Spec-Driven Development rules and skills validation before any changes are committed:
