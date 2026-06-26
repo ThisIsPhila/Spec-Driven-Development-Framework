@@ -220,6 +220,14 @@ bash scripts/skills.sh validate
 bash scripts/skills.sh add vercel-labs/agent-skills --skill react-best-practices
 ```
 
+### Git Pre-Commit Hook (Quality Gate)
+When `setup.sh` is executed, it automatically installs a Git pre-commit hook in the target project. 
+This hook enforces the Spec-Driven Development rules and skills validation before any changes are committed:
+1. Runs `scripts/doctor.sh` to check for missing specs, stray files, legacy folders, and correct spec naming conventions.
+2. Runs `scripts/skills.sh validate` to verify that all local skills under `skills/` follow kebab-case naming and have valid YAML frontmatter containing `name` and `description`.
+
+This acts as a strict automated gate to ensure both human developers and AI agents follow the repository rules religiously.
+
 ### Monorepo Governance Audit
 For monorepos, run coordination coverage and consistency checks:
 ```bash
