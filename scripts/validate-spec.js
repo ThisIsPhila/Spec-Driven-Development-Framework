@@ -121,4 +121,124 @@ if (activeProfile.includes("mlops")) {
   }
 }
 
+// 4. Base Profile: web
+if (activeProfile.includes("web")) {
+  const isWebDesign = fileName.includes("component-design") || fileName.includes("component_design") || /component design/i.test(content);
+
+  if (isWebDesign && isDesign) {
+    if (!/component overview/i.test(content)) {
+      console.error("❌ Web Component Design spec is missing 'Component Overview' section.");
+      process.exit(1);
+    }
+    if (!/component specification/i.test(content) && !/props\/inputs/i.test(content)) {
+      console.error("❌ Web Component Design spec is missing 'Component Specification' or 'Props/Inputs' section.");
+      process.exit(1);
+    }
+    if (!/accessibility/i.test(content)) {
+      console.error("❌ Web Component Design spec is missing 'Accessibility' section.");
+      process.exit(1);
+    }
+  }
+}
+
+// 5. Base Profile: mobile
+if (activeProfile.includes("mobile")) {
+  const isMobileDesign = fileName.includes("screen-design") || fileName.includes("screen_design") || /screen design/i.test(content);
+
+  if (isMobileDesign && isDesign) {
+    if (!/screen overview/i.test(content)) {
+      console.error("❌ Mobile Screen Design spec is missing 'Screen Overview' section.");
+      process.exit(1);
+    }
+    if (!/screen layout/i.test(content)) {
+      console.error("❌ Mobile Screen Design spec is missing 'Screen Layout' section.");
+      process.exit(1);
+    }
+    if (!/states & navigation/i.test(content) && !/navigation/i.test(content)) {
+      console.error("❌ Mobile Screen Design spec is missing 'States & Navigation' section.");
+      process.exit(1);
+    }
+  }
+}
+
+// 6. Base Profile: api
+if (activeProfile.includes("api") || activeProfile.includes("full-stack")) {
+  const isApiDesign = fileName.includes("api-design") || fileName.includes("api_design") || /api design/i.test(content);
+
+  if (isApiDesign && isDesign) {
+    if (!/overview/i.test(content)) {
+      console.error("❌ API Design spec is missing 'Overview' section.");
+      process.exit(1);
+    }
+    if (!/endpoints/i.test(content)) {
+      console.error("❌ API Design spec is missing 'Endpoints' section.");
+      process.exit(1);
+    }
+    if (!/security/i.test(content)) {
+      console.error("❌ API Design spec is missing 'Security' section.");
+      process.exit(1);
+    }
+  }
+}
+
+// 7. Base Profile: cli
+if (activeProfile.includes("cli")) {
+  const isCliDesign = fileName.includes("command-design") || fileName.includes("command_design") || /command design/i.test(content);
+
+  if (isCliDesign && isDesign) {
+    if (!/purpose/i.test(content)) {
+      console.error("❌ CLI Command Design spec is missing 'Purpose' section.");
+      process.exit(1);
+    }
+    if (!/usage/i.test(content)) {
+      console.error("❌ CLI Command Design spec is missing 'Usage' section.");
+      process.exit(1);
+    }
+    if (!/arguments & flags/i.test(content) && !/flags/i.test(content)) {
+      console.error("❌ CLI Command Design spec is missing 'Arguments & Flags' section.");
+      process.exit(1);
+    }
+  }
+}
+
+// 8. Base Profile: monorepo
+if (activeProfile.includes("monorepo")) {
+  const isMonorepoDesign = fileName.includes("package-design") || fileName.includes("package_design") || /package design/i.test(content);
+
+  if (isMonorepoDesign && isDesign) {
+    if (!/package overview/i.test(content)) {
+      console.error("❌ Monorepo Package Design spec is missing 'Package Overview' section.");
+      process.exit(1);
+    }
+    if (!/public api/i.test(content)) {
+      console.error("❌ Monorepo Package Design spec is missing 'Public API' section.");
+      process.exit(1);
+    }
+    if (!/dependencies/i.test(content)) {
+      console.error("❌ Monorepo Package Design spec is missing 'Dependencies' section.");
+      process.exit(1);
+    }
+  }
+}
+
+// 9. Modifier: devops
+if (activeProfile.includes("devops")) {
+  const isDevopsDesign = fileName.includes("pipeline-design") || fileName.includes("pipeline_design") || /pipeline design/i.test(content) || fileName.includes("infrastructure");
+
+  if (isDevopsDesign && isDesign) {
+    if (!/pipeline stages/i.test(content) && !/stage/i.test(content) && !/infrastructure/i.test(content)) {
+      console.error("❌ DevOps Pipeline Design spec is missing 'Pipeline Stages' or 'Infrastructure' section.");
+      process.exit(1);
+    }
+    if (!/deployment strategy/i.test(content)) {
+      console.error("❌ DevOps Pipeline Design spec is missing 'Deployment Strategy' section.");
+      process.exit(1);
+    }
+    if (!/secrets management/i.test(content) && !/secrets/i.test(content)) {
+      console.error("❌ DevOps Pipeline Design spec is missing 'Secrets Management' section.");
+      process.exit(1);
+    }
+  }
+}
+
 console.log("✅ Spec passed all profile-aware validation checks.");
