@@ -315,6 +315,76 @@ for scope in active archive backlog; do
     fi
 done
 
+say ""
+say "Spec Lifecycle Approval Gates"
+active_dir="$TARGET_DIR/specs/active"
+if [[ -d "$active_dir" ]]; then
+    while IFS= read -r subdir; do
+        folder_name=$(basename "$subdir")
+        if [[ "$folder_name" == _* ]]; then
+            continue
+        fi
+
+        req_file="$subdir/requirements.md"
+        des_file="$subdir/design.md"
+        tsk_file="$subdir/tasks.md"
+
+        req_approved=false
+        des_approved=false
+        tsk_ready=false
+
+        # Check Requirements Approval
+        if [[ -f "$req_file" ]]; then
+            if grep -qi "status:.*approved" "$req_file" || grep -qi "status:.*complete" "$req_file"; then
+                req_approved=true
+            fi
+        fi
+
+        # Check Design Approval
+        if [[ -f "$des_file" ]]; then
+            if [[ ! -f "$req_file" ]]; then
+                say "FAIL $folder_name: design.md exists but requirements.md is missing."
+                ERRORS=$((ERRORS+1))
+            elif [[ "$req_approved" == false ]]; then
+                say "FAIL $folder_name: design.md exists but requirements.md is NOT approved (Status is not APPROVED)."
+                ERRORS=$((ERRORS+1))
+            fi
+
+            if grep -qi "status:.*approved" "$des_file" || grep -qi "status:.*complete" "$des_file"; then
+                des_approved=true
+            fi
+        fi
+
+        # Check Tasks Approval
+        if [[ -f "$tsk_file" ]]; then
+            if [[ ! -f "$des_file" ]]; then
+                say "FAIL $folder_name: tasks.md exists but design.md is missing."
+                ERRORS=$((ERRORS+1))
+            elif [[ "$des_approved" == false ]]; then
+                say "FAIL $folder_name: tasks.md exists but design.md is NOT approved (Status is not APPROVED)."
+                ERRORS=$((ERRORS+1))
+            fi
+
+            if grep -qi "status:.*ready to start" "$tsk_file" || grep -qi "status:.*approved" "$tsk_file" || grep -qi "status:.*complete" "$tsk_file"; then
+                tsk_ready=true
+            fi
+        fi
+
+        # Display progress status for information
+        say "INFO $folder_name progress status:"
+        if [[ -f "$req_file" ]]; then
+            say "     - Requirements: $([[ "$req_approved" == true ]] && echo "APPROVED" || echo "DRAFT")"
+        fi
+        if [[ -f "$des_file" ]]; then
+            say "     - Design:       $([[ "$des_approved" == true ]] && echo "APPROVED" || echo "DRAFT")"
+        fi
+        if [[ -f "$tsk_file" ]]; then
+            say "     - Tasks:        $([[ "$tsk_ready" == true ]] && echo "READY" || echo "DRAFT")"
+        fi
+
+    done < <(find "$active_dir" -mindepth 1 -maxdepth 1 -type d 2>/dev/null)
+fi
+
 if [[ $ERRORS -eq 0 ]]; then
     say "Result: OK"
 else
