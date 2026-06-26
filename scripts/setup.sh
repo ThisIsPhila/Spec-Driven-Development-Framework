@@ -241,6 +241,12 @@ install_agent_entrypoints() {
 install_git_hooks() {
     local hook_file=".git/hooks/pre-commit"
     if [[ -d ".git" ]]; then
+        if [[ -f "$hook_file" ]]; then
+            if ! grep -q "SDD Pre-commit Quality Gate" "$hook_file"; then
+                echo "⚠️  Found existing git pre-commit hook. Backing it up to ${hook_file}.bak..."
+                cp "$hook_file" "${hook_file}.bak"
+            fi
+        fi
         echo "⚓ Installing git pre-commit hook..."
         mkdir -p ".git/hooks"
         cat > "$hook_file" <<'EOF'
@@ -249,16 +255,30 @@ install_git_hooks() {
 
 echo "🔍 Running SDD validation checks..."
 
-if ! bash scripts/doctor.sh; then
-    echo "❌ SDD validation failed. Commit aborted."
-    exit 1
+# Resolve script path (check local scripts, .sdd-framework/scripts, or .sdd/scripts)
+SCRIPT_PATH=""
+if [[ -f "scripts/doctor.sh" ]]; then
+    SCRIPT_PATH="scripts"
+elif [[ -f ".sdd-framework/scripts/doctor.sh" ]]; then
+    SCRIPT_PATH=".sdd-framework/scripts"
+elif [[ -f ".sdd/scripts/doctor.sh" ]]; then
+    SCRIPT_PATH=".sdd/scripts"
 fi
 
-if [[ -f "scripts/skills.sh" ]]; then
-    if ! bash scripts/skills.sh validate; then
-        echo "❌ Skills validation failed. Commit aborted."
+if [[ -n "$SCRIPT_PATH" ]]; then
+    if ! bash "$SCRIPT_PATH/doctor.sh"; then
+        echo "❌ SDD validation failed. Commit aborted."
         exit 1
     fi
+
+    if [[ -f "$SCRIPT_PATH/skills.sh" ]]; then
+        if ! bash "$SCRIPT_PATH/skills.sh" validate; then
+            echo "❌ Skills validation failed. Commit aborted."
+            exit 1
+        fi
+    fi
+else
+    echo "⚠️  Warning: SDD validation scripts (doctor.sh) not found. Skipping commit quality checks."
 fi
 
 echo "✅ All SDD validation checks passed."

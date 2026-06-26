@@ -2,6 +2,21 @@
 
 All notable changes to the SDD Framework are documented here.
 
+## [1.3.0] - 2026-06-26
+
+### Added
+- Root-level `skills/` directory for Vercel-style agent skill auto-discovery and compatibility.
+- `scripts/skills.sh` CLI manager for local/remote skills (`list`, `sync`, `create`, `validate`, `add`).
+- Automated Git pre-commit quality gate hook (runs `doctor.sh` and `skills.sh validate` on commit).
+- Backup mechanism in `setup.sh` to preserve existing pre-commit hooks as `pre-commit.bak`.
+- Extensible, profile-aware spec validation rules in `scripts/validate-spec.js` (supporting general, devsecops, and mlops checks).
+
+### Changed
+- `scripts/setup.sh` now deploys skills to the root `skills/` folder and migrates existing `.sdd/skills/` configurations.
+- `scripts/doctor.sh` now audits the root `skills/` folder structure and validates individual skill definitions.
+- `scripts/sync-skills.sh` deprecated in favor of `scripts/skills.sh sync`.
+- `README.md` and `AGENT_ONBOARDING.md` updated to document the new Vercel-style skills architecture, CLI tool, and safe git hooks.
+
 ## [1.2.6] - 2026-03-10
 
 ### Added
