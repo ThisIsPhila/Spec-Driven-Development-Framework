@@ -84,10 +84,10 @@ else
 fi
 check_dir "$TARGET_DIR/templates" ".sdd/templates"
 if [[ "$IS_FRAMEWORK" == false ]]; then
-    check_dir "$TARGET_DIR/skills" ".sdd/skills"
+    check_dir "$REPO_ROOT/skills" "skills"
 else
-    if [[ ! -d "$TARGET_DIR/skills" ]]; then
-        say "WARN .sdd/skills missing (framework repo)"
+    if [[ ! -d "$REPO_ROOT/skills" ]]; then
+        say "WARN skills missing (framework repo)"
         WARNINGS=$((WARNINGS+1))
     fi
 fi
@@ -143,17 +143,36 @@ check_file "$TARGET_DIR/templates/tasks-template.md" "templates/tasks-template.m
 
 say ""
 say "Skills"
-if [[ -d "$TARGET_DIR/skills" ]]; then
-    SKILL_COUNT=$(find "$TARGET_DIR/skills" -type f -name "SKILL.md" | wc -l | xargs)
+if [[ -d "$REPO_ROOT/skills" ]]; then
+    SKILL_COUNT=$(find "$REPO_ROOT/skills" -type f -name "SKILL.md" | wc -l | xargs)
     if [[ "$SKILL_COUNT" -gt 0 ]]; then
-        say "OK   .sdd/skills ($SKILL_COUNT SKILL.md file(s))"
+        say "OK   skills/ ($SKILL_COUNT SKILL.md file(s))"
+        for skill_dir in "$REPO_ROOT/skills"/*; do
+            if [[ -d "$skill_dir" ]]; then
+                skill_name=$(basename "$skill_dir")
+                if [[ ! "$skill_name" =~ ^[a-z0-9-]+$ ]]; then
+                    say "MISS Skill folder name '$skill_name' must be kebab-case."
+                    ERRORS=$((ERRORS+1))
+                    continue
+                fi
+                if [[ ! -f "$skill_dir/SKILL.md" ]]; then
+                    say "MISS Skill '$skill_name' is missing SKILL.md."
+                    ERRORS=$((ERRORS+1))
+                    continue
+                fi
+                if ! grep -q "^name:" "$skill_dir/SKILL.md" || ! grep -q "^description:" "$skill_dir/SKILL.md"; then
+                    say "MISS Skill '$skill_name' SKILL.md must have name and description in YAML frontmatter."
+                    ERRORS=$((ERRORS+1))
+                fi
+            fi
+        done
     else
-        say "WARN .sdd/skills has no SKILL.md files"
+        say "WARN skills/ has no SKILL.md files"
         WARNINGS=$((WARNINGS+1))
     fi
 else
     if [[ "$IS_FRAMEWORK" == true ]]; then
-        say "WARN .sdd/skills missing"
+        say "WARN skills/ missing"
         WARNINGS=$((WARNINGS+1))
     fi
 fi

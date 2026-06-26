@@ -157,7 +157,7 @@ show_preview() {
     echo "  📁 .sdd/templates/      (base + profile templates)"
     echo "  📁 .sdd/memory/         (project memory)"
     echo "  📁 .sdd/memory/rules/   (workflow rules)"
-    echo "  📁 .sdd/skills/         (canonical agent skills)"
+    echo "  📁 skills/              (canonical agent skills at root)"
     if [ "$INSTALL_AGENT_FILES" = true ]; then
         echo "  🧭 AGENTS.md / CLAUDE.md / GEMINI.md / .gemini/GEMINI.md / .github/copilot-instructions.md"
     fi
@@ -175,17 +175,25 @@ show_preview() {
 install_base_files() {
     echo "📦 Installing base framework..."
     
+    # Migration check: migrate old .sdd/skills/ to root skills/
+    if [[ -d "$TARGET_DIR/skills" ]]; then
+        echo "🔄 Migrating existing .sdd/skills/ to root skills/ directory..."
+        mkdir -p "$PROJECT_ROOT/skills"
+        cp -R "$TARGET_DIR/skills/"* "$PROJECT_ROOT/skills/" 2>/dev/null || true
+        rm -rf "$TARGET_DIR/skills"
+    fi
+    
     # Create directory structure
     mkdir -p "$TARGET_DIR/specs/active" "$TARGET_DIR/specs/archive" "$TARGET_DIR/specs/backlog"
     mkdir -p "$TARGET_DIR/memory/rules" "$TARGET_DIR/memory/current-state" "$TARGET_DIR/memory/completed-tasks"
     mkdir -p "$TARGET_DIR/templates"
-    mkdir -p "$TARGET_DIR/skills"
+    mkdir -p "$PROJECT_ROOT/skills"
     
     # Layer 1: Base templates and memory
     echo "  1/3 Copying base framework files..."
     rsync -a "$FRAMEWORK_SOURCE/defaults/templates/" "$TARGET_DIR/templates/" 2>/dev/null || true
     rsync -a "$FRAMEWORK_SOURCE/defaults/memory/" "$TARGET_DIR/memory/" 2>/dev/null || true
-    rsync -a "$FRAMEWORK_SOURCE/defaults/skills/" "$TARGET_DIR/skills/" 2>/dev/null || true
+    rsync -a "$FRAMEWORK_SOURCE/defaults/skills/" "$PROJECT_ROOT/skills/" 2>/dev/null || true
     
     # Copy AGENT_ONBOARDING
     cp "$FRAMEWORK_SOURCE/AGENT_ONBOARDING.md" "$TARGET_DIR/" 2>/dev/null || true
@@ -227,6 +235,37 @@ install_agent_entrypoints() {
             echo "      ADD  $rel_path"
         fi
     done
+}
+
+# Install git pre-commit hook for automated quality gates
+install_git_hooks() {
+    local hook_file=".git/hooks/pre-commit"
+    if [[ -d ".git" ]]; then
+        echo "⚓ Installing git pre-commit hook..."
+        mkdir -p ".git/hooks"
+        cat > "$hook_file" <<'EOF'
+#!/bin/bash
+# SDD Pre-commit Quality Gate
+
+echo "🔍 Running SDD validation checks..."
+
+if ! bash scripts/doctor.sh; then
+    echo "❌ SDD validation failed. Commit aborted."
+    exit 1
+fi
+
+if [[ -f "scripts/skills.sh" ]]; then
+    if ! bash scripts/skills.sh validate; then
+        echo "❌ Skills validation failed. Commit aborted."
+        exit 1
+    fi
+fi
+
+echo "✅ All SDD validation checks passed."
+exit 0
+EOF
+        chmod +x "$hook_file"
+    fi
 }
 
 # Apply base profile overlay
@@ -292,7 +331,7 @@ generate_metadata() {
     echo "📖 Next steps:"
     echo "   1. Read .sdd/AGENT_ONBOARDING.md for workflow guidance"
     echo "   2. Start with .sdd/templates/ for spec creation"
-    echo "   3. Optionally sync skills: bash .sdd-framework/scripts/sync-skills.sh"
+    echo "   3. Optionally sync skills: bash scripts/skills.sh sync"
 }
 
 # ==============================================================================
@@ -393,6 +432,7 @@ fi
 # Install files
 install_base_files
 install_agent_entrypoints
+install_git_hooks
 apply_base_profile
 apply_modifiers
 

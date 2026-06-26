@@ -92,17 +92,18 @@ bash .sdd-framework/scripts/setup.sh --profile general --no-agent-files
 
 ## Skills Support
 
-SDD now supports a canonical skills source in `.sdd/skills/`.
+SDD supports a canonical skills source in a root-level `skills/` directory, compatible with Vercel's `skills.sh` ecosystem layout.
 
-- Setup copies framework-provided skills from `defaults/skills/` into `.sdd/skills/`.
+- Setup copies framework-provided default skills from `defaults/skills/` into the project's root `skills/` folder.
 - The framework currently includes a sample skill: `sdd-workflow`.
-- Use `scripts/sync-skills.sh` to mirror canonical skills into common agent locations:
-  - `.agents/skills` (Codex-style)
-  - `.claude/skills` (Claude)
-  - `.github/skills` (Copilot)
-  - `.gemini/skills` (Gemini)
+- Use the CLI tool `scripts/skills.sh` to manage, validate, scaffold, and sync skills:
+  - `skills.sh list` - List all available local skills with names and descriptions.
+  - `skills.sh sync` - Sync local skills to agent config directories (`.claude/skills`, `.gemini/skills`, etc.).
+  - `skills.sh create <name>` - Scaffold a new skill under `skills/<name>`.
+  - `skills.sh validate` - Perform structural check on all local skills.
+  - `skills.sh add <source>` - Fetch a remote skill from GitHub (e.g., `owner/repo`).
 
-Sample (`.sdd/skills/sdd-workflow/SKILL.md`):
+Sample (`skills/sdd-workflow/SKILL.md`):
 
 ```md
 ---
@@ -208,12 +209,15 @@ bash .sdd-framework/scripts/migrate-structure.sh
 bash .sdd-framework/scripts/migrate-structure.sh --yes
 ```
 
-### Skills Sync
-Mirror canonical `.sdd/skills` into agent-specific skills folders:
+### Skills Management
+Manage, validate, and sync local skills to agent-specific skills folders using the unified CLI:
 ```bash
-bash .sdd-framework/scripts/sync-skills.sh
-bash .sdd-framework/scripts/sync-skills.sh --target copilot
-bash .sdd-framework/scripts/sync-skills.sh --dry-run
+bash scripts/skills.sh list
+bash scripts/skills.sh sync
+bash scripts/skills.sh sync --target copilot --dry-run
+bash scripts/skills.sh create my-new-skill
+bash scripts/skills.sh validate
+bash scripts/skills.sh add vercel-labs/agent-skills --skill react-best-practices
 ```
 
 ### Monorepo Governance Audit

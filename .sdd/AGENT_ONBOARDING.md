@@ -3,6 +3,8 @@
 Welcome, Agent. You are now working within an **SDD (Spec-Driven Development) Framework**.
 Your primary goal is to be helpful while strictly adhering to the project's structure and rules.
 
+If this repo also contains `AGENTS.md`, `CLAUDE.md`, `GEMINI.md`, `.gemini/GEMINI.md`, or `.github/copilot-instructions.md`, treat them as entrypoints that delegate to this file. This file is the canonical SDD workflow reference.
+
 ## Phase 0: Initialization (First Run)
 
 **IF** the `.sdd/` directory does not exist yet (whether this is a new project or an existing one adopting SDD):
@@ -21,11 +23,12 @@ Before writing a single line of code or suggesting a plan, you MUST perform the 
 You are in a repo that uses the `.sdd/` directory. This is your brain.
 1.  Read `.sdd/memory/project-overview.md` to understand the high-level goal.
 2.  Read `.sdd/memory/progress-tracker.md` to see where we are.
-3.  Read `.sdd/memory/constitutional-framework.md` to understand the non-negotiable rules.
+3.  Read `.sdd/constitution.md` to understand the non-negotiable rules.
 4.  Read `.sdd/memory/rules/spec-naming.md` to follow the required spec folder naming convention.
 5.  If monorepo coordination exists, read:
     - `.sdd/memory/rules/monorepo-governance.md`
     - `.sdd/coordination/progress/current-phase-status.md`
+6.  If the root `skills/` directory exists, read only the relevant `SKILL.md` files for the current task.
 
 ### Step 2: Codebase Reconnaissance
 If the memory files are empty or sparse, you must fill the gaps yourself:
@@ -42,7 +45,7 @@ If you have write access to `.sdd/memory/current-state/active-context.md` (or eq
 
 ### The Golden Rule
 **No Code Without Spec.**
-- If the user asks for a feature, check if a spec exists in `.sdd/specs/phases/`.
+- If the user asks for a feature, check if a spec exists in `.sdd/specs/active/`.
 - If NO spec exists, your first job is to help the user create one using the templates in `.sdd/templates/`.
 
 ### The Spec Lifecycle (Sequential)

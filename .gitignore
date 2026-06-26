@@ -8,3 +8,11 @@ memory to the public repo.
 
 # Temporary files
 tmp/
+
+# Agent Specific Files
+.agents/
+.claude/
+.gemini/
+.github/skills/
+.gemini/skills/
+graphify-out/

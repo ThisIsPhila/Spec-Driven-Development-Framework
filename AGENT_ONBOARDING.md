@@ -28,7 +28,7 @@ You are in a repo that uses the `.sdd/` directory. This is your brain.
 5.  If monorepo coordination exists, read:
     - `.sdd/memory/rules/monorepo-governance.md`
     - `.sdd/coordination/progress/current-phase-status.md`
-6.  If `.sdd/skills/` exists, read only the relevant `SKILL.md` files for the current task.
+6.  If the root `skills/` directory exists, read only the relevant `SKILL.md` files for the current task.
 
 ### Step 2: Codebase Reconnaissance
 If the memory files are empty or sparse, you must fill the gaps yourself:
