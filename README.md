@@ -19,6 +19,7 @@ To keep this project clean and maintainable, deep technical details are organize
 *   **[Operational Process Flows & Diagrams](docs/process-flows.md)** — Visual life cycle guides for setup, specifications, phase runner sprints, pre-commit hooks, and validation linters.
 *   **[CLI Tool Reference Guide](docs/cli-reference.md)** — Subcommands, arguments, and options for all script tools (`setup.sh`, `doctor.sh`, `skills.sh`, `phase.sh`, `validate-spec.js`, etc.).
 *   **[Governance Constitution & rules](docs/governance.md)** — Repository constitution articles and operational rules checklists.
+*   **[Critical Assessment & Improvement Roadmap](docs/assessment.md)** — Evidence-based critique of the framework as a tool, with a sequenced roadmap and open decisions.
 
 ---
 
