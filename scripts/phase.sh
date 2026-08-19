@@ -5,6 +5,10 @@
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+if [[ -f "$SCRIPT_DIR/state.sh" ]]; then
+    source "$SCRIPT_DIR/state.sh"
+fi
+
 if [[ -f "$SCRIPT_DIR/common.sh" ]]; then
     source "$SCRIPT_DIR/common.sh"
 else
@@ -152,6 +156,17 @@ cmd_start() {
         say "   Already on branch '$branch_name'"
     fi
 
+    # Record machine-readable state first. This is the source of truth; the
+    # markdown below is a rendering of it (REQ-003.3.3).
+    say "🗃️  Recording sprint state..."
+    state_init || exit 1
+    state_set active_phase "$phase_name" || exit 1
+    state_set branch "$branch_name" || exit 1
+    state_set started "$(date -u +%Y-%m-%dT%H:%M:%SZ)" || exit 1
+    [[ "$req_approved" == true ]] && state_set requirements_approved "$(date -u +%F)"
+    [[ "$des_approved" == true ]] && state_set design_approved "$(date -u +%F)"
+    [[ "$tsk_ready" == true ]]    && state_set tasks_approved "$(date -u +%F)"
+
     # Update active-context.md
     say "📝 Registering active context..."
     mkdir -p "$(dirname "$ACTIVE_CONTEXT")"
@@ -228,12 +243,19 @@ cmd_status() {
         exit 0
     fi
 
-    local active_phase=$(grep -E "^\*\*Current Phase:\*\*" "$ACTIVE_CONTEXT" | sed -E 's/^\*\*Current Phase:\*\*[[:space:]]*//' | xargs)
+    # Active phase comes from machine-readable state, never from prose. Reading
+    # it out of active-context.md and using it as a directory path was
+    # assessment finding F1.
+    local active_phase=$(get_active_phase)
     local current_task=$(grep -E "^\*\*Current Task:\*\*" "$ACTIVE_CONTEXT" | sed -E 's/^\*\*Current Task:\*\*[[:space:]]*//' | xargs)
-    local active_branch=$(grep -E "^\*\*Branch:\*\*" "$ACTIVE_CONTEXT" | sed -E 's/^\*\*Branch:\*\*[[:space:]]*//' | xargs)
+    local active_branch=$(state_get branch)
+    if [[ -z "$active_branch" ]]; then
+        active_branch=$(get_current_branch 2>/dev/null || printf 'unknown')
+    fi
 
-    if [[ -z "$active_phase" || "$active_phase" == "[Phase N - Name]" ]]; then
-        say "ℹ️  No active phase sprint is registered in active-context.md."
+    if [[ -z "$active_phase" ]]; then
+        say "ℹ️  No active phase sprint is registered."
+        say "   Start one with: phase.sh start <phase-folder-name>"
         exit 0
     fi
 
@@ -290,14 +312,9 @@ cmd_task() {
         exit 1
     fi
 
-    if [[ ! -f "$ACTIVE_CONTEXT" ]]; then
-        say "❌ Error: No active phase sprint context. Run start first."
-        exit 1
-    fi
-
-    local active_phase=$(grep -E "^\*\*Current Phase:\*\*" "$ACTIVE_CONTEXT" | sed -E 's/^\*\*Current Phase:\*\*[[:space:]]*//' | xargs)
-    if [[ -z "$active_phase" || "$active_phase" == "[Phase N - Name]" ]]; then
-        say "❌ Error: No active phase sprint registered in active-context.md."
+    local active_phase=$(get_active_phase)
+    if [[ -z "$active_phase" ]]; then
+        say "❌ Error: No active phase sprint registered. Run start first."
         exit 1
     fi
 
@@ -385,14 +402,9 @@ cmd_task() {
 # COMMAND: FINISH
 # ------------------------------------------------------------------------------
 cmd_finish() {
-    if [[ ! -f "$ACTIVE_CONTEXT" ]]; then
-        say "❌ Error: No active context found."
-        exit 1
-    fi
-
-    local active_phase=$(grep -E "^\*\*Current Phase:\*\*" "$ACTIVE_CONTEXT" | sed -E 's/^\*\*Current Phase:\*\*[[:space:]]*//' | xargs)
-    if [[ -z "$active_phase" || "$active_phase" == "[Phase N - Name]" ]]; then
-        say "❌ Error: No active phase sprint registered in active-context.md."
+    local active_phase=$(get_active_phase)
+    if [[ -z "$active_phase" ]]; then
+        say "❌ Error: No active phase sprint registered. Nothing to finish."
         exit 1
     fi
 
@@ -468,6 +480,14 @@ cmd_finish() {
 - [Question]
 EOF
     say "📝 Active context cleared."
+
+    # Clear sprint state so a stale active_phase cannot outlive the sprint.
+    state_set active_phase "" || exit 1
+    state_set branch "" || exit 1
+    state_set requirements_approved "" || exit 1
+    state_set design_approved "" || exit 1
+    state_set tasks_approved "" || exit 1
+    say "🗃️  Sprint state cleared."
 
     say ""
     say "🎉 Phase Sprint '$active_phase' marked as finished!"

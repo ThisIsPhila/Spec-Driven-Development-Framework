@@ -1,0 +1,101 @@
+name: CI
+
+# REQ-003.2 — validation must not depend on a bypassable local git hook.
+# Runs on a clean checkout, proving the repository is self-sufficient after clone.
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: validate (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        # macos-latest is not redundant: it ships Bash 3.2, which is the
+        # compatibility floor this project targets. Ubuntu alone would let
+        # Bash 4+ syntax through unnoticed.
+        os: [ubuntu-latest, macos-latest]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Report shell environment
+        run: |
+          bash --version | head -n1
+          git --version
+
+      # Symlinks under .sdd/scripts/ must survive checkout (design decision D4).
+      - name: Verify checkout integrity
+        run: |
+          if [ ! -e .sdd/scripts/phase.sh ]; then
+            echo "::error::.sdd/scripts/phase.sh does not resolve after a clean checkout"
+            exit 1
+          fi
+          echo "documented script path resolves"
+
+      - name: Shell syntax check
+        run: |
+          rc=0
+          for f in scripts/*.sh tests/*.sh tests/lib/*.sh; do
+            [ -f "$f" ] || continue
+            if ! bash -n "$f"; then
+              echo "::error file=$f::syntax error"
+              rc=1
+            fi
+          done
+          exit $rc
+
+      - name: Structure validation (doctor)
+        run: bash scripts/doctor.sh
+
+      - name: Skills validation
+        run: bash scripts/skills.sh validate
+
+      - name: Profile structure validation
+        run: bash scripts/validate-profiles.sh
+
+      - name: Test suite
+        run: bash tests/run.sh
+
+  spec-lint:
+    name: spec lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      # Specs under active/ are gitignored, so on a clean CI checkout there may
+      # be nothing to lint. That is expected and must not fail the job.
+      # validate-spec.js takes a single markdown FILE, not a spec directory.
+      - name: Lint specs
+        run: |
+          shopt -s nullglob
+          found=0
+          rc=0
+          for spec_file in \
+            .sdd/specs/active/*/requirements.md \
+            .sdd/specs/active/*/design.md \
+            .sdd/specs/archive/*/requirements.md \
+            .sdd/specs/archive/*/design.md
+          do
+            [ -f "$spec_file" ] || continue
+            found=1
+            if ! node scripts/validate-spec.js "$spec_file"; then
+              rc=1
+            fi
+          done
+          if [ "$found" -eq 0 ]; then
+            echo "No specs present in this checkout (active/ is gitignored) - nothing to lint."
+          fi
+          exit $rc

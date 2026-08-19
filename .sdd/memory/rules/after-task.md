@@ -12,7 +12,8 @@ Ensure work is complete, tested, and properly documented before merging.
 - [ ] Test both interactive menu and CLI flags
 
 ### 2. Integration Testing
-- [ ] Run validation tests: `bash tests/validate-profiles.sh`
+- [ ] Run the test suite: `bash tests/run.sh`
+- [ ] Run profile structure validation: `bash scripts/validate-profiles.sh`
 - [ ] Test common compositions:
   - `general` (baseline)
   - `web+devsecops`

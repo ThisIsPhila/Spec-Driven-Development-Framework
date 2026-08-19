@@ -1,0 +1,1 @@
+../../scripts/validate-profiles.sh
