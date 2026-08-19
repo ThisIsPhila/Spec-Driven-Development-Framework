@@ -4,15 +4,36 @@ Thumbs.db
 *.swp
 *.swo
 *~
-memory to the public repo.
 
 # Temporary files
 tmp/
 
 # Agent Specific Files
+# Generated agent adapter directories. These are derived artifacts regenerated
+# from .sdd/, so they are not committed. AGENTS.md is the deliberate exception:
+# it is the committed, cross-vendor baseline entrypoint.
 .agents/
 .claude/
 .gemini/
 .github/skills/
 .gemini/skills/
 graphify-out/
+
+# ==============================================================================
+# In-flight SDD specs (private working state)
+# ==============================================================================
+# Working phases are NOT published. `active/` and `backlog/` hold in-progress
+# planning that contributors to the public repo should not read.
+#
+# Deliberately still tracked, because they are product documentation:
+#   .sdd/specs/archive/       completed phases (the historical record)
+#   defaults/specs-example/   the reference spec shipped to consumers
+#
+# The `/*` + `!.gitkeep` form is required. Git does not descend into a fully
+# excluded directory, so `.sdd/specs/active/` on its own would make the
+# negation unreachable and the directory would disappear on clone. doctor.sh
+# checks that both directories exist.
+.sdd/specs/active/*
+!.sdd/specs/active/.gitkeep
+.sdd/specs/backlog/*
+!.sdd/specs/backlog/.gitkeep
