@@ -33,14 +33,14 @@ Maintain quality and alignment while implementing framework features.
 - Test both interactive menu and CLI flags
 
 **When writing tests:**
-- Use `tests/validate-profiles.sh` pattern
-- Make tests deterministic (no network calls, no randomness)
+- Run `bash tests/run.sh` for the complete deterministic suite
+- Use `bash tests/run.sh <filter>` for a targeted test file
 - Test edge cases (empty profiles, missing files, invalid composition)
 
 ### 5. Progress Tracking
-- Update `progress-tracker.md` when completing major milestones
-- Mark tasks as complete in `specs/phases/phase-1/tasks.md`
-- Note any blockers or decisions in `technical-decisions.md`
+- Update `.sdd/memory/progress-tracker.md` when completing major milestones
+- Mark tasks through `bash .sdd/scripts/phase.sh task <stable-id> <doing|done>`
+- Note blockers or decisions in `.sdd/memory/technical-decisions.md`
 
 ---
 

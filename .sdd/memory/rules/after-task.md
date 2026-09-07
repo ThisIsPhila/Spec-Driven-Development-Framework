@@ -25,7 +25,7 @@ Ensure work is complete, tested, and properly documented before merging.
 ### 3. Documentation Updates
 - [ ] Update `README.md` if user-facing features changed
 - [ ] Update `AGENT_ONBOARDING.md` if workflow changed
-- [ ] Update `CHANGELOG.md` with changes (for v1.1 release)
+- [ ] Update `CHANGELOG.md` under the next release
 - [ ] Ensure all profile README.md files have YAML frontmatter
 
 ### 4. Code Review Preparation
@@ -41,9 +41,9 @@ Ensure work is complete, tested, and properly documented before merging.
 - [ ] Ensure no secrets or project-specific data leaked into examples
 
 ### 6. Progress Tracking
-- [ ] Update `progress-tracker.md` with completion status
-- [ ] Mark category as complete in `specs/phases/phase-1/tasks.md`
-- [ ] Document any new technical decisions in `technical-decisions.md`
+- [ ] Update `.sdd/memory/progress-tracker.md` with completion status
+- [ ] Mark the stable task ID complete using `.sdd/scripts/phase.sh`
+- [ ] Document new technical decisions in `.sdd/memory/technical-decisions.md`
 
 ---
 

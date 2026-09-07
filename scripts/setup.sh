@@ -35,13 +35,20 @@ parse_profile() {
         exit 1
     fi
     
-    # Validate modifiers
+    # Validate modifiers and reject duplicates. Repeating a modifier used to
+    # append the same governance amendment twice.
+    local seen_modifiers=" "
     for modifier in "${MODIFIERS[@]}"; do
         if [[ ! " ${VALID_MODIFIERS[@]} " =~ " ${modifier} " ]]; then
             echo "❌ Error: Invalid modifier '$modifier'"
             echo "Valid modifiers: ${VALID_MODIFIERS[*]}"
             exit 1
         fi
+        if [[ "$seen_modifiers" == *" $modifier "* ]]; then
+            echo "❌ Error: Duplicate modifier '$modifier' in '$composition'"
+            exit 1
+        fi
+        seen_modifiers="$seen_modifiers$modifier "
     done
 }
 
@@ -186,27 +193,52 @@ install_base_files() {
     # Create directory structure
     mkdir -p "$TARGET_DIR/specs/active" "$TARGET_DIR/specs/archive" "$TARGET_DIR/specs/backlog"
     mkdir -p "$TARGET_DIR/memory/rules" "$TARGET_DIR/memory/current-state" "$TARGET_DIR/memory/completed-tasks"
+    mkdir -p "$TARGET_DIR/memory/governance" "$TARGET_DIR/memory/archive"
+    mkdir -p "$TARGET_DIR/evidence" "$TARGET_DIR/reports" "$TARGET_DIR/hooks"
     mkdir -p "$TARGET_DIR/templates"
     mkdir -p "$PROJECT_ROOT/skills"
     
     # Layer 1: Base templates and memory
     echo "  1/3 Copying base framework files..."
-    rsync -a "$FRAMEWORK_SOURCE/defaults/templates/" "$TARGET_DIR/templates/" 2>/dev/null || true
-    rsync -a "$FRAMEWORK_SOURCE/defaults/memory/" "$TARGET_DIR/memory/" 2>/dev/null || true
-    rsync -a "$FRAMEWORK_SOURCE/defaults/skills/" "$PROJECT_ROOT/skills/" 2>/dev/null || true
+    local copy_mode=""
+    [[ "$UPGRADE_MODE" == true ]] && copy_mode="--ignore-existing"
+    rsync -a $copy_mode "$FRAMEWORK_SOURCE/defaults/templates/" "$TARGET_DIR/templates/" 2>/dev/null || true
+    rsync -a $copy_mode \
+        --exclude "constitutional-framework.md" \
+        --exclude "glossary.md" \
+        "$FRAMEWORK_SOURCE/defaults/memory/" "$TARGET_DIR/memory/" 2>/dev/null || true
+    rsync -a $copy_mode "$FRAMEWORK_SOURCE/defaults/skills/" "$PROJECT_ROOT/skills/" 2>/dev/null || true
     
     # Copy scripts to .sdd/scripts for self-containment
     echo "      Copying framework scripts to .sdd/scripts..."
     mkdir -p "$TARGET_DIR/scripts"
     rsync -a "$FRAMEWORK_SOURCE/scripts/" "$TARGET_DIR/scripts/" 2>/dev/null || true
     chmod +x "$TARGET_DIR/scripts"/*.sh 2>/dev/null || true
+
+    # Seed per-checkout machine state. This file is gitignored by the framework
+    # because it records private, in-flight work and differs per developer.
+    if [[ ! -f "$TARGET_DIR/state" ]]; then
+        printf 'schema_version=1\n' > "$TARGET_DIR/state"
+    fi
     
     # Copy AGENT_ONBOARDING
-    cp "$FRAMEWORK_SOURCE/AGENT_ONBOARDING.md" "$TARGET_DIR/" 2>/dev/null || true
+    if [[ "$UPGRADE_MODE" != true || ! -f "$TARGET_DIR/AGENT_ONBOARDING.md" ]]; then
+        cp "$FRAMEWORK_SOURCE/AGENT_ONBOARDING.md" "$TARGET_DIR/" 2>/dev/null || true
+    fi
     
     # Copy top-level governance files
-    cp "$FRAMEWORK_SOURCE/defaults/memory/constitutional-framework.md" "$TARGET_DIR/constitution.md" 2>/dev/null || true
-    cp "$FRAMEWORK_SOURCE/defaults/memory/glossary.md" "$TARGET_DIR/glossary.md" 2>/dev/null || true
+    [[ -f "$TARGET_DIR/constitution.md" ]] || cp "$FRAMEWORK_SOURCE/defaults/memory/constitutional-framework.md" "$TARGET_DIR/constitution.md"
+    [[ -f "$TARGET_DIR/glossary.md" ]] || cp "$FRAMEWORK_SOURCE/defaults/memory/glossary.md" "$TARGET_DIR/glossary.md"
+    [[ -f "$TARGET_DIR/framework.json" ]] || cp "$FRAMEWORK_SOURCE/defaults/framework.json" "$TARGET_DIR/framework.json"
+
+    # Record the selected composition without making scripts parse prose.
+    if [[ -f "$TARGET_DIR/framework.json" && "$UPGRADE_MODE" != true ]]; then
+        local composition="$BASE_PROFILE"
+        for modifier in "${MODIFIERS[@]}"; do composition="$composition+$modifier"; done
+        sed -e "s/\"profile\": \"general\"/\"profile\": \"$composition\"/" \
+            "$TARGET_DIR/framework.json" > "$TARGET_DIR/framework.json.tmp"
+        mv "$TARGET_DIR/framework.json.tmp" "$TARGET_DIR/framework.json"
+    fi
 }
 
 # Install root-level agent entrypoints for common coding agents
@@ -248,14 +280,20 @@ install_git_hooks() {
     local hook_file=".git/hooks/pre-commit"
     if [[ -d ".git" ]]; then
         if [[ -f "$hook_file" ]]; then
-            if ! grep -q "SDD Pre-commit Quality Gate" "$hook_file"; then
-                echo "⚠️  Found existing git pre-commit hook. Backing it up to ${hook_file}.bak..."
-                cp "$hook_file" "${hook_file}.bak"
-            fi
+            echo "🛡️  KEEP existing pre-commit hook unchanged."
+            echo "   Optional SDD gate: $TARGET_DIR/hooks/pre-commit"
+            write_sdd_precommit "$TARGET_DIR/hooks/pre-commit"
+            return
         fi
         echo "⚓ Installing git pre-commit hook..."
         mkdir -p ".git/hooks"
-        cat > "$hook_file" <<'EOF'
+        write_sdd_precommit "$hook_file"
+    fi
+}
+
+write_sdd_precommit() {
+    local hook_file="$1"
+    cat > "$hook_file" <<'EOF'
 #!/bin/bash
 # SDD Pre-commit Quality Gate
 
@@ -290,8 +328,7 @@ fi
 echo "✅ All SDD validation checks passed."
 exit 0
 EOF
-        chmod +x "$hook_file"
-    fi
+    chmod +x "$hook_file"
 }
 
 # Apply base profile overlay
@@ -310,6 +347,27 @@ apply_base_profile() {
     fi
 }
 
+# Append a markdown fragment once, using its first level-2 heading as a stable
+# marker. Setup is allowed to run repeatedly on an existing project; composition
+# must therefore be idempotent rather than duplicating governance text.
+append_markdown_once() {
+    local target="$1" fragment="$2"
+    local marker
+    marker=$(grep -m1 '^## ' "$fragment" 2>/dev/null || true)
+
+    if [[ -n "$marker" ]] && grep -Fqx "$marker" "$target" 2>/dev/null; then
+        echo "        SKIP $(basename "$fragment") (already applied)"
+        return 0
+    fi
+
+    {
+        echo ""
+        echo "---"
+        echo ""
+        cat "$fragment"
+    } >> "$target"
+}
+
 # Apply modifier overlays
 apply_modifiers() {
     if [ ${#MODIFIERS[@]} -gt 0 ]; then
@@ -321,20 +379,21 @@ apply_modifiers() {
                 # Overlay files
                 rsync -a "$FRAMEWORK_SOURCE/defaults/profiles/modifiers/$modifier/" "$TARGET_DIR/" 2>/dev/null || true
                 
-                # Append constitutional amendment if exists
+                # Append constitutional amendment to the canonical constitution.
+                # Do not append to memory/constitutional-framework.md: agents are
+                # instructed to read .sdd/constitution.md, and splitting amendments
+                # from the canonical file made composed governance ineffective.
                 if [ -f "$FRAMEWORK_SOURCE/defaults/profiles/modifiers/$modifier/memory/constitutional-amendment.md" ]; then
-                    echo "" >> "$TARGET_DIR/memory/constitutional-framework.md"
-                    echo "---" >> "$TARGET_DIR/memory/constitutional-framework.md"
-                    echo "" >> "$TARGET_DIR/memory/constitutional-framework.md"
-                    cat "$FRAMEWORK_SOURCE/defaults/profiles/modifiers/$modifier/memory/constitutional-amendment.md" >> "$TARGET_DIR/memory/constitutional-framework.md"
+                    append_markdown_once \
+                        "$TARGET_DIR/constitution.md" \
+                        "$FRAMEWORK_SOURCE/defaults/profiles/modifiers/$modifier/memory/constitutional-amendment.md"
                 fi
 
-                # Append before-task rule extensions if present
+                # Append before-task extensions idempotently.
                 if [ -f "$FRAMEWORK_SOURCE/defaults/profiles/modifiers/$modifier/memory/rules/before-task_extends.md" ]; then
-                    echo "" >> "$TARGET_DIR/memory/rules/before-task.md"
-                    echo "---" >> "$TARGET_DIR/memory/rules/before-task.md"
-                    echo "" >> "$TARGET_DIR/memory/rules/before-task.md"
-                    cat "$FRAMEWORK_SOURCE/defaults/profiles/modifiers/$modifier/memory/rules/before-task_extends.md" >> "$TARGET_DIR/memory/rules/before-task.md"
+                    append_markdown_once \
+                        "$TARGET_DIR/memory/rules/before-task.md" \
+                        "$FRAMEWORK_SOURCE/defaults/profiles/modifiers/$modifier/memory/rules/before-task_extends.md"
                 fi
             fi
         done
@@ -369,6 +428,7 @@ PROFILE_ARG=""
 WITH_EXAMPLES=false
 AUTO_YES=false
 INSTALL_AGENT_FILES=true
+UPGRADE_MODE=false
 while [[ $# -gt 0 ]]; do
     case $1 in
         --profile)
@@ -387,6 +447,11 @@ while [[ $# -gt 0 ]]; do
             INSTALL_AGENT_FILES=false
             shift 1
             ;;
+        --upgrade)
+            UPGRADE_MODE=true
+            AUTO_YES=true
+            shift 1
+            ;;
         --list-profiles|--list)
             list_profiles
             exit 0
@@ -402,6 +467,7 @@ while [[ $# -gt 0 ]]; do
             echo "  --with-examples          Copy example specs into .sdd/specs/examples"
             echo "  --yes                    Skip confirmation prompts"
             echo "  --no-agent-files         Skip creating root agent entrypoint files"
+            echo "  --upgrade                Conservatively refresh scripts and add missing assets"
             echo "  --list-profiles          Show all available profiles"
             echo "  --help                   Show this help message"
             echo ""
@@ -459,8 +525,10 @@ fi
 install_base_files
 install_agent_entrypoints
 install_git_hooks
-apply_base_profile
-apply_modifiers
+if [[ "$UPGRADE_MODE" != true ]]; then
+    apply_base_profile
+    apply_modifiers
+fi
 
 if [ "$WITH_EXAMPLES" = true ]; then
     echo "📄 Copying example specs..."
@@ -468,4 +536,22 @@ if [ "$WITH_EXAMPLES" = true ]; then
     rsync -a "$FRAMEWORK_SOURCE/defaults/specs-example/" "$TARGET_DIR/specs/examples/" 2>/dev/null || true
 fi
 
-generate_metadata
+if [[ "$UPGRADE_MODE" == true ]]; then
+    upgrade_stamp=$(date -u +%Y%m%dT%H%M%SZ)
+    upgrade_dir="$TARGET_DIR/memory/archive/framework-upgrades/$upgrade_stamp"
+    mkdir -p "$upgrade_dir"
+    {
+        echo "# Framework Upgrade $upgrade_stamp"
+        echo
+        echo "- Scripts: refreshed from framework source"
+        echo "- Missing templates/rules/topology: added"
+        echo "- Constitution, memory, specs, skills, agent entrypoints, and hooks: preserved when present"
+        echo "- Profile: preserved from existing .sdd/.profile"
+        echo "- Conflicts: semantic framework assets already present require project review"
+    } > "$upgrade_dir/manifest.md"
+    echo "✅ Conservative framework upgrade complete."
+    echo "   Manifest: $upgrade_dir/manifest.md"
+    bash "$TARGET_DIR/scripts/doctor.sh"
+else
+    generate_metadata
+fi

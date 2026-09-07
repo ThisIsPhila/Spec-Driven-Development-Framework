@@ -9,6 +9,8 @@ The **Spec-Driven Development (SDD) Framework** provides a structured environmen
 
 By keeping everything in the `.sdd/` directory, this framework ensures that context is never lost and every code change is traceable back to a requirement.
 
+The framework also preserves a continuous learning loop: **current state → intended state → observed gap → next authorized action → evidence → learning → explicit specification decision**. Specifications remain authoritative without becoming dogma; implementation discoveries update intent through traceable decisions rather than silent drift.
+
 ---
 
 ## 🧭 Documentation Index
@@ -17,7 +19,7 @@ To keep this project clean and maintainable, deep technical details are organize
 
 *   **[Core Architecture & Directory Layouts](docs/architecture.md)** — Layout references, profile compositions, and overlay file mechanisms.
 *   **[Operational Process Flows & Diagrams](docs/process-flows.md)** — Visual life cycle guides for setup, specifications, phase runner sprints, pre-commit hooks, and validation linters.
-*   **[CLI Tool Reference Guide](docs/cli-reference.md)** — Subcommands, arguments, and options for all script tools (`setup.sh`, `doctor.sh`, `skills.sh`, `phase.sh`, `validate-spec.js`, etc.).
+*   **[CLI Tool Reference Guide](docs/cli-reference.md)** — Subcommands, arguments, and options for all script tools (`setup.sh`, `doctor.sh`, `skills.sh`, `phase.sh`, `validate-spec.cjs`, etc.).
 *   **[Governance Constitution & rules](docs/governance.md)** — Repository constitution articles and operational rules checklists.
 *   **[Critical Assessment & Improvement Roadmap](docs/assessment.md)** — Evidence-based critique of the framework as a tool, with a sequenced roadmap and open decisions.
 
@@ -31,6 +33,12 @@ Initialize the framework by cloning the source and running the compose setup scr
 # From your target project root
 git clone https://github.com/ThisIsPhila/Spec-Driven-Development-Framework.git .sdd-framework
 bash .sdd-framework/scripts/setup.sh
+```
+
+To conservatively update an existing installation while preserving its constitution, memory, specs, skills, and hooks:
+
+```bash
+bash .sdd-framework/scripts/setup.sh --upgrade
 ```
 
 ### 2. Autonomous Agent Setup

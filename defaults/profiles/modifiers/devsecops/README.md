@@ -5,7 +5,7 @@ description: Security-first development workflows
 includes:
   - security-design-template.md
   - security-checklist.md
-  - constitutional-amendment.md (Article VI: Security-First Development)
+  - constitutional-amendment.md (Amendment: Security-First Development)
   - before-task_extends.md (adds security impact assessment)
   - security-requirements.md
 examples:
@@ -40,7 +40,7 @@ The **DevSecOps** modifier adds security-first workflows to any base profile. It
 - `before-task_extends.md` - Adds security impact assessment to before-task rules
 
 ### Constitution
-- **Article VI: Security-First Development** (appended to constitutional-framework.md)
+- **Amendment: Security-First Development** (appended idempotently to `.sdd/constitution.md`)
   - Threat modeling required for design phase
   - Security checklist mandatory before implementation
   - Secrets never committed to version control

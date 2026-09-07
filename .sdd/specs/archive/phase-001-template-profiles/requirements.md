@@ -1,9 +1,9 @@
-# Phase 1.1: Template Profiles & Methodology - Requirements
+# Phase 001: Template Profiles & Methodology - Requirements
 
-**Phase:** Phase 1.1 - Template Profiles & Methodology  
+**Phase:** Phase 001 - Template Profiles & Methodology  
 **Created:** December 9, 2025  
-**Status:** 📝 DRAFT  
-**Approved:** Pending
+**Status:** ✅ COMPLETE  
+**Approved:** December 9, 2025
 
 ---
 
@@ -14,10 +14,11 @@
 **Why This Phase Matters:**  
 Different projects need different workflows. A web app with ML models needs both web-specific templates AND ML governance. Traditional monolithic profiles force users to choose one or the other.
 
-**Profile Architecture:**
-- **Base Profiles** (What you're building): `web`, `mobile`, `api`, `cli`, `full-stack`, `general`
-- **Modifiers** (How you're building): `+devsecops`, `+mlops`, `+devops`
-- **Composition**: `web+devsecops` = React app with security workflows
+**Profile Architecture (reconciled with the completed implementation):**
+- **Base Profiles** (what you're building): `web`, `mobile`, `api`, `cli`, `full-stack`, `general`, `monorepo`
+- **Modifiers** (how you're building): `+devsecops`, `+mlops`, `+devops`
+- **Composition**: one base plus any subset of the three modifiers
+- **Valid Matrix**: 56 compositions (`7 × 2³`), including each base with no modifier
 
 **Version Control Note:**  
 The `.sdd/` directory is now version-controlled (removed from `.gitignore`) to enable normal agent file access and show planning evolution in git history.
@@ -41,9 +42,10 @@ As a developer, I need to select/compose profiles that match my project needs so
 4. WHEN I run `scripts/setup.sh --list-profiles` THEN I SHALL see all base profiles and modifiers with descriptions
 
 **Composition Rules:**
-- ONE base profile (required): `general|web|mobile|api|cli|full-stack`
-- ZERO or MORE modifiers (optional): `+devsecops`, `+mlops`, `+devops`
+- ONE base profile (required): `general|web|mobile|api|cli|full-stack|monorepo`
+- ZERO or MORE distinct modifiers (optional): `+devsecops`, `+mlops`, `+devops`
 - Syntax: `<base>` or `<base>+<modifier1>+<modifier2>`
+- Duplicate modifiers are invalid
 
 **Success Metrics:**
 - Profile selection time: < 10 seconds
@@ -79,7 +81,8 @@ defaults/profiles/
 │   ├── mobile/
 │   ├── api/
 │   ├── cli/
-│   └── full-stack/
+│   ├── full-stack/
+│   └── monorepo/
 └── modifiers/
     ├── devsecops/
     │   ├── README.md
@@ -184,6 +187,19 @@ As a full-stack developer, I need combined web + API templates.
 
 ---
 
+### REQ-1.8A: Base Profile - Monorepo
+
+**User Story:**  
+As a maintainer of multiple applications and services, I need cross-component governance, ownership, dependency, blocker, and rollout coordination artifacts.
+
+**Acceptance Criteria:**
+1. WHEN I select `monorepo` THEN setup SHALL install coordination scaffolding and monorepo governance rules.
+2. WHEN doctor runs against a monorepo install THEN it SHALL audit required coordination artifacts.
+
+**Priority:** 🟡 HIGH
+
+---
+
 ### REQ-1.9: Modifier - DevSecOps
 
 **User Story:**  
@@ -191,7 +207,7 @@ As a security-focused team, I need security checklists and threat modeling templ
 
 **Acceptance Criteria:**
 1. WHEN I use `+devsecops` THEN `rules/before-task.md` SHALL include security impact assessment
-2. WHEN I use `+devsecops` THEN constitution SHALL add "Security-First Development" article
+2. WHEN I use `+devsecops` THEN constitution SHALL add semantic "Amendment: Security-First Development" section in `.sdd/constitution.md`
 
 **Specific Files:**
 - `rules/security-checklist.md` - Pre-implementation security review
@@ -199,7 +215,7 @@ As a security-focused team, I need security checklists and threat modeling templ
 - `memory/security-requirements.md` - OWASP/CWE mapping
 
 **Component Alignment:**
-- Constitution: Add Article VI "Security-First Development"
+- Constitution: Append `Amendment: Security-First Development` to `.sdd/constitution.md`
 - Rules: Security checklist in `before-task.md`
 - Progress Tracker: Security milestones
 
@@ -214,7 +230,7 @@ As a data science team, I need ML experiment tracking and data governance workfl
 
 **Acceptance Criteria:**
 1. WHEN I use `+mlops` THEN `rules/before-task.md` SHALL include data lineage validation
-2. WHEN I use `+mlops` THEN constitution SHALL add "Data Governance" article
+2. WHEN I use `+mlops` THEN constitution SHALL add semantic "Amendment: Data Governance" section in `.sdd/constitution.md`
 
 **Specific Files:**
 - `rules/data-versioning.md` - Dataset version control
@@ -223,7 +239,7 @@ As a data science team, I need ML experiment tracking and data governance workfl
 - `templates/dataset-card-template.md` - Dataset documentation
 
 **Component Alignment:**
-- Constitution: Add Article VI "Data Governance"
+- Constitution: Append `Amendment: Data Governance` to `.sdd/constitution.md`
 - Rules: Data lineage in `before-task.md`
 - Progress Tracker: Experiment milestones
 
@@ -364,17 +380,17 @@ As a maintainer, I need automated tests to ensure profiles install correctly.
 **Phase 1.1 is COMPLETE when:**
 
 1. ✅ `setup.sh` supports `--profile <base>+<modifier>` composition syntax with preview
-2. ✅ Base profiles exist: general, web, mobile, api, cli, full-stack
+2. ✅ Base profiles exist: general, web, mobile, api, cli, full-stack, monorepo
 3. ✅ Modifiers exist: +devsecops, +mlops, +devops
 4. ✅ Agent detection recommends appropriate compositions
 5. ✅ Profile components (templates, rules, constitution, memory) are aligned
 6. ✅ Custom profiles are supported
-7. ✅ Automated tests validate all profiles
+7. ✅ Automated tests validate profile structure and all 56 valid installations
 8. ✅ Documentation updated (README, AGENT_ONBOARDING)
 
 **Validation Tests:**
 - Agent analyzes 5 sample projects and correctly recommends composed profiles
-- Run `setup.sh --profile web+devsecops` and verify preview, then correct installation
+- Run `bash tests/run.sh install_compositions` and verify all 56 base/modifier combinations, amendment idempotence, profile payloads, and `.sdd/.profile` metadata
 - Verify constitution, rules, and templates reference devsec methodology consistently
 - List profiles and verify all appear with descriptions
 
@@ -419,26 +435,12 @@ As a maintainer, I need automated tests to ensure profiles install correctly.
 
 **Risks:**
 1. **Profile Proliferation**: Too many → maintenance burden
-   - Mitigation: Start with 6 base + 3 modifiers, add based on demand
+   - Mitigation: Maintain 7 bases + 3 modifiers as reusable building blocks and test the complete 56-composition matrix
 2. **Composition Complexity**: Users confused by syntax
    - Mitigation: Interactive menu, agent recommendations, clear docs
 
 ---
 
-## ✅ Approval Checkpoint
+## ✅ Completion Record
 
-**🛑 STOP - DO NOT PROCEED TO DESIGN WITHOUT APPROVAL**
-
-**Please confirm:**
-1. Composition architecture (base+modifiers) makes sense?
-2. Starting set is appropriate (6 base + 3 modifiers)?
-3. Priorities correct?
-
-**Respond with:**
-- ✅ "Approved - proceed to Design"
-- 🔄 "I have changes..."
-- ❓ "I have questions..."
-
----
-
-**Once approved, I will create the Phase 1.1 Design document.**
+Requirements were approved on December 9, 2025. The completed implementation was reconciled on August 19, 2026 to include the subsequently shipped `monorepo` base, canonical `.sdd/constitution.md` amendments, duplicate-modifier rejection, and the complete 56-composition validation matrix.

@@ -23,7 +23,7 @@ sdd-framework/
 │   ├── doctor.sh                # Validation check utility
 │   ├── skills.sh                # Skills CLI manager
 │   ├── phase.sh                 # Phase Sprint runner (Phase hook)
-│   ├── validate-spec.js         # Profile-aware spec linter
+│   ├── validate-spec.cjs         # Profile-aware spec linter
 │   ├── scan-strays.sh           # Misplaced spec detector
 │   ├── migrate-structure.sh     # Legacy layout structure migrator
 │   └── audit-monorepo.sh        # Monorepo compliance auditor
@@ -37,6 +37,7 @@ When the setup script is executed, it initializes the project's brain under the 
 consumer-repo/
 ├── .sdd/                        # Project Brain (initialized by setup.sh)
 │   ├── constitution.md          # Supreme Law of the repository
+│   ├── framework.json           # Machine-readable framework/profile/threshold metadata
 │   ├── glossary.md              # Shared vocabulary
 │   ├── .profile                 # Composition metadata (e.g. web+devsecops)
 │   ├── memory/                  # Active status logs, technical decisions
@@ -45,6 +46,8 @@ consumer-repo/
 │   │   ├── technical-decisions.md# Architectural decisions (ADRs)
 │   │   ├── rules/               # Workflow checklists (before/during/after task)
 │   │   └── current-state/       # Active focus + blockers (active-context.md)
+│   ├── evidence/                # Raw, revision/environment-bound verification
+│   ├── reports/                 # Audits, assessments, and closeout reports
 │   ├── templates/               # Project templates
 │   ├── specs/                   # Project specifications
 │   │   ├── active/              # Sprints currently under development
@@ -54,7 +57,7 @@ consumer-repo/
 │       ├── doctor.sh
 │       ├── skills.sh
 │       ├── phase.sh
-│       ├── validate-spec.js
+│       ├── validate-spec.cjs
 │       ├── scan-strays.sh
 │       ├── migrate-structure.sh
 │       └── audit-monorepo.sh
@@ -94,6 +97,6 @@ During `setup.sh`:
 1.  **Base Templates** are copied from `defaults/templates/` to `.sdd/templates/`.
 2.  **Base Profile** templates are copied from `defaults/profiles/base/<profile>/` to `.sdd/`. These files overwrite base templates if they share names, tailoring them to the project type.
 3.  **Modifiers** are copied from `defaults/profiles/modifiers/<modifier>/` to `.sdd/`. These overlay and extend existing files.
-4.  **Constitutional Amendments** (if present in modifiers) are automatically appended to the bottom of `.sdd/constitution.md`.
-5.  **Before/During/After rules extensions** are appended to the corresponding rules checklists under `.sdd/memory/rules/`.
+4.  **Constitutional Amendments** (if present) are appended idempotently to the canonical `.sdd/constitution.md`. Amendment headings are semantic rather than fixed article numbers, so multiple modifiers compose without duplicate numbering.
+5.  **Before-task extensions** are appended idempotently to `.sdd/memory/rules/before-task.md`.
 6.  The final composition string is written to `.sdd/.profile` to act as metadata for profile-aware linting.

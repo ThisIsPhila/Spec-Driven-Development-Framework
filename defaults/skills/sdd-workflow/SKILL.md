@@ -15,9 +15,10 @@ Use this skill for feature work, refactors, and substantial bug fixes that shoul
 ## Workflow
 
 1. **Before coding (Spec Creation)**:
-   - Read `.sdd/AGENT_ONBOARDING.md` and `.sdd/memory/rules/*`.
-   - Confirm the spec folder name follows `.sdd/memory/rules/spec-naming.md`.
-   - Create or update artifacts in sequential order: `requirements.md` -> `design.md` -> `tasks.md`. Pause for approval between each file.
+   - Read `.sdd/AGENT_ONBOARDING.md`, `.sdd/constitution.md`, and relevant rules.
+   - Create the phase with `bash .sdd/scripts/phase.sh new <phase-name>`.
+   - Review and approve sequentially with `approve requirements`, `approve design`, then `approve tasks`; each approval scaffolds the next artifact.
+   - Never record approval until the user explicitly approves that artifact.
 
 2. **Phase Execution Sprint (Implementation)**:
    - Once all specs are approved, initialize the sprint by running the startup hook:
@@ -51,3 +52,6 @@ Use this skill for feature work, refactors, and substantial bug fixes that shoul
 - Do not create spec artifacts outside `.sdd/specs/`.
 - Keep `docs/` for project documentation, not spec triplets.
 - If you find stray spec files, run `bash .sdd/scripts/scan-strays.sh`.
+- Reconcile current state, intended state, observed gap, next authorized action, and learning after verification.
+- Classify failures before changing direction; revise intent only through a recorded decision or successor spec.
+- Keep implementation, local verification, deployment, authenticated-owner verification, and owner acceptance distinct.

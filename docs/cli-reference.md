@@ -5,6 +5,8 @@ This document provides detailed usage information, options, arguments, and examp
 ---
 
 ## 1. `setup.sh` — Project Initializer
+
+`--upgrade` performs a conservative update: framework scripts and missing baseline assets are refreshed, while an existing constitution, memory, specs, skills, agent entrypoints, and hooks are preserved. The operation writes a manifest under `.sdd/memory/archive/framework-upgrades/` and runs Doctor before reporting success.
 Initializes a target project's `.sdd/` workspace and installs composting profile templates, memory documents, and Git pre-commit hooks.
 
 ### Usage
@@ -46,26 +48,33 @@ bash .sdd/scripts/phase.sh <command> [args]
 ```
 
 ### Commands
+*   `new <phase-name>`
+    Validates the phase name and creates only `requirements.md`. This preserves the mandatory artifact order; design and tasks do not exist yet.
+*   `approve <requirements|design|tasks> [phase-name]`
+    Records a typed approval in `.sdd/state`, updates the artifact's visible status, and scaffolds the next artifact. Approval is order-dependent: requirements → design → tasks.
 *   `start <phase-name>`
-    Validates spec files status (Requirements, Design, Tasks), configures the Git feature branch, registers the active context in `active-context.md`, and prints the `BEFORE-TASK CHECKLIST COMPLETE` block.
+    Hard-fails unless all three artifacts are approved, runs `doctor.sh`, configures the Git feature branch, records machine state, renders `active-context.md`, and prints the `BEFORE-TASK CHECKLIST COMPLETE` block.
 *   `status` / `progress`
-    Counts checkbox tasks in the active phase's `tasks.md`, calculates progress completion percentage, and lists remaining pending tasks.
+    Reads the active phase from `.sdd/state`, counts checkbox tasks, calculates completion percentage, and lists pending tasks. Human edits to `active-context.md` cannot break phase resolution.
 *   `task <task_id> <done|doing|todo>`
-    Updates the checkbox status in the active spec's `tasks.md`. It also synchronizes the active task focus in `active-context.md` (e.g. updating task description and work target).
+    Updates exactly one task by stable ID (for example `T003.1`). Legacy text matching remains supported only when the match is unique; ambiguous matches fail without changing the file.
 *   `finish`
-    Ensures all tasks in `tasks.md` are marked complete, executes validation checks (`doctor.sh`, `skills.sh validate`), clears the active context, and marks the phase `Complete` in `progress-tracker.md`.
+    Refuses while tasks remain open, executes validation checks (`doctor.sh`, `skills.sh validate`), clears sprint state, and reports whether the historical progress tracker was updated. It never reports a silent no-op.
 *   `archive <phase-name>`
     Moves the completed spec folder from `specs/active/` to `specs/archive/` (an explicit action).
 
 ### Examples
 ```bash
-# Start a new sprint
-bash .sdd/scripts/phase.sh start phase-002-skills-management
+# Create and approve a spec sequentially
+bash .sdd/scripts/phase.sh new phase-003-framework-hardening
+bash .sdd/scripts/phase.sh approve requirements
+bash .sdd/scripts/phase.sh approve design
+bash .sdd/scripts/phase.sh approve tasks
 
-# Mark task complete
-bash .sdd/scripts/phase.sh task "Block 1" done
-
-# Finish the sprint
+# Execute its sprint
+bash .sdd/scripts/phase.sh start phase-003-framework-hardening
+bash .sdd/scripts/phase.sh task T003.1 doing
+bash .sdd/scripts/phase.sh task T003.1 done
 bash .sdd/scripts/phase.sh finish
 ```
 
@@ -103,17 +112,19 @@ bash scripts/doctor.sh
 *   Ensures core directories (`specs`, `templates`, `memory/rules`) are present.
 *   Ensures canonical memory files exist.
 *   Performs Spec Lifecycle Approval checks: asserts that design specifications do not exist without approved requirements, and task lists do not exist without approved designs.
+*   Invokes `validate-spec.cjs` automatically for active requirements and design artifacts when Node.js is available; lint failures fail Doctor.
 *   Validates spec folder naming conventions.
 *   Validates skills structures.
+*   Applies the same structural requirements to this framework repository as to consumer projects; there is no dogfooding exemption.
 
 ---
 
-## 5. `validate-spec.js` — Spec Linter
+## 5. `validate-spec.cjs` — Spec Linter
 Lints written specifications against profiles and masking rules.
 
 ### Usage
 ```bash
-node scripts/validate-spec.js <spec-path>
+node scripts/validate-spec.cjs <spec-path>
 ```
 *   Asserts that `requirements.md` contains a "Privacy & Security Model" section.
 *   If PII Risk is marked "Yes", it requires a valid masking control checkbox to be checked.

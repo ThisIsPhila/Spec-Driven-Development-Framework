@@ -5,11 +5,11 @@ Ensure proper context before implementing framework features.
 
 ## Checklist
 
-### 1. Review Current Phase Specs
-- [ ] Read `specs/phases/phase-1/requirements.md`
-- [ ] Read `specs/phases/phase-1/design.md`
-- [ ] Read `specs/phases/phase-1/tasks.md`
-- [ ] Understand which category you're working on (1: Infrastructure, 2: Templates, 3: Setup Script, 4: Validation)
+### 1. Review the Active Phase
+- [ ] Run `bash .sdd/scripts/phase.sh status` to identify the active phase and task
+- [ ] Read that phase's `requirements.md`, `design.md`, and `tasks.md` under `.sdd/specs/active/`
+- [ ] Confirm the three artifacts are approved in order before implementation
+- [ ] Trace the selected task to its requirement IDs
 
 ### 2. Check Project Status
 - [ ] Review `progress-tracker.md` for active blockers
@@ -44,8 +44,8 @@ Post this summary before starting:
 ```
 BEFORE-TASK CHECKLIST COMPLETE
 
-Category: [1/2/3/4] - [Name]
-Branch: feat/[category-name]
+Category: [phase and stable task ID] - [Name]
+Branch: feat/[phase-folder-name]
 Requirements: ✅ Reviewed
 Design: ✅ Reviewed
 Tasks: ✅ Validated

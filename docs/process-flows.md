@@ -136,13 +136,13 @@ graph TD
 
 ---
 
-## 5. Profile-Aware Spec Validation Flow (`validate-spec.js`)
+## 5. Profile-Aware Spec Validation Flow (`validate-spec.cjs`)
 
 This flow validates written specifications against the rules defined by the active profile composition.
 
 ```mermaid
 graph TD
-    A[Run validate-spec.js <file>] --> B{Read .sdd/.profile}
+    A[Run validate-spec.cjs <file>] --> B{Read .sdd/.profile}
     B --> C{Is Requirements file?}
     
     C -->|Yes| D[Check 'Privacy & Security Model' presence]

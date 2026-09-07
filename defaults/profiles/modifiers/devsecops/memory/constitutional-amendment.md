@@ -1,4 +1,4 @@
-## Article VI: Security-First Development
+## Amendment: Security-First Development
 
 **Principle:** All changes must be evaluated for security impact before implementation.
 

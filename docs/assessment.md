@@ -165,7 +165,7 @@ gate, because all of those need to read state deterministically.
 
 Beyond F1's phantom `.sdd/scripts/` path:
 
-- **`validate-spec.js` (244 LOC) is invoked by nothing.** Documented in `cli-reference.md:111-127`
+- **`validate-spec.cjs` (244 LOC) is invoked by nothing.** Documented in `cli-reference.md:111-127`
   and diagrammed in `process-flows.md:139`. Grep across all `.sh`, `.json`, and `.yml` files:
   `NOT INVOKED BY ANY SCRIPT`. Its privacy/PII, threat-model, and MLOps checks only run if a human
   types the command manually. Nearly a tenth of the codebase is dead automation.
@@ -392,7 +392,7 @@ Resolve the gap between what the docs claim and what runs. Fixes F1, F3, and the
 1. Fix the `active-context` → spec-folder coupling so `status`/`task`/`finish` work.
 2. Resolve the `.sdd/scripts/` contradiction across all 18 references.
 3. Fix the `progress-tracker.md` silent no-op.
-4. Wire `validate-spec.js` into `doctor.sh`.
+4. Wire `validate-spec.cjs` into `doctor.sh`.
 5. Add CI so enforcement is not only a bypassable local hook.
 6. Retire the `IS_FRAMEWORK` escape hatch, or scope it to genuinely framework-only artifacts.
 
@@ -449,7 +449,7 @@ These need a human call; they are not technical unknowns.
 | Metric | Value |
 |---|---|
 | Automation LOC (`scripts/`, 11 files) | 2,750 |
-| Of which never invoked (`validate-spec.js`) | 244 (9%) |
+| Of which never invoked (`validate-spec.cjs`) | 244 (9%) |
 | Behavioural tests | 0 |
 | Markdown files | 125 |
 | Shell + JS files | 11 |

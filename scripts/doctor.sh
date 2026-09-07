@@ -55,80 +55,40 @@ if [[ ! -d "$TARGET_DIR" ]]; then
     exit 1
 fi
 
-# Framework repo may include a partial .sdd; allow best-effort checks
-IS_FRAMEWORK=false
-if [[ -d "$REPO_ROOT/defaults" && -d "$REPO_ROOT/scripts" ]]; then
-    IS_FRAMEWORK=true
-fi
-
 say ""
 say "Core Structure"
 check_dir "$TARGET_DIR/specs" ".sdd/specs"
-if [[ "$IS_FRAMEWORK" == false ]]; then
-    check_dir "$TARGET_DIR/specs/active" ".sdd/specs/active"
-    check_dir "$TARGET_DIR/specs/archive" ".sdd/specs/archive"
-    check_dir "$TARGET_DIR/specs/backlog" ".sdd/specs/backlog"
-else
-    if [[ ! -d "$TARGET_DIR/specs/active" ]]; then
-        say "WARN .sdd/specs/active missing (framework repo)"
-        WARNINGS=$((WARNINGS+1))
-    fi
-    if [[ ! -d "$TARGET_DIR/specs/archive" ]]; then
-        say "WARN .sdd/specs/archive missing (framework repo)"
-        WARNINGS=$((WARNINGS+1))
-    fi
-    if [[ ! -d "$TARGET_DIR/specs/backlog" ]]; then
-        say "WARN .sdd/specs/backlog missing (framework repo)"
-        WARNINGS=$((WARNINGS+1))
-    fi
-fi
+check_dir "$TARGET_DIR/specs/active" ".sdd/specs/active"
+check_dir "$TARGET_DIR/specs/archive" ".sdd/specs/archive"
+check_dir "$TARGET_DIR/specs/backlog" ".sdd/specs/backlog"
 check_dir "$TARGET_DIR/templates" ".sdd/templates"
-if [[ "$IS_FRAMEWORK" == false ]]; then
-    check_dir "$REPO_ROOT/skills" "skills"
-else
-    if [[ ! -d "$REPO_ROOT/skills" ]]; then
-        say "WARN skills missing (framework repo)"
-        WARNINGS=$((WARNINGS+1))
-    fi
-fi
+check_dir "$TARGET_DIR/scripts" ".sdd/scripts"
+check_dir "$REPO_ROOT/skills" "skills"
 check_dir "$TARGET_DIR/memory" ".sdd/memory"
 check_dir "$TARGET_DIR/memory/rules" ".sdd/memory/rules"
-if [[ "$IS_FRAMEWORK" == false ]]; then
-    check_dir "$TARGET_DIR/memory/current-state" ".sdd/memory/current-state"
-    check_dir "$TARGET_DIR/memory/completed-tasks" ".sdd/memory/completed-tasks"
-else
-    if [[ ! -d "$TARGET_DIR/memory/current-state" ]]; then
-        say "WARN .sdd/memory/current-state missing (framework repo)"
-        WARNINGS=$((WARNINGS+1))
-    fi
-    if [[ ! -d "$TARGET_DIR/memory/completed-tasks" ]]; then
-        say "WARN .sdd/memory/completed-tasks missing (framework repo)"
-        WARNINGS=$((WARNINGS+1))
-    fi
-fi
+check_dir "$TARGET_DIR/memory/current-state" ".sdd/memory/current-state"
+check_dir "$TARGET_DIR/memory/completed-tasks" ".sdd/memory/completed-tasks"
+check_dir "$TARGET_DIR/memory/governance" ".sdd/memory/governance"
+check_dir "$TARGET_DIR/memory/archive" ".sdd/memory/archive"
+check_dir "$TARGET_DIR/evidence" ".sdd/evidence"
+check_dir "$TARGET_DIR/reports" ".sdd/reports"
 
 say ""
 say "Memory Files"
 check_file "$TARGET_DIR/AGENT_ONBOARDING.md" ".sdd/AGENT_ONBOARDING.md"
+check_file "$TARGET_DIR/constitution.md" ".sdd/constitution.md"
+check_file "$TARGET_DIR/glossary.md" ".sdd/glossary.md"
+check_file "$TARGET_DIR/framework.json" ".sdd/framework.json"
 check_file "$TARGET_DIR/memory/project-overview.md" "memory/project-overview.md"
 check_file "$TARGET_DIR/memory/progress-tracker.md" "memory/progress-tracker.md"
 check_file "$TARGET_DIR/memory/technical-decisions.md" "memory/technical-decisions.md"
-if [[ "$IS_FRAMEWORK" == false ]]; then
-    check_file "$TARGET_DIR/memory/current-state/active-context.md" "memory/current-state/active-context.md"
-    check_file "$TARGET_DIR/memory/current-state/progress.md" "memory/current-state/progress.md"
-else
-    if [[ ! -f "$TARGET_DIR/memory/current-state/active-context.md" ]]; then
-        say "WARN memory/current-state/active-context.md missing (framework repo)"
-        WARNINGS=$((WARNINGS+1))
-    fi
-    if [[ ! -f "$TARGET_DIR/memory/current-state/progress.md" ]]; then
-        say "WARN memory/current-state/progress.md missing (framework repo)"
-        WARNINGS=$((WARNINGS+1))
-    fi
-fi
+check_file "$TARGET_DIR/memory/current-state/active-context.md" "memory/current-state/active-context.md"
+check_file "$TARGET_DIR/memory/current-state/progress.md" "memory/current-state/progress.md"
 check_file "$TARGET_DIR/memory/rules/before-task.md" "memory/rules/before-task.md"
 check_file "$TARGET_DIR/memory/rules/during-task.md" "memory/rules/during-task.md"
 check_file "$TARGET_DIR/memory/rules/after-task.md" "memory/rules/after-task.md"
+check_file "$TARGET_DIR/memory/rules/file-placement.md" "memory/rules/file-placement.md"
+check_file "$TARGET_DIR/memory/rules/spec-naming.md" "memory/rules/spec-naming.md"
 
 if [[ -f "$TARGET_DIR/memory/current-state/activeContext.md" ]]; then
     say "WARN Found legacy file: memory/current-state/activeContext.md"
@@ -140,6 +100,10 @@ say "Templates"
 check_file "$TARGET_DIR/templates/requirements-template.md" "templates/requirements-template.md"
 check_file "$TARGET_DIR/templates/design-template.md" "templates/design-template.md"
 check_file "$TARGET_DIR/templates/tasks-template.md" "templates/tasks-template.md"
+check_file "$TARGET_DIR/templates/evidence-template.md" "templates/evidence-template.md"
+check_file "$TARGET_DIR/templates/learning-template.md" "templates/learning-template.md"
+check_file "$TARGET_DIR/templates/governance-exception-template.md" "templates/governance-exception-template.md"
+check_file "$TARGET_DIR/templates/assessment-report-template.md" "templates/assessment-report-template.md"
 
 say ""
 say "Skills"
@@ -171,10 +135,8 @@ if [[ -d "$REPO_ROOT/skills" ]]; then
         WARNINGS=$((WARNINGS+1))
     fi
 else
-    if [[ "$IS_FRAMEWORK" == true ]]; then
-        say "WARN skills/ missing"
-        WARNINGS=$((WARNINGS+1))
-    fi
+    say "MISS skills/ missing"
+    ERRORS=$((ERRORS+1))
 fi
 
 if [[ -f "$TARGET_DIR/templates/requirements-template.md" ]]; then
@@ -318,6 +280,11 @@ done
 say ""
 say "Spec Lifecycle Approval Gates"
 active_dir="$TARGET_DIR/specs/active"
+forward_threshold=0
+if [[ -f "$TARGET_DIR/framework.json" ]]; then
+    configured_threshold=$(grep -E '"forwardThreshold"[[:space:]]*:' "$TARGET_DIR/framework.json" | head -n1 | grep -oE '[0-9]+' || true)
+    [[ -n "$configured_threshold" ]] && forward_threshold="$configured_threshold"
+fi
 if [[ -d "$active_dir" ]]; then
     while IFS= read -r subdir; do
         folder_name=$(basename "$subdir")
@@ -328,6 +295,9 @@ if [[ -d "$active_dir" ]]; then
         req_file="$subdir/requirements.md"
         des_file="$subdir/design.md"
         tsk_file="$subdir/tasks.md"
+
+        phase_number=$(printf '%s' "$folder_name" | sed -E 's/^phase-([0-9]{3}).*/\1/' | sed 's/^0*//')
+        [[ -z "$phase_number" ]] && phase_number=0
 
         req_approved=false
         des_approved=false
@@ -368,6 +338,24 @@ if [[ -d "$active_dir" ]]; then
             if grep -qi "status:.*ready to start" "$tsk_file" || grep -qi "status:.*approved" "$tsk_file" || grep -qi "status:.*complete" "$tsk_file"; then
                 tsk_ready=true
             fi
+
+            if [[ "$phase_number" -ge "$forward_threshold" ]]; then
+                task_count=$(grep -cE '^[[:space:]]*-[[:space:]]*\[[ xX/]\][[:space:]]*\*\*\[T[0-9]{3}\.[0-9]+\]' "$tsk_file" || true)
+                unique_count=$(grep -oE '\[T[0-9]{3}\.[0-9]+\]' "$tsk_file" | sort -u | wc -l | xargs)
+                if [[ "$task_count" -eq 0 || "$task_count" -ne "$unique_count" ]]; then
+                    say "FAIL $folder_name: governed tasks require unique stable IDs on every top-level checkbox."
+                    ERRORS=$((ERRORS+1))
+                fi
+                for field in 'Objective and requirements' 'Implementation and owned outputs' 'Owned paths' 'Positive and negative verification' 'Acceptance evidence' 'No-go conditions and handoff'; do
+                    field_count=$(grep -c "\*\*$field:\*\*" "$tsk_file" || true)
+                    if [[ "$field_count" -ne "$task_count" ]]; then
+                        say "FAIL $folder_name: '$field' appears $field_count times for $task_count governed tasks."
+                        ERRORS=$((ERRORS+1))
+                    fi
+                done
+            else
+                say "INFO $folder_name: pre-threshold history (before phase $forward_threshold); no retroactive task certification."
+            fi
         fi
 
         # Display progress status for information
@@ -383,6 +371,35 @@ if [[ -d "$active_dir" ]]; then
         fi
 
     done < <(find "$active_dir" -mindepth 1 -maxdepth 1 -type d 2>/dev/null)
+fi
+
+say ""
+say "Spec Content Lint"
+if command -v node >/dev/null 2>&1; then
+    linter="$SCRIPT_DIR/validate-spec.cjs"
+    if [[ ! -f "$linter" ]]; then
+        say "MISS validate-spec.cjs not found at $linter"
+        ERRORS=$((ERRORS+1))
+    elif [[ -d "$active_dir" ]]; then
+        lint_count=0
+        while IFS= read -r spec_file; do
+            [[ -f "$spec_file" ]] || continue
+            lint_count=$((lint_count + 1))
+            if node "$linter" "$spec_file"; then
+                :
+            else
+                say "FAIL spec lint: ${spec_file#$REPO_ROOT/}"
+                ERRORS=$((ERRORS+1))
+            fi
+        done < <(find "$active_dir" -mindepth 2 -maxdepth 2 -type f \
+            \( -name 'requirements.md' -o -name 'design.md' \) 2>/dev/null | sort)
+        if [[ "$lint_count" -eq 0 ]]; then
+            say "INFO no active requirements/design files to lint"
+        fi
+    fi
+else
+    say "WARN node is unavailable; skipping profile-aware spec content lint"
+    WARNINGS=$((WARNINGS+1))
 fi
 
 if [[ $ERRORS -eq 0 ]]; then

@@ -7,7 +7,7 @@ includes:
   - dataset-card-template.md
   - data-versioning.md
   - experiment-tracking.md
-  - constitutional-amendment.md (Article VI: Data Governance)
+  - constitutional-amendment.md (Amendment: Data Governance)
   - before-task_extends.md (adds data lineage validation)
   - data-governance.md
 examples:
@@ -50,7 +50,7 @@ The **MLOps** modifier adds machine learning workflows to any base profile. It e
 - `before-task_extends.md` - Adds data lineage validation to before-task rules
 
 ### Constitution
-- **Article VI: Data Governance** (appended to constitutional-framework.md)
+- **Amendment: Data Governance** (appended idempotently to `.sdd/constitution.md`)
   - All datasets must be versioned
   - Experiments must be logged and reproducible
   - Model decisions must be documented

@@ -1,18 +1,5 @@
-# Agent Instructions (SDD)
+# Project Agent Entry Point
 
-This repository uses the Spec-Driven Development (SDD) framework.
+Before project work, read `.sdd/AGENT_ONBOARDING.md`, `.sdd/constitution.md`, `.sdd/memory/current-state/active-context.md`, and the active phase documents.
 
-## Canonical Source
-
-1. Read `.sdd/AGENT_ONBOARDING.md` first.
-2. Follow `.sdd/constitution.md` (or `.sdd/memory/constitutional-framework.md` on legacy setups).
-3. Follow rules in `.sdd/memory/rules/`.
-
-## Non-Negotiables
-
-- No code without a spec in `.sdd/specs/active/...`.
-- You MUST run phase sprint hooks (`bash .sdd/scripts/phase.sh start <phase>`, `task <id> done/doing`, and `finish`) to execute sprints and sync tasks.
-- Artifact order is mandatory: `requirements.md` -> `design.md` -> `tasks.md`.
-- Spec artifacts must stay under `.sdd/specs/`.
-- Project docs belong in `docs/` and should link to specs instead of duplicating them.
-- Keep `.sdd/memory/current-state/` updated as implementation progresses.
+The authoritative workflow, placement, evidence, security, and project-boundary rules live in `.sdd/`; do not restate or weaken them here. Preserve hooks and unrelated work. Local authoring or implementation never implies authority to deploy, publish, merge, push, or mutate an external environment.

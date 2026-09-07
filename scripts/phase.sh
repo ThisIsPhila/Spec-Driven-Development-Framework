@@ -27,26 +27,324 @@ say() {
     printf "%s\n" "$1"
 }
 
+# ------------------------------------------------------------------------------
+# update_progress_tracker <phase_name> <new_status>
+#
+# Sets the Status line under a phase's heading in progress-tracker.md.
+#
+# Previously this was duplicated in cmd_start and cmd_finish, and both copies
+# silently no-opped when the tracker did not use the expected
+# "### Phase N" + "- **Status:**" shape -- reporting success while changing
+# nothing (assessment F2). The tracker is freeform prose, so rather than force a
+# format, this reports honestly whether the anchor was found.
+#
+# Returns 0 if updated, 1 if the anchor was absent (caller decides severity).
+# ------------------------------------------------------------------------------
+update_progress_tracker() {
+    local phase_name="$1"
+    local new_status="$2"
+
+    [[ -f "$PROGRESS_TRACKER" ]] || return 1
+
+    local clean_phase_num
+    clean_phase_num=$(printf '%s' "$phase_name" | grep -oE "phase-[0-9]+" | cut -d- -f2 | sed 's/^0*//')
+    [[ -z "$clean_phase_num" ]] && clean_phase_num="[0-9]+"
+
+    local tracker_header_regex="^###[[:space:]]+Phase[[:space:]]+0*${clean_phase_num}"
+    local status_line_regex="^-[[:space:]]+\*\*Status:\*\*"
+
+    local temp_tracker="${PROGRESS_TRACKER}.tmp.$$"
+    # Truncate explicitly. The old code used >> against a fixed .tmp name, so a
+    # leftover temp file from an interrupted run would corrupt the result.
+    : > "$temp_tracker" || {
+        say "❌ Error: cannot stage progress-tracker write: $temp_tracker"
+        return 1
+    }
+
+    local in_phase=false
+    local did_update=false
+
+    while IFS= read -r line || [[ -n "$line" ]]; do
+        if [[ "$line" =~ $tracker_header_regex ]]; then
+            printf '%s\n' "$line" >> "$temp_tracker"
+            in_phase=true
+        elif [[ "$in_phase" == true && "$line" =~ $status_line_regex ]]; then
+            printf -- '- **Status:** %s\n' "$new_status" >> "$temp_tracker"
+            in_phase=false
+            did_update=true
+        else
+            printf '%s\n' "$line" >> "$temp_tracker"
+        fi
+    done < "$PROGRESS_TRACKER"
+
+    if [[ "$did_update" != true ]]; then
+        rm -f "$temp_tracker"
+        return 1
+    fi
+
+    if ! mv "$temp_tracker" "$PROGRESS_TRACKER"; then
+        say "❌ Error: cannot commit progress-tracker write."
+        rm -f "$temp_tracker"
+        return 1
+    fi
+
+    # Verify the value actually landed rather than trusting the rewrite.
+    if grep -qE "^-[[:space:]]+\*\*Status:\*\*[[:space:]]*${new_status}" "$PROGRESS_TRACKER"; then
+        return 0
+    fi
+
+    say "❌ Error: progress-tracker write verification failed."
+    return 1
+}
+
+# report_tracker_result <rc> <phase_name> <status>
+# Turns the silent no-op into a visible, actionable message.
+report_tracker_result() {
+    local rc="$1" phase_name="$2" status="$3"
+    if [[ "$rc" -eq 0 ]]; then
+        say "📊 Progress tracker status updated to '$status'."
+    else
+        say "⚠️  Progress tracker NOT updated (no '### Phase N' + '- **Status:**' entry"
+        say "    found for '$phase_name' in $PROGRESS_TRACKER)."
+        say "    Update it by hand, or add a matching entry so this can be automated."
+    fi
+}
+
 show_usage() {
     say "SDD Phase Sprint Runner"
     say ""
     say "Usage: $0 <command> [args]"
     say ""
     say "Commands:"
-    say "  start <phase-name>          Initialize and start a phase sprint"
+    say "  new <phase-name>            Create a phase and scaffold requirements.md"
+    say "  approve <artifact> [phase]  Approve requirements, design, or tasks"
+    say "  start <phase-name>          Initialize and start an approved phase sprint"
     say "  status                      Check completion status of the active phase sprint"
     say "  task <task_id> <status>     Update a task status (done, doing, todo) in tasks.md"
     say "  finish                      Verify codebase and complete the active sprint"
     say "  archive <phase-name>        Archive the completed phase folder (explicit action)"
     say ""
     say "Examples:"
-    say "  $0 start phase-002-skills-management"
+    say "  $0 new phase-003-framework-hardening"
+    say "  $0 approve requirements"
+    say "  $0 approve design"
+    say "  $0 approve tasks"
+    say "  $0 start phase-003-framework-hardening"
+    say "  $0 task T003.1 doing"
+    say "  $0 task T003.1 done"
     say "  $0 status"
-    say "  $0 task \"Block 1\" done"
-    say "  $0 task \"1.1\" doing"
     say "  $0 finish"
-    say "  $0 archive phase-002-skills-management"
+    say "  $0 archive phase-003-framework-hardening"
     exit 1
+}
+
+# Return the configured spec-folder regex, with the framework default as a
+# fallback. This was previously duplicated inside cmd_start.
+get_spec_regex() {
+    local regex="^phase-[0-9]{3}-[a-z0-9-]+$"
+    local rules_file="$TARGET_DIR/memory/rules/spec-naming.md"
+    if [[ -f "$rules_file" ]]; then
+        local configured
+        configured=$(grep -i "^Regex:" "$rules_file" | head -n1 | cut -d: -f2- | xargs)
+        [[ -n "$configured" ]] && regex="$configured"
+    fi
+    printf '%s' "$regex"
+}
+
+validate_phase_name() {
+    local phase_name="$1"
+    local regex
+    regex=$(get_spec_regex)
+    if [[ ! "$phase_name" =~ $regex ]]; then
+        say "❌ Error: Phase name '$phase_name' does not match naming regex: $regex"
+        return 1
+    fi
+}
+
+# Seed typed approval state from an existing spec once. This is a compatibility
+# bridge for specs created before `phase.sh approve` existed. New approvals are
+# always recorded through the command below.
+select_spec() {
+    local phase_name="$1"
+    local current
+    current=$(state_get current_spec)
+
+    if [[ "$current" != "$phase_name" ]]; then
+        state_set current_spec "$phase_name" || return 1
+        state_set requirements_approved "" || return 1
+        state_set design_approved "" || return 1
+        state_set tasks_approved "" || return 1
+    fi
+
+    local spec_dir="$TARGET_DIR/specs/active/$phase_name"
+    local today
+    today=$(date -u +%F)
+
+    if [[ -z "$(state_get requirements_approved)" && -f "$spec_dir/requirements.md" ]] &&
+       grep -qi "status:.*\(approved\|complete\)" "$spec_dir/requirements.md"; then
+        state_set requirements_approved "$today" || return 1
+    fi
+    if [[ -z "$(state_get design_approved)" && -f "$spec_dir/design.md" ]] &&
+       grep -qi "status:.*\(approved\|complete\)" "$spec_dir/design.md"; then
+        state_set design_approved "$today" || return 1
+    fi
+    if [[ -z "$(state_get tasks_approved)" && -f "$spec_dir/tasks.md" ]] &&
+       grep -qi "status:.*\(ready to start\|approved\|complete\)" "$spec_dir/tasks.md"; then
+        state_set tasks_approved "$today" || return 1
+    fi
+}
+
+# Copy one canonical template and replace the common phase placeholders.
+# Only called after the previous artifact is approved, preserving the mandatory
+# requirements -> design -> tasks order.
+scaffold_artifact() {
+    local phase_name="$1" artifact="$2"
+    local template="$TARGET_DIR/templates/${artifact}-template.md"
+    local destination="$TARGET_DIR/specs/active/$phase_name/${artifact}.md"
+
+    if [[ ! -f "$template" ]]; then
+        say "❌ Error: template not found: $template"
+        return 1
+    fi
+    if [[ -e "$destination" ]]; then
+        say "ℹ️  $artifact.md already exists; leaving it unchanged."
+        return 0
+    fi
+
+    local number slug title today
+    number=$(printf '%s' "$phase_name" | sed -E 's/^phase-([0-9]+)-.*/\1/')
+    slug=$(printf '%s' "$phase_name" | sed -E 's/^phase-[0-9]+-//')
+    title=$(printf '%s' "$slug" | tr '-' ' ' | awk '{ for (i=1;i<=NF;i++) $i=toupper(substr($i,1,1)) substr($i,2); print }')
+    today=$(date -u +%F)
+
+    sed \
+        -e "s/\[Date or Pending\]/Pending/g" \
+        -e "s/\[PHASE NAME\]/Phase $number - $title/g" \
+        -e "s/\[Phase N\]/Phase $number/g" \
+        -e "s/\[Name\]/$title/g" \
+        -e "s/\[N\]/$number/g" \
+        -e "s/\[Date\]/$today/g" \
+        "$template" > "$destination" || {
+            rm -f "$destination"
+            say "❌ Error: failed to scaffold $destination"
+            return 1
+        }
+
+    say "✅ Created $destination"
+}
+
+set_artifact_status() {
+    local file="$1" status="$2" approved="$3"
+    local tmp="${file}.tmp.$$"
+    awk -v status="$status" -v approved="$approved" '
+        BEGIN { status_done=0; approved_done=0 }
+        /^\*\*Status:\*\*/ && !status_done {
+            print "**Status:** " status
+            status_done=1
+            next
+        }
+        /^\*\*Approved:\*\*/ && !approved_done {
+            print "**Approved:** " approved
+            approved_done=1
+            next
+        }
+        { print }
+    ' "$file" > "$tmp" || {
+        rm -f "$tmp"
+        return 1
+    }
+    mv "$tmp" "$file"
+}
+
+# ------------------------------------------------------------------------------
+# COMMAND: NEW
+# ------------------------------------------------------------------------------
+cmd_new() {
+    local phase_name="$1"
+    if [[ -z "$phase_name" ]]; then
+        say "❌ Error: Missing phase name. Usage: $0 new <phase-name>"
+        exit 1
+    fi
+    validate_phase_name "$phase_name" || exit 1
+
+    local spec_dir="$TARGET_DIR/specs/active/$phase_name"
+    if [[ -d "$spec_dir" ]]; then
+        say "❌ Error: spec already exists: $spec_dir"
+        exit 1
+    fi
+
+    mkdir -p "$spec_dir"
+    state_init || exit 1
+    state_set current_spec "$phase_name" || exit 1
+    state_set requirements_approved "" || exit 1
+    state_set design_approved "" || exit 1
+    state_set tasks_approved "" || exit 1
+
+    scaffold_artifact "$phase_name" requirements || exit 1
+    say ""
+    say "Next: review requirements.md, then run:"
+    say "  bash $0 approve requirements"
+}
+
+# ------------------------------------------------------------------------------
+# COMMAND: APPROVE
+# ------------------------------------------------------------------------------
+cmd_approve() {
+    local artifact="$1"
+    local phase_name="${2:-$(state_get current_spec)}"
+
+    case "$artifact" in
+        requirements|design|tasks) ;;
+        *)
+            say "❌ Error: choose one artifact: requirements, design, or tasks"
+            exit 1
+            ;;
+    esac
+
+    if [[ -z "$phase_name" ]]; then
+        say "❌ Error: no current spec. Run 'phase.sh new <phase>' or pass a phase name."
+        exit 1
+    fi
+    validate_phase_name "$phase_name" || exit 1
+
+    local spec_dir="$TARGET_DIR/specs/active/$phase_name"
+    local file="$spec_dir/$artifact.md"
+    if [[ ! -f "$file" ]]; then
+        say "❌ Error: $file does not exist. Artifacts must be created in order."
+        exit 1
+    fi
+
+    select_spec "$phase_name" || exit 1
+    local today
+    today=$(date -u +%F)
+
+    case "$artifact" in
+        requirements)
+            set_artifact_status "$file" "✅ APPROVED" "$today" || exit 1
+            state_set requirements_approved "$today" || exit 1
+            scaffold_artifact "$phase_name" design || exit 1
+            say "Next: review design.md, then run: bash $0 approve design"
+            ;;
+        design)
+            if [[ -z "$(state_get requirements_approved)" ]]; then
+                say "❌ Error: requirements must be approved before design."
+                exit 1
+            fi
+            set_artifact_status "$file" "✅ APPROVED" "$today" || exit 1
+            state_set design_approved "$today" || exit 1
+            scaffold_artifact "$phase_name" tasks || exit 1
+            say "Next: review tasks.md, then run: bash $0 approve tasks"
+            ;;
+        tasks)
+            if [[ -z "$(state_get design_approved)" ]]; then
+                say "❌ Error: design must be approved before tasks."
+                exit 1
+            fi
+            set_artifact_status "$file" "🚀 READY TO START" "$today" || exit 1
+            state_set tasks_approved "$today" || exit 1
+            say "✅ Spec approved. Start it with: bash $0 start $phase_name"
+            ;;
+    esac
 }
 
 # ------------------------------------------------------------------------------
@@ -59,20 +357,7 @@ cmd_start() {
         show_usage
     fi
 
-    # Ensure spec-naming format is valid
-    local spec_regex="^phase-[0-9]{3}-[a-z0-9-]+$"
-    local spec_rules_file="$TARGET_DIR/memory/rules/spec-naming.md"
-    if [[ -f "$spec_rules_file" ]]; then
-        local configured_regex=$(grep -i "^Regex:" "$spec_rules_file" | head -n1 | cut -d: -f2- | xargs)
-        if [[ -n "$configured_regex" ]]; then
-            spec_regex="$configured_regex"
-        fi
-    fi
-
-    if [[ ! "$phase_name" =~ $spec_regex ]]; then
-        say "❌ Error: Phase name '$phase_name' does not match naming regex: $spec_regex"
-        exit 1
-    fi
+    validate_phase_name "$phase_name" || exit 1
 
     local spec_dir="$TARGET_DIR/specs/active/$phase_name"
     local backlog_dir="$TARGET_DIR/specs/backlog/$phase_name"
@@ -106,37 +391,32 @@ cmd_start() {
         exit 1
     fi
 
-    # Verify approvals
+    # Typed approvals are the gate. For pre-v1.4 specs, select_spec imports an
+    # existing APPROVED/COMPLETE status once as a compatibility bridge.
+    select_spec "$phase_name" || exit 1
+
     local req_approved=false
     local des_approved=false
     local tsk_ready=false
+    [[ -n "$(state_get requirements_approved)" ]] && req_approved=true
+    [[ -n "$(state_get design_approved)" ]]       && des_approved=true
+    [[ -n "$(state_get tasks_approved)" ]]        && tsk_ready=true
 
-    if grep -qi "status:.*approved" "$req_file" || grep -qi "status:.*complete" "$req_file"; then
-        req_approved=true
-    fi
-    if grep -qi "status:.*approved" "$des_file" || grep -qi "status:.*complete" "$des_file"; then
-        des_approved=true
-    fi
-    if grep -qi "status:.*ready to start" "$tsk_file" || grep -qi "status:.*approved" "$tsk_file" || grep -qi "status:.*complete" "$tsk_file"; then
-        tsk_ready=true
-    fi
-
-    if [[ "$req_approved" == false ]]; then
-        say "⚠️  Warning: requirements.md status is not APPROVED or COMPLETE."
-    fi
-    if [[ "$des_approved" == false ]]; then
-        say "⚠️  Warning: design.md status is not APPROVED or COMPLETE."
-    fi
-    if [[ "$tsk_ready" == false ]]; then
-        say "⚠️  Warning: tasks.md status is not READY TO START, APPROVED, or COMPLETE."
+    if [[ "$req_approved" == false || "$des_approved" == false || "$tsk_ready" == false ]]; then
+        say "❌ Error: Cannot start '$phase_name'; all spec artifacts must be approved."
+        say "   Requirements: $([[ "$req_approved" == true ]] && echo APPROVED || echo DRAFT)"
+        say "   Design:       $([[ "$des_approved" == true ]] && echo APPROVED || echo DRAFT)"
+        say "   Tasks:        $([[ "$tsk_ready" == true ]] && echo APPROVED || echo DRAFT)"
+        say "   Use 'phase.sh approve <artifact> $phase_name' in order."
+        exit 1
     fi
 
-    # Run Doctor to verify repo integrity
+    # Doctor is a hard pre-flight gate. A governance tool must not continue
+    # after its own structural validator fails.
     say "🔍 Running project doctor pre-flight checks..."
-    if [[ -f "$SCRIPT_DIR/doctor.sh" ]]; then
-        if ! bash "$SCRIPT_DIR/doctor.sh" > /dev/null 2>&1; then
-            say "⚠️  Warning: Project doctor detected structure or naming warnings."
-        fi
+    if [[ -f "$SCRIPT_DIR/doctor.sh" ]] && ! bash "$SCRIPT_DIR/doctor.sh"; then
+        say "❌ Error: project doctor failed. Resolve the findings before starting."
+        exit 1
     fi
 
     # Determine branch
@@ -187,30 +467,10 @@ cmd_start() {
 - [None]
 EOF
 
-    # Update progress-tracker.md if active phase entry exists
-    if [[ -f "$PROGRESS_TRACKER" ]]; then
-        # Find if phase header exists and update status to "In Progress"
-        local temp_tracker="${PROGRESS_TRACKER}.tmp"
-        local updated=false
-        
-        local clean_phase_num=$(echo "$phase_name" | grep -oE "phase-[0-9]+" | cut -d- -f2 | sed 's/^0*//')
-        [[ -z "$clean_phase_num" ]] && clean_phase_num="[0-9]+"
-
-        local tracker_header_regex="^###[[:space:]]+Phase[[:space:]]+0*${clean_phase_num}"
-        local status_line_regex="^-[[:space:]]+\*\*Status:\*\*"
-
-        while IFS= read -r line; do
-            if [[ "$line" =~ $tracker_header_regex ]]; then
-                say "$line" >> "$temp_tracker"
-                updated=true
-            elif [[ "$updated" == true && "$line" =~ $status_line_regex ]]; then
-                say "- **Status:** In Progress" >> "$temp_tracker"
-                updated=false
-            else
-                say "$line" >> "$temp_tracker"
-            fi
-        done < "$PROGRESS_TRACKER"
-        mv "$temp_tracker" "$PROGRESS_TRACKER"
+    if update_progress_tracker "$phase_name" "In Progress"; then
+        report_tracker_result 0 "$phase_name" "In Progress"
+    else
+        report_tracker_result 1 "$phase_name" "In Progress"
     fi
 
     say ""
@@ -335,19 +595,37 @@ cmd_task() {
             ;;
     esac
 
-    local matched_line=$(grep -F "$task_id" "$tasks_file" | head -n1 || true)
-    if [[ -z "$matched_line" ]]; then
-        matched_line=$(grep -i "$task_id" "$tasks_file" | head -n1 || true)
+    # Stable IDs (for example T003.1) are matched as a delimited token.
+    # Legacy free-text tasks remain supported, but only when the match is unique.
+    local needle="$task_id"
+    case "$task_id" in
+        T[0-9]*.*) needle="[$task_id]" ;;
+    esac
+
+    local matches match_count matched_line
+    matches=$(grep -F "$needle" "$tasks_file" 2>/dev/null \
+        | grep -E "^[[:space:]]*-[[:space:]]*\[[ xX/]\]" || true)
+    match_count=$(printf '%s\n' "$matches" | grep -c . || true)
+
+    if [[ "$match_count" -eq 0 ]]; then
+        matches=$(grep -i "$needle" "$tasks_file" 2>/dev/null \
+            | grep -E "^[[:space:]]*-[[:space:]]*\[[ xX/]\]" || true)
+        match_count=$(printf '%s\n' "$matches" | grep -c . || true)
     fi
 
-    if [[ -z "$matched_line" ]]; then
-        say "❌ Error: No task matching '$task_id' was found in tasks.md."
+    if [[ "$match_count" -eq 0 ]]; then
+        say "❌ Error: No checklist task matching '$task_id' was found in tasks.md."
+        exit 1
+    fi
+    if [[ "$match_count" -gt 1 ]]; then
+        say "❌ Error: '$task_id' matches $match_count tasks. Use a stable task ID:"
+        printf '%s\n' "$matches"
         exit 1
     fi
 
+    matched_line="$matches"
     say "🎯 Found task: $matched_line"
 
-    local escaped_match=$(echo "$matched_line" | sed 's/[&/\]/\\&/g')
     local updated_line=""
     local checklist_line_regex="^([[:space:]]*-)[[:space:]]*\[[ xX/]\](.*)$"
     if [[ "$matched_line" =~ $checklist_line_regex ]]; then
@@ -359,14 +637,26 @@ cmd_task() {
         exit 1
     fi
 
-    local temp_tasks="${tasks_file}.tmp"
-    while IFS= read -r line; do
+    local temp_tasks="${tasks_file}.tmp.$$"
+    : > "$temp_tasks" || {
+        say "❌ Error: cannot stage tasks.md update."
+        exit 1
+    }
+    local replacements=0
+    while IFS= read -r line || [[ -n "$line" ]]; do
         if [[ "$line" == "$matched_line" ]]; then
             say "$updated_line" >> "$temp_tasks"
+            replacements=$((replacements + 1))
         else
             say "$line" >> "$temp_tasks"
         fi
     done < "$tasks_file"
+
+    if [[ "$replacements" -ne 1 ]]; then
+        rm -f "$temp_tasks"
+        say "❌ Error: expected to update exactly one task; updated $replacements."
+        exit 1
+    fi
     mv "$temp_tasks" "$tasks_file"
 
     local task_text=$(echo "$updated_line" | sed -E 's/^[[:space:]]*-?[[:space:]]*\[[x /]\][[:space:]]*//' | sed 's/^[[:space:]]*\*\*[^*]*\*\*//g' | xargs)
@@ -437,28 +727,10 @@ cmd_finish() {
         fi
     fi
 
-    if [[ -f "$PROGRESS_TRACKER" ]]; then
-        local temp_tracker="${PROGRESS_TRACKER}.tmp"
-        local updated=false
-        local clean_phase_num=$(echo "$active_phase" | grep -oE "phase-[0-9]+" | cut -d- -f2 | sed 's/^0*//')
-        [[ -z "$clean_phase_num" ]] && clean_phase_num="[0-9]+"
-
-        local tracker_header_regex="^###[[:space:]]+Phase[[:space:]]+0*${clean_phase_num}"
-        local status_line_regex="^-[[:space:]]+\*\*Status:\*\*"
-
-        while IFS= read -r line; do
-            if [[ "$line" =~ $tracker_header_regex ]]; then
-                say "$line" >> "$temp_tracker"
-                updated=true
-            elif [[ "$updated" == true && "$line" =~ $status_line_regex ]]; then
-                say "- **Status:** Complete" >> "$temp_tracker"
-                updated=false
-            else
-                say "$line" >> "$temp_tracker"
-            fi
-        done < "$PROGRESS_TRACKER"
-        mv "$temp_tracker" "$PROGRESS_TRACKER"
-        say "📊 Progress tracker status updated to 'Complete'."
+    if update_progress_tracker "$active_phase" "Complete"; then
+        report_tracker_result 0 "$active_phase" "Complete"
+    else
+        report_tracker_result 1 "$active_phase" "Complete"
     fi
 
     # Clear active context
@@ -527,24 +799,36 @@ cmd_archive() {
 
 # ------------------------------------------------------------------------------
 # ROUTING
+#
+# Guarded so this file can be sourced by tests without executing a command.
+# When invoked through the .sdd/scripts/ symlink, BASH_SOURCE[0] and $0 are both
+# the symlink path, so the comparison still holds.
 # ------------------------------------------------------------------------------
-case "$1" in
-    start)
-        cmd_start "$2"
-        ;;
-    status|progress)
-        cmd_status
-        ;;
-    task)
-        cmd_task "$2" "$3"
-        ;;
-    finish)
-        cmd_finish
-        ;;
-    archive)
-        cmd_archive "$2"
-        ;;
-    *)
-        show_usage
-        ;;
-esac
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+    case "$1" in
+        new)
+            cmd_new "$2"
+            ;;
+        approve)
+            cmd_approve "$2"
+            ;;
+        start)
+            cmd_start "$2"
+            ;;
+        status|progress)
+            cmd_status
+            ;;
+        task)
+            cmd_task "$2" "$3"
+            ;;
+        finish)
+            cmd_finish
+            ;;
+        archive)
+            cmd_archive "$2"
+            ;;
+        *)
+            show_usage
+            ;;
+    esac
+fi

@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 2,
+  "frameworkVersion": "2.0.0",
+  "profile": "general",
+  "forwardThreshold": 4,
+  "validator": ".sdd/scripts/validate-spec.cjs",
+  "ownership": {
+    "frameworkManaged": ["scripts", "baseline templates", "baseline rules"],
+    "projectManaged": ["constitution", "memory", "specs", "evidence", "reports", "skills", "hooks"]
+  }
+}

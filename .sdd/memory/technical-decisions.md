@@ -1,147 +1,156 @@
 # Technical Decisions - SDD Framework
 
-**Project:** Spec-Driven Development Framework  
-**Last Updated:** December 9, 2025
+**Project:** Spec-Driven Development Framework
+**Last Updated:** August 19, 2026
 
 ---
 
 ## Decision Log
 
-### TD-001: Profile Composition Architecture (December 9, 2025)
+### TD-001: Profile Composition Architecture (December 9, 2025; expanded February 5, 2026)
 
-**Decision:** Use base + modifiers composition model instead of monolithic profiles.
+**Decision:** Use one base plus zero or more independent modifiers instead of monolithic profiles.
 
-**Context:**  
-Users need different combinations (web app with security, API with ML, etc.). Traditional approach would require `web`, `web-secure`, `web-ml`, `web-secure-ml` profiles (exponential growth).
+**Current model:**
+- **Base profiles:** `general`, `web`, `mobile`, `api`, `cli`, `full-stack`, `monorepo`
+- **Modifiers:** `devops`, `devsecops`, `mlops`
+- **Syntax:** `web+devsecops` or `monorepo+devops+devsecops+mlops`
+- **Inventory:** 10 reusable building blocks
+- **Composition space:** 56 valid combinations (`7 × 2³`), including each unmodified base
 
-**Solution:**
-- **Base profiles** (what you're building): `web`, `mobile`, `api`, `cli`, `full-stack`, `general`
-- **Modifiers** (how you're building): `+devsecops`, `+mlops`, `+devops`
-- **Syntax**: `web+devsecops` = React app with security workflows
+**Rationale:** Linear content growth supports a complete composition space without maintaining a separate profile for every combination. Duplicate modifiers are rejected because they are not meaningful compositions and can duplicate amendments.
 
-**Rationale:**
-- Linear scaling (6 bases + 3 modifiers = 9 total, not 18)
-- Clear separation of concerns
-- Easier to maintain
-- Users can compose novel combinations
+**Alternatives considered:**
+- Monolithic profiles — rejected because combinations grow exponentially as maintained artifacts.
+- A YAML composition file — rejected because the CLI syntax is sufficient and avoids another parser/dependency.
 
-**Alternatives Considered:**
-- Monolithic profiles → rejected (maintenance burden)
-- YAML config file → rejected (too complex for bash script)
-
-**Status:** Approved (REQ-1.1, REQ-1.2)
+**Status:** Implemented and covered by the complete 56-composition installation matrix.
 
 ---
 
-### TD-002: File Overlay with rsync (December 9, 2025)
+### TD-002: Predictable Three-Layer Overlay (December 9, 2025)
 
-**Decision:** Use 3-layer rsync for file installation (base → profile → modifiers).
+**Decision:** Install files in base-framework → base-profile → modifier order.
 
-**Context:**  
-Need predictable way to overlay files where later layers override earlier ones.
+**Rationale:** Later layers can intentionally augment or replace earlier defaults while each profile remains independently understandable. Setup uses `rsync` where available and preserves the same ordering in its fallback copy path.
 
-**Solution:**
-```bash
-rsync -a defaults/templates/ .sdd/templates/           # Layer 1: Base
-rsync -a defaults/profiles/base/web/ .sdd/             # Layer 2: Profile
-rsync -a defaults/profiles/modifiers/devsecops/ .sdd/ # Layer 3: Modifiers
-```
-
-**Rationale:**
-- `rsync` is standard Unix tool (no new dependencies)
-- `-a` preserves file attributes
-- Later rsync calls overwrite earlier files (clear precedence)
-- Simple mental model
-
-**Alternatives Considered:**
-- Custom merge logic → rejected (too complex)
-- Symbolic links → rejected (portability issues)
-
-**Status:** Approved (Design)
+**Status:** Implemented.
 
 ---
 
 ### TD-003: Template Extensions via `_extends.md` (December 9, 2025)
 
-**Decision:** Modifiers augment templates using `*_extends.md` files.
+**Decision:** Let modifiers augment existing markdown through `*_extends.md` files rather than copying full templates.
 
-**Context:**  
-Modifiers need to add sections to base templates without replacing entire files.
+**Rationale:** A modifier owns only the content it adds, which reduces drift and preserves composition. Extension insertion is idempotent.
 
-**Solution:**
-- Modifiers can include `design-template_extends.md`
-- Setup script scans for `_extends.md` files
-- Inserts content at marked insertion points in base templates
-
-**Example:**
-```
-# In devsecops/templates/design-template_extends.md
-<!-- INSERT_AFTER: ## 🎯 Design Overview -->
-## 🔒 Security Considerations
-[threat model content]
-```
-
-**Rationale:**
-- Modifiers remain composable (don't need full template copy)
-- Base templates stay clean
-- Clear extension points
-
-**Alternatives Considered:**
-- Full template replacement → rejected (breaks composition)
-- Markdown includes → rejected (not standard)
-
-**Status:** Approved (Design)
+**Status:** Implemented.
 
 ---
 
-### TD-004: Self-Hosting `.sdd/` in Git (December 9, 2025)
+### TD-004: Private Working Specs, Published Archive (December 9, 2025; superseded August 19, 2026)
 
-**Decision:** Commit `.sdd/` directory to version control (removed from `.gitignore`).
+**Original decision:** Commit the complete `.sdd/` workspace to demonstrate self-hosting.
 
-**Context:**  
-Initially `.sdd/` was gitignored to avoid committing work-in-progress. But we're using SDD to develop SDD (dogfooding).
+**Superseding decision:** Commit the framework, governance, memory, templates, and completed spec archive, but keep `.sdd/specs/active/`, `.sdd/specs/backlog/`, and `.sdd/state` private and untracked in this public repository.
 
-**Solution:**
-- Remove `.sdd/` from `.gitignore`
-- Commit our planning artifacts (specs, memory, progress)
-- Show users how the framework is developed using itself
+**Rationale:** Dogfooding and public design history remain visible through archived specs without publishing unfinished plans or per-developer sprint state. Existing public specs were security-scanned; no secret or PII exposure justified destructive history rewriting.
 
-**Rationale:**
-- Transparency: Users see our planning process
-- Dogfooding: We use what we promote
-- Easier agent access: No more `cat` hacks
-- Version history: Planning evolution is visible
-
-**Tradeoffs:**
-- Repo slightly larger
-- Planning docs are public (acceptable for open source)
-
-**Status:** Implemented (December 9, 2025)
+**Status:** Implemented. Consumer projects choose their own visibility policy.
 
 ---
 
-### TD-005: Bash Script for Profile System (December 9, 2025)
+### TD-005: Portable Bash Core (December 9, 2025)
 
-**Decision:** Enhance `setup.sh` in bash rather than rewriting in Python/Node.
+**Decision:** Keep the executable core in portable Bash, including compatibility with macOS Bash 3.2.
 
-**Context:**  
-Need to add composition parsing, interactive menu, preview, and file overlay.
+**Rationale:** Consumer projects can run the framework without installing Python, Node, or `jq`. Node remains optional for the richer spec content linter; `doctor.sh` degrades visibly when Node is absent.
 
-**Solution:**
-- Keep bash for consistency with v1.0
-- Use `whiptail` for TUI (with fallback to `read`)
-- Parse composition string with `IFS` split
+**Status:** Implemented and validated on Linux and macOS CI runners.
 
-**Rationale:**
-- No new dependencies (bash + rsync + whiptail are standard)
-- Existing users already have bash
-- Simple enough for bash (not complex state machine)
+---
 
-**Alternatives Considered:**
-- Python → rejected (new dependency)
-- Go binary → rejected (compilation step)
+### TD-006: `.sdd/` Owns Enforcement; Adapters Own No Logic (August 19, 2026)
 
-**Status:** Approved (Design)
+**Decision:** `.sdd/` is the universal canonical layer. Agent-specific adapters may map native events to `.sdd/scripts/`, but may not implement independent lifecycle or governance rules.
+
+**Rationale:** The framework must behave identically for Kiro, Claude, Gemini, Copilot, Codex, Cursor, a human shell, and CI. Native hooks can accelerate feedback but cannot be the only gate because agents and hook capabilities differ.
+
+**Rejected:** Making Kiro or any other vendor's native spec directory canonical. That would undermine the cross-agent purpose of the project.
+
+**Status:** Approved architecture principle; concrete adapters are deferred to a later phase.
+
+---
+
+### TD-007: Flat Machine State and One-Fact-One-Home (August 19, 2026)
+
+**Decision:** Store sprint scalars in a flat `.sdd/state` `key=value` file. Store task completion only in the canonical `tasks.md` checkboxes.
+
+**State owns:** active phase folder, branch, typed approval timestamps, and sprint-start metadata.
+**Tasks own:** stable task IDs and task status.
+**Markdown current-state files:** rendered human context, never parsed as authoritative sprint state.
+
+**Rationale:** JSON would require `jq` or Node in a Bash-only core. Duplicating checkbox state into `.sdd/state` would create two sources of truth—the defect this decision is intended to remove. Atomic writes and read-back verification prevent false success.
+
+**Compatibility:** When state is absent, legacy `active-context.md` values are migrated automatically.
+
+**Status:** Implemented by Phase 003 (REQ-003.3).
+
+---
+
+### TD-008: Stable IDs, Typed Approvals, and Hard Gates (August 19, 2026)
+
+**Decision:**
+- Generated task identifiers use the delimited form `**[T003.1]**`.
+- A task operation must match exactly one ID; zero or multiple matches fail without mutation.
+- `phase.sh approve` records requirements, design, and tasks approvals as ordered typed transitions.
+- `phase.sh start` refuses missing or unapproved artifacts and a failing doctor preflight.
+
+**Rationale:** Substring matching and prose approval detection are ambiguous. Governance must be executable rather than advisory.
+
+**Status:** Implemented and lifecycle-tested by Phase 003 (REQ-003.4 and REQ-003.5).
+
+---
+
+### TD-009: One Script Source, Two Installation Forms (August 19, 2026)
+
+**Decision:** Root `scripts/` is the implementation source. This framework repository commits relative `.sdd/scripts/*.sh` symlinks to `../../scripts/*.sh`; consumer setup copies real files into `.sdd/scripts/`.
+
+**Rationale:** Documented `.sdd/scripts/` commands work verbatim in both contexts without maintaining duplicate script copies. Relative links survive fresh clones. Consumers remain self-contained.
+
+**Rejected:** Rewriting documentation to root-only `scripts/`, which would break the consumer contract, and committing duplicate script copies, which would drift.
+
+**Status:** Implemented and guarded by symlink/path regression tests.
+
+---
+
+### TD-010: Canonical Constitution and Semantic Amendments (August 19, 2026)
+
+**Decision:** Installed governance lives at `.sdd/constitution.md`. Modifier amendments use semantic headings such as `## Amendment: Security-First Development` and are appended idempotently.
+
+**Rationale:** Multiple modifiers cannot all own a fixed “Article VI.” A single canonical location removes the split between root governance and `memory/constitutional-framework.md`. The legacy source filename remains only as installer input and migration fallback.
+
+**Status:** Implemented; doctor verifies the canonical constitution.
+
+---
+
+### TD-011: Complete Composition Matrix and Cross-Platform CI (August 19, 2026)
+
+**Decision:** Test every syntactically valid profile composition: seven bases × all subsets of three modifiers = 56. Execute the deterministic Bash suite in GitHub Actions on Ubuntu and macOS.
+
+**Rationale:** Four examples do not support a universal composition claim. The full matrix is bounded, runs in parallel batches of eight, and stays below the Phase 003 60-second target. macOS protects the Bash 3.2 compatibility floor.
+
+**Status:** Implemented by Phase 003 (REQ-003.1 and REQ-003.2).
+
+---
+
+### TD-012: Phase 001 Canonical Archive Migration (August 19, 2026)
+
+**Decision:** Move the legacy `specs/phases/phase-1/` triplet to `.sdd/specs/archive/phase-001-template-profiles/` and reconcile it with the implementation it now documents.
+
+**Rationale:** The old path was outside the contract directories and escaped validation. The canonical folder follows the repository's `phase-###-slug` naming regex and keeps completed design history public.
+
+**Status:** Implemented as part of Phase 003 documentation reconciliation.
 
 ---
 
@@ -158,7 +167,7 @@ Need to add composition parsing, interactive menu, preview, and file overlay.
 
 **Rationale:** [Why this approach]
 
-**Alternatives Considered:** [Other options and why rejected]
+**Alternatives considered:** [Other options and why rejected]
 
-**Status:** [Proposed / Approved / Implemented / Deprecated]
+**Status:** [Proposed / Approved / Implemented / Superseded / Deprecated]
 ```

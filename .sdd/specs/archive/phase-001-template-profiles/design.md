@@ -1,21 +1,23 @@
-# Phase 1.1: Template Profiles & Methodology - Design
+# Phase 001: Template Profiles & Methodology - Design
 
-**Phase:** Phase 1.1 - Template Profiles & Methodology  
+**Phase:** Phase 001 - Template Profiles & Methodology  
 **Created:** December 9, 2025  
-**Status:** 📝 DRAFT  
+**Status:** ✅ COMPLETE  
 **Requirements Approved:** ✅ YES (December 9, 2025)  
-**Approved:** Pending
+**Approved:** December 9, 2025
 
 ---
 
 ## 🎯 Design Overview
 
-This document details **HOW** we will implement the Phase 1.1 requirements for composable profile architecture. It specifies:
+This document details **HOW** the completed profile architecture is implemented. It specifies:
 - Exact bash script logic for composition parsing
 - File overlay mechanism (base → profile → modifiers)
 - Agent detection heuristics implementation
 - Profile directory structure and conventions
 - Component alignment strategy (constitution, rules, templates, memory)
+
+**Post-completion reconciliation (August 19, 2026):** The shipped system now has seven bases including `monorepo`, rejects duplicate modifiers, writes governance to `.sdd/constitution.md`, uses semantic `Amendment:` headings, and validates all 56 combinations through `tests/run.sh install_compositions`. The implementation excerpts below reflect that final contract rather than the superseded six-base prototype.
 
 ---
 
@@ -55,9 +57,9 @@ This document details **HOW** we will implement the Phase 1.1 requirements for c
 │  │   ├── tasks-template.md (base)                         │
 │  │   ├── component-design-template.md (from web)         │
 │  │   └── security-design-template.md (from devsecops)    │
-│  ├── memory/                                               │
-│  │   ├── constitutional-framework.md (+ Article VI)      │
-│  │   ├── progress-tracker.md (base)                       │
+│  ├── constitution.md (+ semantic modifier amendments)       │
+│  ├── memory/                                                │
+│  │   ├── progress-tracker.md (base)                        │
 │  │   └── security-requirements.md (from devsecops)       │
 │  └── memory/rules/                                         │
 │      ├── before-task.md (base + security checklist)      │

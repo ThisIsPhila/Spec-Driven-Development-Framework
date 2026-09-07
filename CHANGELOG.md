@@ -2,6 +2,21 @@
 
 All notable changes to the SDD Framework are documented here.
 
+## [2.0.0] - Unreleased
+
+### Added
+- Canonical evidence, reports, governance, historical-threshold, and learning-loop artifacts under `.sdd/`.
+- Machine-readable `.sdd/framework.json` with profile and forward-threshold metadata.
+- Conservative `setup.sh --upgrade` flow with an in-framework upgrade manifest.
+- Detailed executable task contracts and governed-phase Doctor validation.
+- ES-module consumer and hook-preservation regression coverage.
+
+### Changed
+- Replaced product-specific default constitutional rules with universal governance and explicit project-invariant extension points.
+- Made agent entrypoints concise pointers to the single `.sdd` authority.
+- Renamed the Node validator to `validate-spec.cjs` so consumer module mode cannot break it.
+- Existing git hooks are preserved; the SDD gate is emitted separately when composition is required.
+
 ## [1.3.0] - 2026-06-26
 
 ### Added
@@ -9,7 +24,7 @@ All notable changes to the SDD Framework are documented here.
 - `scripts/skills.sh` CLI manager for local/remote skills (`list`, `sync`, `create`, `validate`, `add`).
 - Automated Git pre-commit quality gate hook (runs `doctor.sh` and `skills.sh validate` on commit).
 - Backup mechanism in `setup.sh` to preserve existing pre-commit hooks as `pre-commit.bak`.
-- Extensible, profile-aware spec validation rules in `scripts/validate-spec.js` (supporting general, devsecops, and mlops checks).
+- Extensible, profile-aware spec validation rules in `scripts/validate-spec.cjs` (supporting general, devsecops, and mlops checks).
 
 ### Changed
 - `scripts/setup.sh` now deploys skills to the root `skills/` folder and migrates existing `.sdd/skills/` configurations.

@@ -1,5 +1,10 @@
 # Progress Tracker - SDD Framework
 
+### Phase 004 — Intent, Evidence, and Learning Loop
+- **Status:** Complete
+- **Scope:** Canonical governance, evidence topology, detailed tasks, safe upgrades, runtime-neutral validation, and explicit learning feedback.
+- **Authority:** `SDD-EXC-2026-09-07-01`; local commit allowed, push/release excluded.
+
 **Last Updated:** December 9, 2025  
 **Current Phase:** Phase 1 - Template Profiles & Methodology
 

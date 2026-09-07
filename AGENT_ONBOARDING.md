@@ -55,20 +55,20 @@ If you have write access to `.sdd/memory/current-state/active-context.md` (or eq
 - Specs MUST live in `.sdd/specs/{active,archive,backlog}/` under a folder that matches the naming convention in `memory/rules/spec-naming.md`.
 - For monorepos, keep root coordination artifacts updated in `.sdd/coordination/`.
 
-1.  **Requirements (`requirements.md`)**:
-    - Create draft using `templates/requirements-template.md`.
-    - **STOP** and ask for user approval.
-    - *Do not proceed until user says "Approved".*
+1.  **Create (`phase.sh new`)**:
+    - Run `bash .sdd/scripts/phase.sh new <phase-name>`.
+    - This creates only `requirements.md` from the canonical template.
+    - Review it with the user, then run `bash .sdd/scripts/phase.sh approve requirements` only after explicit approval.
 
-2.  **Design (`design.md`)**:
-    - Create draft using `templates/design-template.md`.
-    - **STOP** and ask for user approval.
-    - *Do not proceed until user says "Approved".*
+2.  **Design**:
+    - Approving requirements scaffolds `design.md`; no manual copying is needed.
+    - Review it with the user, then run `bash .sdd/scripts/phase.sh approve design` only after explicit approval.
 
-3.  **Tasks (`tasks.md`)**:
-    - Create draft using `templates/tasks-template.md`.
-    - Ensure only **High-Level Tasks** have checkboxes.
-    - **STOP** and ask for user approval.
+3.  **Tasks**:
+    - Approving design scaffolds `tasks.md` with stable task IDs such as `T003.1`.
+    - Ensure only high-level tasks have checkboxes.
+    - Review it with the user, then run `bash .sdd/scripts/phase.sh approve tasks` only after explicit approval.
+    - `phase.sh start` is a hard gate and refuses any phase missing these typed approvals.
 
 4.  **Execute Phase Sprint (Task by Task)**:
     When instructed to work on an approved spec/phase, you MUST follow these automated steps:
@@ -92,6 +92,12 @@ If you have write access to `.sdd/memory/current-state/active-context.md` (or eq
         ```
 
 ---
+
+### Evidence and learning loop
+
+Keep five questions answerable: What exists now? What outcome is intended? What gap was observed? What is the next authorized action? What did reality teach us? Classify failed validation as a problem, specification, interaction, execution, environment, timing, or evidence failure. Change intent through a recorded decision, never silent implementation drift.
+
+Keep local, deployed-testing, authenticated-owner, production, and owner-acceptance claims separate. Store raw verification in `.sdd/evidence/`, assessments in `.sdd/reports/`, and exceptions in `.sdd/memory/governance/`.
 
 ## Phase 3: Communication
 

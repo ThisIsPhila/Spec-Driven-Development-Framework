@@ -1,47 +1,46 @@
-# [PHASE NAME] - Implementation Plan
+# [Phase N] — [Phase Name] — Tasks
 
-**Phase:** [Phase N] - [Name]  
-**Created:** [Date]  
-**Status:** 🚀 READY TO START  
-**Requirements Approved:** ✅ YES ([Date])  
-**Design Approved:** ✅ YES ([Date])
+**Status:** DRAFT
+**Requirements:** Approved [date/marker]
+**Design:** Approved [date/marker]
+**Execution authority:** Not granted
 
----
+Only top-level task lines carry lifecycle checkboxes.
 
-## Implementation Checklist
+## Task plan
 
-- [ ] **Task [N]-1: [Task Name]**
-  - [Detailed sub-step 1]
-  - [Detailed sub-step 2]
-  - _Requirements: REQ-[N].X_
-  - _Estimated Time: [X] hours_
+- [ ] **[T[N].1]** [Outcome-oriented task name]
+  - **Objective and requirements:** Observable result and REQ-[N].x links.
+  - **Design references:** Decisions and sections implemented.
+  - **Implementation and owned outputs:** Concrete behavior, boundaries, state transitions, and outputs.
+  - **Owned paths:** Existing paths and explicitly proposed new paths.
+  - **Dependencies and inputs:** Prior tasks, services, schemas, decisions, and external authority.
+  - **Positive and negative verification:** Success inputs/results plus failures that must fail closed.
+  - **Acceptance evidence:** `.sdd/evidence/phase-[N]/...` with tree, environment, timestamp, result, and limitations.
+  - **No-go conditions and handoff:** What blocks completion and the exact downstream contract.
 
-- [ ] **Task [N]-2: [Task Name]**
-  - [Detailed sub-step 1]
-  - [Detailed sub-step 2]
-  - _Requirements: REQ-[N].Y_
-  - _Estimated Time: [X] hours_
+- [ ] **[T[N].2]** [Second outcome-oriented task name]
+  - **Objective and requirements:** Observable result and REQ-[N].y links.
+  - **Design references:** Decisions and sections implemented.
+  - **Implementation and owned outputs:** Concrete behavior, boundaries, state transitions, and outputs.
+  - **Owned paths:** Existing paths and explicitly proposed new paths.
+  - **Dependencies and inputs:** T[N].1 plus services, schemas, decisions, and external authority.
+  - **Positive and negative verification:** Success inputs/results plus failures that must fail closed.
+  - **Acceptance evidence:** `.sdd/evidence/phase-[N]/...` with tree, environment, timestamp, result, and limitations.
+  - **No-go conditions and handoff:** What blocks completion and the exact downstream contract.
 
----
+## Dependency map
 
-## Summary
+```text
+T[N].1 → T[N].2 → T[N].3
+```
 
-**Total Tasks:** [Count]  
-**Total Estimated Time:** [Hours]  
+## Traceability
 
-**Critical Path:**
-1. Task 1 -> Task 2
+| Requirement | Design decision | Tasks | Verification | Evidence home |
+|---|---|---|---|---|
+| REQ-[N].x | [section] | T[N].1 | [check] | `.sdd/evidence/phase-[N]/...` |
 
----
+## Completion criteria
 
-## Phase Completion Criteria
-
-Phase [N] is complete when:
-
-1. ✅ All tasks checked off
-2. ✅ All tests passing
-3. ✅ Verification report approved
-
----
-
-**Ready to start? Proceed with Task [N]-1!** 🚀
+Every task and applicable positive/negative check passes on the exact assessed tree; state, specs, evidence, and reports agree; remote claims have remote observations; residual risks and downstream ownership are explicit; and the owner records acceptance.

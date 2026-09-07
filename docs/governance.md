@@ -23,6 +23,16 @@ These rules govern the development of the target project to ensure standards and
 *   **Rule:** The pre-commit hook runs on every `git commit` to assert directory structure and naming conventions.
 *   **Rule:** Speclifting linters assert PII and security models before merging.
 
+### Article IV – Evidence Truth
+*   **Principle:** Claims are bounded by the environment and revision actually observed.
+*   **Rule:** Implementation, local verification, deployed verification, authenticated-owner verification, owner acceptance, and production release are distinct states.
+*   **Rule:** Evidence records tree/revision, environment, procedure, timestamp, result, and limitations.
+
+### Article V – Learning Without Drift
+*   **Principle:** Evidence may improve intent but may not silently replace it.
+*   **Rule:** Classify gaps as problem, specification, interaction, execution, environment, timing, or evidence failures.
+*   **Rule:** A changed destination requires a recorded decision or successor specification.
+
 ---
 
 ## 📋 Operational Checklists

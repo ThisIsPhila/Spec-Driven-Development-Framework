@@ -4,7 +4,7 @@
 /**
  * Spec Linter: validates privacy and profile-specific requirements for feature specs.
  *
- * Usage: node scripts/validate-spec.js path/to/spec.md
+ * Usage: node scripts/validate-spec.cjs path/to/spec.md
  */
 const fs = require("fs");
 const path = require("path");
@@ -12,7 +12,7 @@ const path = require("path");
 const specPath = process.argv[2];
 
 if (!specPath) {
-  console.error("❌ Missing spec file path. Usage: node scripts/validate-spec.js path/to/spec.md");
+  console.error("❌ Missing spec file path. Usage: node scripts/validate-spec.cjs path/to/spec.md");
   process.exit(1);
 }
 
@@ -35,8 +35,14 @@ if (fs.existsSync(profilePath)) {
 
 console.log(`🔍 Linting spec: ${path.relative(process.cwd(), resolvedPath)} (Profile: ${activeProfile})`);
 
-const isRequirements = fileName.includes("requirements") || /requirements/i.test(content) || /## 📋 Requirements/i.test(content);
-const isDesign = fileName.includes("design") || /design/i.test(content) || /## 🎯 Design Overview/i.test(content);
+// Classify by canonical filename first, then by a specific artifact heading.
+// The old `/requirements/i.test(content)` and `/design/i.test(content)` checks
+// classified almost every design as requirements (designs naturally discuss
+// requirements), forcing the requirements-only privacy section onto design.md.
+const isRequirements =
+  fileName.includes("requirements") || /^##[^\n]*\bRequirements\b/im.test(content);
+const isDesign =
+  fileName.includes("design") || /^##[^\n]*\bDesign (Overview|Specification)\b/im.test(content);
 
 // 1. General checks (Privacy & Security Model check for requirements files)
 if (isRequirements) {

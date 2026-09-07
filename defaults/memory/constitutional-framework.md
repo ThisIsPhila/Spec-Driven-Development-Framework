@@ -1,56 +1,40 @@
-# Constitutional Framework
+# Project SDD Constitution
 
 **Status:** Active
-**Version:** 1.0
+**Version:** 2.0
+**Effective:** [installation date]
 
----
+## 1. Authority and truth
 
-## 🎯 Purpose
+The owner sets scope and may grant a written, bounded exception. System instructions, this constitution, approved phase documents, and repository evidence govern in that order. An exception changes only what it names.
 
-This document defines the non-negotiable principles that govern this project. It ensures consistency, quality, and maintainability.
+Claims describe the revision and environment actually observed. Local verification, deployment, authenticated verification, owner acceptance, publication, merge, and external mutation are distinct states. Missing evidence is pending or blocked, never inferred success.
 
----
+## 2. Specification-driven work
 
-## ⚖️ The Articles
+Implementation requires traceable requirements, design, and tasks. Normal progression is requirements → design → tasks → execution → verification → owner acceptance. Exceptions live in `.sdd/memory/governance/`.
 
-### Article I – Security & Privacy
-**Principle:** Security is not an afterthought.
-- **Rule:** No hardcoded secrets.
-- **Rule:** Least privilege access.
-- **Rule:** Data must be encrypted where applicable.
+Authoring is not execution authority. A checked task requires its implementation and stated evidence on the exact assessed tree. Phase completion additionally requires reconciled state, cleared no-go conditions, and owner acceptance.
 
-### Article II – Specification-Driven Development (SDD)
-**Principle:** Code is a liability; specs are an asset.
-- **Rule:** No code without a linked Requirement and Design spec.
-- **Rule:** Specs must be approved before implementation begins.
-- **Rule:** Commits must reference the Spec/Task ID.
+## 3. Artifact boundary
 
-### Article III – Test-First
-**Principle:** If it isn't tested, it doesn't exist.
-- **Rule:** Write tests before code (TDD) where possible.
-- **Rule:** Coverage must meet defined thresholds.
-- **Rule:** Tests must be deterministic.
+- Specs and traceability: `.sdd/specs/`
+- Raw verification: `.sdd/evidence/<phase>/`
+- Audits and closeout reports: `.sdd/reports/<phase>/`
+- Current lifecycle state: `.sdd/memory/current-state/`
+- Owner exceptions: `.sdd/memory/governance/`
+- Historical thresholds/context: `.sdd/memory/archive/`
 
-### Article IV – The Law of Boundaries (Monorepo Architecture)
-**Principle:** Architecture integrity is enforced through separation of concerns.
-- **Rule:** No App-to-App Imports. `apps/cogni-chat` can never import from `apps/cogni-voice`; communicate via CUL or shared packages.
-- **Rule:** Logic Lives in Packages. Business logic belongs in shared packages (e.g., `packages/core`), not in app layers.
-- **Rule:** UI Components are Dumb. Shared UI components (`packages/ui`) must not contain business logic or API calls.
+`docs/` is for product, API, operator, and user documentation—not authoritative SDD status or evidence. Root agent files point here and do not duplicate policy.
 
-### Article V – The Law of Blindness (Privacy & Data)
-**Principle:** PII must be minimized, masked, and kept local whenever possible.
-- **Rule:** Mask First, Ask Later. No user input enters application state without passing through the PrivacyGuard sanitizer.
-- **Rule:** The Double-Blind Rule. Cloud databases (e.g., Supabase) must never contain unencrypted PII—only vectors or masked text.
-- **Rule:** Local Sovereignty. Unmasking keys never leave the user's device.
+## 4. Project invariants
 
-### Article VI – AI & Context
-**Principle:** AI agents are first-class team members.
-- **Rule:** Keep context files (`progress-tracker.md`, `project-overview.md`) up to date.
-- **Rule:** AI agents must follow the `AGENT_ONBOARDING.md` protocol.
+Define durable project-specific product, data, deployment, identity, and safety boundaries here. Profiles may append universal discipline; they must not invent product facts.
 
----
+## 5. Security, privacy, testing, and operability
 
-## 📋 Governance
+Designs identify trust boundaries, data classification, failure modes, negative cases, recovery, accessibility, observability, and environment separation. Secrets remain outside version control. Applicable tests run deterministically against the exact tree. Evidence records procedure, revision, environment, timestamp, result, and limitations.
 
-- **Approval Gates:** Requirements -> Design -> Implementation.
-- **Amendments:** Changes to this constitution require team consensus.
+## 6. Preservation and change control
+
+Preserve hooks, history, user work, project rules, and archived phases. Framework upgrades are conservative and report conflicts rather than overwriting project meaning. Constitution changes require owner authority, a version/date change, a rationale in `.sdd/reports/`, and corresponding tooling/template updates.

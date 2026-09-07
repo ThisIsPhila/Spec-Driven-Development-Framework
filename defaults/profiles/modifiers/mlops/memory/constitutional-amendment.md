@@ -1,4 +1,4 @@
-## Article VI: Data Governance
+## Amendment: Data Governance
 
 **Principle:** All datasets and experiments must be reproducible and ethically sound.
 

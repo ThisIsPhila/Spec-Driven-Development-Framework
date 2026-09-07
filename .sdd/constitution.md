@@ -1,7 +1,7 @@
 # Constitutional Framework - SDD Framework Project
 
 **Status:** Active  
-**Version:** 1.0  
+**Version:** 2.0  
 **Project:** Spec-Driven Development Framework
 
 ---
@@ -52,6 +52,24 @@ This constitution governs the development of the SDD framework itself. It ensure
 - **Rule:** Integration tests must pass before merging
 - **Rule:** All profiles must pass validation tests
 - **Rule:** Documentation must be updated with code changes
+
+### Article VI – Authority and Evidence Truth
+**Principle:** A claim is only as broad as the observation that supports it.
+- **Rule:** Review, authoring, local implementation, external mutation, merge/push, release, deployment, and owner acceptance are separate authorities.
+- **Rule:** Evidence records exact tree/revision, environment, procedure, timestamp, result, and limitations.
+- **Rule:** Checkbox state and agent prose never substitute for evidence.
+
+### Article VII – Artifact Boundary and Preservation
+**Principle:** One fact has one authoritative home.
+- **Rule:** Specs, evidence, reports, governance records, current state, and historical thresholds live in their declared `.sdd/` homes.
+- **Rule:** Root agent files are pointers, not duplicate constitutions.
+- **Rule:** Framework upgrades preserve consumer hooks, active work, project rules, history, and skills by default.
+
+### Article VIII – Evidence-to-Learning Loop
+**Principle:** The specification preserves intent while evidence improves it.
+- **Rule:** Each phase makes current state, intended state, observed gap, next authorized action, and learning explicit.
+- **Rule:** Failed validation is classified as problem, specification, interaction, execution, environment, timing, or evidence failure.
+- **Rule:** Learning changes intent through a recorded decision or successor spec, never silent implementation drift.
 
 ---
 
