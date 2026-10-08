@@ -5,6 +5,13 @@ All notable changes to the SDD Framework are documented here.
 ## [2.0.0] - Unreleased
 
 ### Added
+- **Visual Framework Workspace (`visual/`)**: Optional read-only interactive cockpit and static documentation site for Spec-Driven Development (Phase 005).
+  - Derived snapshot extraction pipeline parsing requirements, designs, tasks, and explicit traceability links with SHA-256 content revision digests.
+  - Isolated loopback HTTP service (`127.0.0.1`) with ephemeral token authentication, path traversal guards, and Server-Sent Events (SSE) live updates.
+  - Connected phase workspace views: 4-stage lifecycle progress strip, execution meters, filterable task cards, and structured evidence inspector.
+  - Interactive SVG traceability graph and accessible keyboard-navigable list alternative (`role="list"`).
+  - Resilient Mermaid diagram rendering with graceful error fallbacks to raw source code blocks.
+  - Public landing page and synthetic demonstration mode (`skills.sh` pattern) providing zero-dependency static exploration.
 - Canonical evidence, reports, governance, historical-threshold, and learning-loop artifacts under `.sdd/`.
 - Machine-readable `.sdd/framework.json` with profile and forward-threshold metadata.
 - Conservative `setup.sh --upgrade` flow with an in-framework upgrade manifest.

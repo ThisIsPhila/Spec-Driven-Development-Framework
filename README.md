@@ -20,6 +20,7 @@ To keep this project clean and maintainable, deep technical details are organize
 *   **[Core Architecture & Directory Layouts](docs/architecture.md)** — Layout references, profile compositions, and overlay file mechanisms.
 *   **[Operational Process Flows & Diagrams](docs/process-flows.md)** — Visual life cycle guides for setup, specifications, phase runner sprints, pre-commit hooks, and validation linters.
 *   **[CLI Tool Reference Guide](docs/cli-reference.md)** — Subcommands, arguments, and options for all script tools (`setup.sh`, `doctor.sh`, `skills.sh`, `phase.sh`, `validate-spec.cjs`, etc.).
+*   **[Visual Framework Workspace & Cockpit](docs/visual-workspace.md)** — Optional read-only web cockpit, live auto-updates, traceability graphs, and synthetic demonstration.
 *   **[Governance Constitution & rules](docs/governance.md)** — Repository constitution articles and operational rules checklists.
 *   **[Critical Assessment & Improvement Roadmap](docs/assessment.md)** — Evidence-based critique of the framework as a tool, with a sequenced roadmap and open decisions.
 
@@ -90,3 +91,25 @@ bash .sdd/scripts/phase.sh task <task-id> <done|doing|todo>
 bash .sdd/scripts/phase.sh finish
 ```
 See the **[CLI Reference](docs/cli-reference.md#2-phasesh--phase-sprint-runner-phase-hook)** for detailed subcommand information.
+
+---
+
+## 🖥️ Visual Framework Workspace (Optional Cockpit)
+
+The SDD Framework includes an optional, zero-dependency-on-core visual cockpit that runs locally to provide engineers with real-time visibility into specifications, task completion, evidence records, and dependency traceability while AI agents work:
+
+```bash
+# Install isolated visual dependencies
+npm --prefix visual install
+
+# Launch local cockpit (loopback-only with ephemeral token)
+npm --prefix visual run workspace
+
+# Or build static documentation and demo bundle
+npm --prefix visual run build
+```
+
+- **Live Auto-Updates:** Reflects file changes on disk via Server-Sent Events (SSE) within seconds without losing scroll or selection.
+- **Traceability Visualizations:** Responsive SVG graphs and accessible lists connect Requirements (`REQ-*`), Tasks (`T*`), and Evidence records.
+- **Public Demonstration:** Inspired by `skills.sh`, includes an interactive synthetic demonstration that runs completely statically without backend servers or credentials.
+- **Strictly Read-Only:** Exposes no file-mutation endpoints, eliminating write-race conflicts with autonomous agents.
