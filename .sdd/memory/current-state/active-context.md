@@ -1,7 +1,7 @@
 # Active Context
 
 **Current Phase:** phase-005-visual-framework-workspace  
-**Current Task:** T005.2 - Extract project phases, specifications, tasks, and explicit relationships
+**Current Task:** T005.3 - Serve isolated local projects and reflect file changes
 **Branch:** feat/phase-005-visual-framework-workspace
 
 ## Focus
