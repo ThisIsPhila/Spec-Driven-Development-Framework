@@ -1,7 +1,7 @@
 # Active Context
 
 **Current Phase:** phase-005-visual-framework-workspace  
-**Current Task:** T005.3 - Serve isolated local projects and reflect file changes
+**Current Task:** T005.4 - Build the connected phase workspace and accessible visual views
 **Branch:** feat/phase-005-visual-framework-workspace
 
 ## Focus
