@@ -1,0 +1,107 @@
+{
+  "projectId": "cloud-billing-service",
+  "projectRoot": "/synthetic/workspace/cloud-billing-service",
+  "extractionTime": "2026-10-08T12:00:00.000Z",
+  "contentRevision": "9f8e7d6c5b4a3210",
+  "profile": "api",
+  "activePhaseId": "phase-003-stripe-webhook-handling",
+  "phases": [
+    {
+      "id": "phase-003-stripe-webhook-handling",
+      "name": "Phase 003 — Stripe Webhook Handling",
+      "category": "active",
+      "status": "IN_PROGRESS",
+      "taskCounts": {
+        "total": 4,
+        "completed": 2,
+        "inProgress": 1,
+        "pending": 1,
+        "percent": 50
+      },
+      "artifacts": {
+        "requirements": {
+          "status": "APPROVED",
+          "content": "# Requirements: Stripe Webhook Handling\n\n**Status:** APPROVED\n**Profile:** api\n\n## Core Requirements\n\n### REQ-003.1 — Signature Verification\nThe webhook receiver must verify Stripe HMAC signatures using the configured webhook secret before parsing the payload body.\n\n### REQ-003.2 — Idempotent Event Processing\nThe service must store incoming `event.id` values with a 24-hour TTL in cache to reject duplicate transmissions.\n\n### REQ-003.3 — Asynchronous Queue Dispatch\nEvents must be enqueued into the background processing queue within 200ms of receipt, returning an HTTP 200 status immediately.\n"
+        },
+        "design": {
+          "status": "APPROVED",
+          "content": "# Design: Stripe Webhook Handling\n\n**Status:** APPROVED\n\n## Architecture Sequence\n\n```mermaid\nsequenceDiagram\n  autonumber\n  Stripe ->> Webhook Handler: POST /webhooks/stripe (Signed Event)\n  Webhook Handler ->> Crypto Verifier: Validate Signature (HMAC SHA-256)\n  Crypto Verifier -->> Webhook Handler: Valid Signature\n  Webhook Handler ->> Cache: Check Event ID (Idempotency Key)\n  Cache -->> Webhook Handler: Key not found (First seen)\n  Webhook Handler ->> Event Queue: Enqueue 'invoice.payment_succeeded'\n  Webhook Handler -->> Stripe: 200 OK (Event Acknowledged)\n```\n\n## Security Boundaries\n- Never trust raw unverified JSON.\n- Read raw request buffer before json parsing to calculate hash signature.\n"
+        },
+        "tasks": {
+          "status": "READY",
+          "content": "# Tasks: Stripe Webhook Handling\n\n- [x] **[T003.1]** Implement cryptographic signature check with raw body buffer (REQ-003.1)\n- [x] **[T003.2]** Add Redis idempotency lock with 24-hour expiration (REQ-003.2)\n- [/] **[T003.3]** Integrate background event queue publisher with BullMQ (REQ-003.3)\n  - **Objective:** Dispatch webhook payload to queue and respond with 200 OK.\n  - **Contract:** Queue accepts valid JSON; failure logs error and alerts.\n- [ ] **[T003.4]** Add automated negative test cases for expired signatures and replays (REQ-003.1)\n"
+        },
+        "evidence": [
+          {
+            "id": "webhook-idempotency.md",
+            "filename": "webhook-idempotency.md",
+            "parsed": {
+              "result": "PASS",
+              "assessedTree": "7b29e01",
+              "environment": "Ubuntu 24.04 LTS, Node.js v22.13.0, Redis 7.2",
+              "timestamp": "2026-10-08T11:45:00Z",
+              "limitations": "Tested using synthetic replay attacks and simulated network drops."
+            },
+            "content": "# Evidence: Webhook Idempotency Verification\n\n**Result:** PASS  \n**Assessed Tree / Revision:** 7b29e01  \n**Environment:** Ubuntu 24.04 LTS, Node.js v22.13.0, Redis 7.2  \n**Timestamp:** 2026-10-08T11:45:00Z  \n**Limitations:** Tested using synthetic replay attacks and simulated network drops.  \n\n## Procedure\n1. Dispatched 50 duplicate webhook payloads with identical event ID `evt_test_12345`.\n2. Confirmed that only the first request enqueued a processing job.\n3. Confirmed subsequent 49 duplicate requests returned HTTP 200 without duplicate queue entries.\n"
+          }
+        ]
+      },
+      "requirements": [
+        { "id": "REQ-003.1", "title": "Signature Verification" },
+        { "id": "REQ-003.2", "title": "Idempotent Event Processing" },
+        { "id": "REQ-003.3", "title": "Asynchronous Queue Dispatch" }
+      ],
+      "tasks": [
+        { "id": "T003.1", "title": "Implement cryptographic signature check", "status": "done" },
+        { "id": "T003.2", "title": "Add Redis idempotency lock", "status": "done" },
+        { "id": "T003.3", "title": "Integrate background event queue publisher", "status": "doing", "contract": "Objective: Dispatch webhook payload to queue and respond with 200 OK.\nContract: Queue accepts valid JSON; failure logs error and alerts." },
+        { "id": "T003.4", "title": "Add automated negative test cases", "status": "todo" }
+      ],
+      "relationships": [
+        { "from": "T003.1", "to": "REQ-003.1", "type": "implements", "source": "tasks.md" },
+        { "from": "T003.2", "to": "REQ-003.2", "type": "implements", "source": "tasks.md" },
+        { "from": "T003.3", "to": "REQ-003.3", "type": "implements", "source": "tasks.md" },
+        { "from": "T003.4", "to": "REQ-003.1", "type": "implements", "source": "tasks.md" },
+        { "from": "webhook-idempotency.md", "to": "REQ-003.2", "type": "verifies", "source": "webhook-idempotency.md" }
+      ],
+      "warnings": []
+    },
+    {
+      "id": "phase-001-account-provisioning",
+      "name": "Phase 001 — Account Provisioning",
+      "category": "archive",
+      "status": "COMPLETED",
+      "taskCounts": { "total": 3, "completed": 3, "inProgress": 0, "pending": 0, "percent": 100 },
+      "artifacts": { "evidence": [] },
+      "requirements": [],
+      "tasks": [],
+      "relationships": [],
+      "warnings": []
+    },
+    {
+      "id": "phase-002-invoice-generation",
+      "name": "Phase 002 — Invoice Generation",
+      "category": "archive",
+      "status": "COMPLETED",
+      "taskCounts": { "total": 4, "completed": 4, "inProgress": 0, "pending": 0, "percent": 100 },
+      "artifacts": { "evidence": [] },
+      "requirements": [],
+      "tasks": [],
+      "relationships": [],
+      "warnings": []
+    },
+    {
+      "id": "phase-004-dunning-retry-strategy",
+      "name": "Phase 004 — Dunning & Retry Strategy",
+      "category": "backlog",
+      "status": "BACKLOG",
+      "taskCounts": { "total": 3, "completed": 0, "inProgress": 0, "pending": 3, "percent": 0 },
+      "artifacts": { "evidence": [] },
+      "requirements": [],
+      "tasks": [],
+      "relationships": [],
+      "warnings": []
+    }
+  ],
+  "diagnostics": []
+}

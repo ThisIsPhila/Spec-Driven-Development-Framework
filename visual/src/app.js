@@ -2,12 +2,14 @@ import { renderOverviewView } from './views/overviewView.js';
 import { renderSpecView } from './views/specView.js';
 import { renderEvidenceView } from './views/evidenceView.js';
 import { renderRelationshipsView } from './views/relationshipsView.js';
+import { renderLandingView } from './views/landingView.js';
 import { renderMermaidBlocks } from './diagrams.js';
 
 export class SDDWorkspaceApp {
   constructor(containerId = 'app') {
     this.container = document.getElementById(containerId);
     this.token = this._resolveToken();
+    this.viewMode = this.token ? 'workspace' : 'landing'; // 'landing' | 'workspace'
     this.projects = [];
     this.currentProjectId = null;
     this.snapshot = null;
@@ -28,7 +30,6 @@ export class SDDWorkspaceApp {
     if (hashMatch) {
       const token = hashMatch[1];
       sessionStorage.setItem('sdd_token', token);
-      // Clean fragment from URL for security
       history.replaceState(null, '', window.location.pathname + window.location.search);
       return token;
     }
@@ -52,21 +53,23 @@ export class SDDWorkspaceApp {
   }
 
   async _loadProjects() {
-    try {
-      const res = await fetch(`/api/projects?token=${encodeURIComponent(this.token)}`);
-      if (res.ok) {
-        this.projects = await res.json();
-        if (this.projects.length > 0) {
-          const defaultProject = this.projects[0];
-          await this.selectProject(defaultProject.id);
-          return;
+    if (this.token) {
+      try {
+        const res = await fetch(`/api/projects?token=${encodeURIComponent(this.token)}`);
+        if (res.ok) {
+          this.projects = await res.json();
+          if (this.projects.length > 0) {
+            this.viewMode = 'workspace';
+            await this.selectProject(this.projects[0].id);
+            return;
+          }
         }
+      } catch {
+        // Fall through to demo loader
       }
-    } catch {
-      // Fall through to demo loader
     }
 
-    // Fallback: Check for static demo data
+    // If no token or fetch failed, prepare static demo dataset
     await this._loadStaticDemo();
   }
 
@@ -89,11 +92,15 @@ export class SDDWorkspaceApp {
         return;
       }
     } catch {
-      // Demo not available
+      // Demo fetch error
     }
 
-    this.connectionStatus = 'stale';
-    this._renderError('Could not connect to SDD local server. Make sure `npm run workspace` is running.');
+    if (this.viewMode === 'workspace') {
+      this.connectionStatus = 'stale';
+      this._renderError('Could not connect to SDD local server. Make sure `npm run workspace` is running.');
+    } else {
+      this.render();
+    }
   }
 
   async selectProject(projectId) {
@@ -130,8 +137,7 @@ export class SDDWorkspaceApp {
           this.connectionStatus = 'polling';
         }
 
-        // If revision changed, update view preserving scroll
-        if (prevRevision && prevRevision !== data.contentRevision) {
+        if (prevRevision && prevRevision !== data.contentRevision && this.viewMode === 'workspace') {
           this._softRerender();
         }
       } else {
@@ -166,7 +172,9 @@ export class SDDWorkspaceApp {
             this.snapshot = msg.snapshot;
             this.lastUpdateTime = new Date();
             this.connectionStatus = 'live';
-            this._softRerender();
+            if (this.viewMode === 'workspace') {
+              this._softRerender();
+            }
           }
         } catch (err) {
           console.warn('Failed parsing SSE update message:', err);
@@ -187,9 +195,8 @@ export class SDDWorkspaceApp {
 
   _startPolling() {
     if (this.pollTimer) clearInterval(this.pollTimer);
-    // Poll every 2 seconds while tab is visible as resilient fallback
     this.pollTimer = setInterval(() => {
-      if (document.visibilityState === 'visible') {
+      if (document.visibilityState === 'visible' && this.viewMode === 'workspace') {
         this._fetchSnapshot();
       }
     }, 2000);
@@ -197,7 +204,7 @@ export class SDDWorkspaceApp {
 
   _setupVisibilityListener() {
     document.addEventListener('visibilitychange', () => {
-      if (document.visibilityState === 'visible') {
+      if (document.visibilityState === 'visible' && this.viewMode === 'workspace') {
         this._fetchSnapshot();
       }
     });
@@ -216,6 +223,36 @@ export class SDDWorkspaceApp {
 
   render() {
     if (!this.container) return;
+
+    if (this.viewMode === 'landing') {
+      this.container.innerHTML = `
+        <div class="landing-layout">
+          <header class="workspace-header">
+            <div class="header-left">
+              <div class="brand">
+                <span class="brand-icon">⚡</span>
+                <span class="brand-name">SDD Framework</span>
+              </div>
+            </div>
+            <div class="header-right">
+              <button id="nav-demo-btn" class="btn btn-secondary btn-sm">
+                Explore Demo Cockpit
+              </button>
+              <a href="https://github.com/ThisIsPhila/Spec-Driven-Development-Framework" target="_blank" rel="noopener noreferrer" class="link-muted">
+                GitHub ↗
+              </a>
+            </div>
+          </header>
+          <main class="landing-main">
+            ${renderLandingView()}
+          </main>
+        </div>
+      `;
+      this._bindLandingEvents();
+      return;
+    }
+
+    // Workspace Mode
     const phase = this.getActivePhase();
 
     this.container.innerHTML = `
@@ -225,8 +262,11 @@ export class SDDWorkspaceApp {
           <div class="header-left">
             <div class="brand">
               <span class="brand-icon">⚡</span>
-              <span class="brand-name">SDD Visual Workspace</span>
+              <span class="brand-name">SDD Workspace</span>
             </div>
+            <button id="nav-landing-btn" class="btn-text">
+              ← Home / Docs
+            </button>
             ${this._renderProjectSelector()}
           </div>
 
@@ -299,9 +339,8 @@ export class SDDWorkspaceApp {
       </div>
     `;
 
-    this._bindEvents();
+    this._bindWorkspaceEvents();
 
-    // Trigger mermaid rendering if currently on design tab
     if (this.activeTab === 'design') {
       renderMermaidBlocks(this.container);
     }
@@ -400,7 +439,46 @@ export class SDDWorkspaceApp {
     if (el) el.innerHTML = this._getStatusBadgeHtml();
   }
 
-  _bindEvents() {
+  _bindLandingEvents() {
+    const launchDemoBtn = document.getElementById('launch-demo-btn');
+    if (launchDemoBtn) {
+      launchDemoBtn.addEventListener('click', () => {
+        this.viewMode = 'workspace';
+        this.render();
+      });
+    }
+
+    const navDemoBtn = document.getElementById('nav-demo-btn');
+    if (navDemoBtn) {
+      navDemoBtn.addEventListener('click', () => {
+        this.viewMode = 'workspace';
+        this.render();
+      });
+    }
+
+    const copyBtn = document.getElementById('copy-cmd-btn');
+    const cmdEl = document.getElementById('install-cmd');
+    if (copyBtn && cmdEl) {
+      copyBtn.addEventListener('click', () => {
+        navigator.clipboard.writeText(cmdEl.innerText.trim()).then(() => {
+          copyBtn.textContent = 'Copied!';
+          setTimeout(() => { copyBtn.textContent = 'Copy'; }, 2000);
+        }).catch(() => {
+          copyBtn.textContent = 'Copied!';
+        });
+      });
+    }
+  }
+
+  _bindWorkspaceEvents() {
+    const navLandingBtn = document.getElementById('nav-landing-btn');
+    if (navLandingBtn) {
+      navLandingBtn.addEventListener('click', () => {
+        this.viewMode = 'landing';
+        this.render();
+      });
+    }
+
     // Phase selection
     this.container.querySelectorAll('.nav-item').forEach(el => {
       el.addEventListener('click', () => {

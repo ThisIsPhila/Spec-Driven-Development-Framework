@@ -1125,3 +1125,287 @@ body {
     grid-template-columns: 1fr 1fr;
   }
 }
+
+/* Button Styles */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.6rem 1.25rem;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: all 0.15s ease;
+  text-decoration: none;
+}
+.btn-primary {
+  background: var(--accent-color);
+  color: #fff;
+}
+.btn-primary:hover {
+  background: var(--accent-hover);
+}
+.btn-secondary {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  border-color: var(--border-color);
+}
+.btn-secondary:hover {
+  background: var(--bg-hover);
+  border-color: var(--accent-color);
+}
+.btn-sm {
+  padding: 0.35rem 0.75rem;
+  font-size: 0.8rem;
+}
+.btn-text {
+  background: none;
+  border: none;
+  color: var(--accent-hover);
+  font-size: 0.85rem;
+  cursor: pointer;
+  padding: 0.3rem 0.6rem;
+}
+.btn-text:hover {
+  text-decoration: underline;
+}
+.link-muted {
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  text-decoration: none;
+}
+.link-muted:hover {
+  color: var(--text-primary);
+}
+
+/* Landing Page Styles */
+.landing-layout {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+.landing-main {
+  flex: 1;
+  max-width: 1040px;
+  margin: 0 auto;
+  padding: 3rem 1.5rem 6rem;
+  width: 100%;
+}
+.landing-hero {
+  text-align: center;
+  padding: 3rem 1rem 4rem;
+}
+.hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: var(--accent-soft);
+  color: var(--accent-hover);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  padding: 0.35rem 0.8rem;
+  border-radius: 9999px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  margin-bottom: 1.5rem;
+}
+.hero-title {
+  font-size: 3rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  margin: 0 0 1.25rem;
+  line-height: 1.15;
+  background: linear-gradient(180deg, #ffffff 0%, #cbd5e1 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.hero-subtitle {
+  font-size: 1.2rem;
+  color: var(--text-secondary);
+  max-width: 680px;
+  margin: 0 auto 2.5rem;
+  line-height: 1.6;
+}
+.hero-actions {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin-bottom: 3rem;
+}
+
+/* Install Terminal Snippet */
+.install-card {
+  max-width: 650px;
+  margin: 0 auto;
+  background: #090d15;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
+}
+.install-header {
+  background: var(--bg-secondary);
+  padding: 0.45rem 0.8rem;
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid var(--border-subtle);
+}
+.install-dots {
+  display: flex;
+  gap: 6px;
+}
+.install-dots i {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  display: inline-block;
+  background: #334155;
+}
+.install-dots i:first-child { background: #ef4444; }
+.install-dots i:nth-child(2) { background: #f59e0b; }
+.install-dots i:last-child { background: #10b981; }
+.install-label {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  margin-left: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.install-code-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.9rem 1.25rem;
+  gap: 1rem;
+}
+.install-code-row code {
+  color: #38bdf8;
+  font-size: 0.85rem;
+  word-break: break-all;
+}
+.btn-copy {
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+  padding: 0.35rem 0.75rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.btn-copy:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+/* Pillars Section */
+.pillars-section, .profiles-section, .commands-section {
+  margin-top: 4rem;
+}
+.section-title {
+  font-size: 1.8rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  margin-bottom: 0.5rem;
+}
+.section-desc {
+  color: var(--text-secondary);
+  margin-bottom: 1.75rem;
+  font-size: 0.95rem;
+}
+.pillars-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.25rem;
+  margin-top: 1.5rem;
+}
+.pillar-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 1.5rem;
+}
+.pillar-icon {
+  font-size: 1.8rem;
+  margin-bottom: 0.75rem;
+}
+.pillar-card h3 {
+  margin: 0 0 0.5rem;
+  font-size: 1.15rem;
+  font-weight: 700;
+}
+.pillar-card p {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+
+/* Profiles Grid */
+.profiles-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+}
+.profile-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 1.25rem;
+  transition: transform 0.15s ease, border-color 0.15s ease;
+}
+.profile-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--accent-color);
+}
+.profile-name {
+  color: var(--accent-hover);
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+.profile-desc {
+  margin: 0.6rem 0 0;
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+  line-height: 1.5;
+}
+
+/* Commands Table */
+.commands-table-wrapper {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  overflow: hidden;
+  margin-top: 1.25rem;
+}
+.commands-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.commands-table th, .commands-table td {
+  padding: 0.8rem 1.25rem;
+  text-align: left;
+  border-bottom: 1px solid var(--border-subtle);
+  font-size: 0.85rem;
+}
+.commands-table th {
+  background: var(--bg-secondary);
+  color: var(--text-muted);
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  letter-spacing: 0.05em;
+}
+.commands-table code {
+  color: var(--accent-hover);
+}
+
+@media (max-width: 900px) {
+  .hero-title { font-size: 2.2rem; }
+  .pillars-grid { grid-template-columns: 1fr; }
+  .profiles-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 600px) {
+  .profiles-grid { grid-template-columns: 1fr; }
+}
