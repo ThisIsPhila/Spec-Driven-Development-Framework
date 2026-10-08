@@ -7,6 +7,9 @@ Thumbs.db
 
 # Temporary files
 tmp/
+node_modules/
+dist/
+.vite/
 
 # Agent Specific Files
 # Generated agent adapter directories. These are derived artifacts regenerated

@@ -1,0 +1,22 @@
+{
+  "name": "@sdd/visual",
+  "version": "0.1.0",
+  "description": "Visual workspace and public landing interface for Spec-Driven Development",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test": "node --test tests/*.test.js",
+    "workspace": "node server/cli.js"
+  },
+  "dependencies": {
+    "dompurify": "^3.2.4",
+    "marked": "^15.0.7",
+    "mermaid": "^11.4.1"
+  },
+  "devDependencies": {
+    "vite": "^6.2.0"
+  }
+}

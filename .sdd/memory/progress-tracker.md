@@ -1,5 +1,9 @@
 # Progress Tracker - SDD Framework
 
+### Phase 005 — Visual Framework Workspace
+- **Status:** In Progress
+- **Scope:** Visual HTML project/phase workspace, connected specification reading, live progress updates, and public introduction/demo site.
+
 ### Phase 004 — Intent, Evidence, and Learning Loop
 - **Status:** Complete
 - **Scope:** Canonical governance, evidence topology, detailed tasks, safe upgrades, runtime-neutral validation, and explicit learning feedback.

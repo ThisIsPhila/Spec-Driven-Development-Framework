@@ -1,15 +1,14 @@
 # Active Context
 
-**Current Phase:** [Phase N - Name]
-**Current Task:** [Task ID - Title]
-**Branch:** [branch-name]
+**Current Phase:** phase-005-visual-framework-workspace  
+**Current Task:** T005.1 - Establish the optional visual package and representative fixtures
+**Branch:** feat/phase-005-visual-framework-workspace
 
 ## Focus
-- [Primary objective]
-- [Secondary objective]
+- Implement specifications for phase-005-visual-framework-workspace
 
 ## Recent Decisions
-- [Decision]
+- Sprint initialized using phase.sh start command
 
 ## Open Questions
-- [Question]
+- [None]
