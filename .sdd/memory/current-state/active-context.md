@@ -1,7 +1,7 @@
 # Active Context
 
 **Current Phase:** phase-005-visual-framework-workspace  
-**Current Task:** T005.1 - Establish the optional visual package and representative fixtures
+**Current Task:** T005.2 - Extract project phases, specifications, tasks, and explicit relationships
 **Branch:** feat/phase-005-visual-framework-workspace
 
 ## Focus
