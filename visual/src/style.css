@@ -3666,3 +3666,6 @@ a {
 .btn-secondary:hover { background:#222; }
 .btn-primary:hover { background:#fff; }
 .btn:focus-visible { outline:2px solid #ededed; outline-offset:3px; }
+
+.imported-graph-scroller { max-width:100%; overflow:auto; max-height:65vh; }
+.imported-graph { display:block; min-width:1100px; width:100%; }

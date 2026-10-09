@@ -533,7 +533,7 @@ function computeProjectMetrics(snapshot) {
     overallProgressPct: totalTasksAll > 0 ? Math.round((completedTasksAll / totalTasksAll) * 100) : 0,
     traceabilityCoveragePct: totalReqsAll > 0 ? Math.round((mappedReqsAll / totalReqsAll) * 100) : 100,
     verificationAssurancePct: totalReqsAll > 0 ? Math.round((verifiedReqsAll / totalReqsAll) * 100) : 0,
-    activeSprintsCount: snapshot.phases.filter(p => p.category === 'active').length,
+    activeSprintsCount: snapshot.phases.filter(p => p.id === snapshot.activePhaseId).length,
     orphanTaskCount: orphanTasksAll,
     unmappedReqCount: unmappedReqsAll,
     phasesBurndown: snapshot.phases.map(p => ({

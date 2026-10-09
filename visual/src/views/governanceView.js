@@ -59,7 +59,7 @@ export function renderGovernanceView(snapshot, activeSubTab = 'active-context') 
             </button>
           `).join('')}
 
-          <div class="sidebar-section-title font-mono" style="margin-top:1.25rem;">ENFORCED RULES (${rules.length})</div>
+          <div class="sidebar-section-title font-mono" style="margin-top:1.25rem;">DECLARED RULES (${rules.length})</div>
           ${rules.map(r => `
             <button class="domain-nav-item ${activeSubTab === `rule-${r.id}` ? 'active' : ''}" data-gov-tab="rule-${r.id}">
               <span class="item-icon">${ICONS.terminal}</span>

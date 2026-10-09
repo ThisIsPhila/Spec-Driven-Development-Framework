@@ -13,6 +13,8 @@ test.beforeAll(async () => {
     fs.writeFileSync(path.join(folder,'requirements.md'),`# Project phase ${i}\n**Status:** Approved\n### REQ-${id}.1: Functional behavior\n`);
     fs.writeFileSync(path.join(folder,'tasks.md'),`# Tasks\n- [x] **[T${id}.1]** Completed task\n  - **Objective:** REQ-${id}.1\n- [ ] **[T${id}.2]** Pending task\n  - **Objective:** REQ-${id}.1\n`);
   }
+  fs.mkdirSync(path.join(root,'graphify-out'));
+  fs.writeFileSync(path.join(root,'graphify-out/graph.json'),JSON.stringify({nodes:[{id:'source',label:'Source file',type:'file'},{id:'parser',label:'Task parser',type:'function'}],edges:[{from:'source',to:'parser',label:'calls',provenance:'EXTRACTED'}]}));
   service = new LocalProjectService({port:0,staticDir:path.resolve('dist')}); service.registerProject(root); info=await service.start();
   accountService = new AccountService({database:':memory:',port:0,staticDir:path.resolve('dist')}); accountInfo=await accountService.start();
 });
@@ -56,6 +58,10 @@ test('real 60-phase workspace filters tasks and follows requirement/source links
   await expect(page.locator('[data-phase-tab="tasks"]')).toHaveClass(/active/);
   await expect(page.locator('.task-card')).toHaveCount(2);
   for (const width of [320,390,768,1024,1440]) { await page.setViewportSize({width,height:844}); const sizes=await page.evaluate(()=>({document:document.documentElement.scrollWidth,viewport:innerWidth})); expect(sizes.document, `workspace overflow at ${width}`).toBeLessThanOrEqual(sizes.viewport); }
+  await page.locator('[data-domain="knowledge"]').click(); await page.locator('[data-know-section="graphify"]').click();
+  await expect(page.getByRole('img',{name:'Imported Graphify topology'})).toBeVisible();
+  await expect(page.locator('.imported-graph rect')).toHaveCount(2);
+  await expect(page.locator('.imported-graph line')).toHaveCount(1);
 });
 test('account sign-up is functional and an empty account has no invented projects',async ({page})=>{
   await page.goto(accountInfo.url);

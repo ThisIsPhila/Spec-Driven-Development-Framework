@@ -85,7 +85,7 @@ test('renderGovernanceView surfaces constitution, memories and enforced rules', 
   const html = renderGovernanceView(demoSnapshot, 'constitution');
   assert.ok(html.includes('Constitution'), 'must include constitution');
   assert.ok(html.includes('PROJECT MEMORIES'), 'must include memories navigation');
-  assert.ok(html.includes('ENFORCED RULES'), 'must include rules navigation');
+  assert.ok(html.includes('DECLARED RULES'), 'must include rules navigation');
 });
 
 test('renderAutomationView surfaces scripts and Git pre-commit telemetry', () => {
@@ -104,4 +104,14 @@ test('renderKnowledgeView surfaces spec templates, docs and Graphify network', (
   const htmlGraph = renderKnowledgeView(demoSnapshot, 'graphify', null);
   assert.ok(htmlGraph.includes('Derived Artifact Map'), 'must show graphify network');
   assert.ok(htmlGraph.includes('Governance & Rules'), 'must show governance entity column');
+});
+
+test('actual Graphify exports show topology and external node types instead of an empty matrix', () => {
+  const snapshot={graphify:{source:'graphify-export',nodes:[{id:'file-a',label:'Requirements source',type:'file'},{id:'function-b',label:'Task parser',type:'function'}],edges:[{from:'file-a',to:'function-b',label:'calls',provenance:'EXTRACTED'}]}};
+  const html=renderKnowledgeView(snapshot,'graphify');
+  assert.match(html,/Imported Graphify topology/);
+  assert.match(html,/Requirements source/);
+  assert.match(html,/Task parser/);
+  assert.match(html,/<line /);
+  assert.match(html,/EXTRACTED/);
 });

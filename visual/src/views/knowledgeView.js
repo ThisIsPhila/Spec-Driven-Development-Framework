@@ -133,6 +133,7 @@ export function renderKnowledgeView(snapshot, activeSubTab = 'templates', select
             </p>
           </header>
 
+          ${graphify.source === 'graphify-export' ? renderImportedGraph(graphify) : ''}
           <!-- Graphify Visual Entity Matrix -->
           <div class="graphify-entity-grid font-mono">
             <div class="entity-column">
@@ -178,8 +179,20 @@ export function renderKnowledgeView(snapshot, activeSubTab = 'templates', select
         <details><summary>All discovered .sdd artifacts (${snapshot.artifactIndex?.length || 0})</summary>
           ${(snapshot.artifactIndex || []).map(file => `<p><button class="btn btn-secondary" data-source-path="${escapeHtml(file.path)}">${file.relativePath}</button> ${file.kind} · ${file.bytes} bytes</p>`).join('')}
         </details>
-        <details><summary>Graph relationships and provenance</summary>${(graphify.edges || []).map(edge => `<p>${edge.from} → ${edge.to}: ${edge.label} (${edge.provenance || 'UNSPECIFIED'})</p>`).join('')}</details>
+        <details><summary>Graph relationships and provenance</summary>${(graphify.edges || []).map(edge => `<p>${edge.from} → ${edge.to}: ${edge.label} (${edge.provenance || 'UNSPECIFIED'}; confidence: ${edge.confidence ?? 'unrecorded'})</p>`).join('')}</details>
       </section>
     </div>
   `;
+}
+
+function renderImportedGraph(graph) {
+  const nodes = (graph.nodes || []).slice(0, 150);
+  const positions = new Map(nodes.map((node, index) => [node.id, {x:30 + (index % 8) * 180, y:40 + Math.floor(index / 8) * 65}]));
+  const edges = (graph.edges || []).filter(edge => positions.has(edge.from) && positions.has(edge.to)).slice(0,500);
+  return `<p class="font-mono">Imported topology: ${nodes.length}/${graph.nodes.length} nodes and ${edges.length} internal edges shown. Full node and provenance lists are below.</p>
+    <div class="imported-graph-scroller"><svg class="imported-graph" viewBox="0 0 1460 ${Math.max(160, Math.ceil(nodes.length/8)*65+50)}" role="img" aria-label="Imported Graphify topology">
+      ${edges.map(edge => {const a=positions.get(edge.from),b=positions.get(edge.to);return `<line x1="${a.x+75}" y1="${a.y+12}" x2="${b.x+75}" y2="${b.y+12}" stroke="#777" stroke-opacity="0.35"><title>${edge.label}: ${edge.provenance || 'UNSPECIFIED'}</title></line>`;}).join('')}
+      ${nodes.map(node => {const point=positions.get(node.id);return `<g><title>${node.label} (${node.type})</title><rect x="${point.x}" y="${point.y}" width="150" height="30" rx="4" fill="#161616" stroke="#555"/><text x="${point.x+6}" y="${point.y+19}" fill="#ddd" font-size="10">${node.label.slice(0,23)}</text></g>`;}).join('')}
+    </svg></div>
+    <details><summary>All imported nodes (${graph.nodes.length})</summary>${graph.nodes.map(node => `<p>${node.label} — ${node.type}</p>`).join('')}</details>`;
 }
