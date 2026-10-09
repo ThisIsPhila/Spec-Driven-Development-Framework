@@ -23,4 +23,6 @@ test('actual CLI accepts repeated project arguments, serves them and exits clean
 test('CLI rejects unknown options rather than silently ignoring them',()=>{
   const result=spawnSync(process.execPath,[cli,'--unknown'],{encoding:'utf8'});
   assert.equal(result.status,1);assert.match(result.stderr,/Unknown or incomplete option/);
+  const malformed=spawnSync(process.execPath,[cli,'--port','1x'],{encoding:'utf8'});
+  assert.equal(malformed.status,1); assert.match(malformed.stderr,/Port must be an integer/);
 });

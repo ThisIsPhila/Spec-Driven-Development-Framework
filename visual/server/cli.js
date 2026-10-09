@@ -19,7 +19,7 @@ for (let i = 0; i < args.length; i++) {
     projectPaths.push(args[i + 1]);
     i++;
   } else if (args[i] === '--port' && args[i + 1]) {
-    port = parseInt(args[i + 1], 10);
+    port = Number(args[i + 1]);
     i++;
   } else { console.error(`[SDD] Unknown or incomplete option: ${args[i]}`); process.exit(1); }
 }

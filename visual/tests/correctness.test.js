@@ -70,9 +70,13 @@ test('same-named projects register independently and repeated roots are idempote
   const a = fixture(), b = fixture();
   const service = new LocalProjectService();
   try {
-    const first = service.registerProject(a.root), second = service.registerProject(b.root);
+    const firstRoot=path.join(a.root,'same-name'), secondRoot=path.join(b.root,'same-name');
+    fs.mkdirSync(firstRoot); fs.mkdirSync(secondRoot);
+    fs.renameSync(path.join(a.root,'.sdd'),path.join(firstRoot,'.sdd'));
+    fs.renameSync(path.join(b.root,'.sdd'),path.join(secondRoot,'.sdd'));
+    const first = service.registerProject(firstRoot), second = service.registerProject(secondRoot);
     assert.notEqual(first.id, second.id);
-    assert.equal(service.registerProject(a.root), first);
+    assert.equal(service.registerProject(firstRoot), first);
   } finally { service.stop(); fs.rmSync(a.root, {recursive:true,force:true}); fs.rmSync(b.root, {recursive:true,force:true}); }
 });
 
