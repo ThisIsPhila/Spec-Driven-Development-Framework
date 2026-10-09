@@ -14,6 +14,7 @@ test.beforeAll(async () => {
     fs.writeFileSync(path.join(folder,'tasks.md'),`# Tasks\n- [x] **[T${id}.1]** Completed task\n  - **Objective:** REQ-${id}.1\n- [ ] **[T${id}.2]** Pending task\n  - **Objective:** REQ-${id}.1\n`);
   }
   fs.mkdirSync(path.join(root,'graphify-out'));
+  fs.writeFileSync(path.join(root,'.sdd/specs/active/phase-001-example/design.md'),'# Design\n```mermaid\nflowchart LR\n Files[Markdown files] --> Extractor --> Viewer[Visual workspace]\n```\n');
   fs.writeFileSync(path.join(root,'graphify-out/graph.json'),JSON.stringify({nodes:[{id:'source',label:'Source file',type:'file'},{id:'parser',label:'Task parser',type:'function'}],edges:[{from:'source',to:'parser',label:'calls',provenance:'EXTRACTED'}]}));
   service = new LocalProjectService({port:0,staticDir:path.resolve('dist')}); service.registerProject(root); info=await service.start();
   accountService = new AccountService({database:':memory:',port:0,staticDir:path.resolve('dist')}); accountInfo=await accountService.start();
@@ -23,13 +24,31 @@ test('public page stays contained at mobile, tablet and desktop widths',async ({
   for (const width of [320,390,768,1024,1440]) {
     await page.setViewportSize({width,height:844}); await page.goto(`http://127.0.0.1:${info.port}/`);
     await expect(page.getByText('Explore fictional projects')).toBeVisible();
+    await expect(page.locator('body')).not.toContainText('undefined');
+    await expect(page.locator('.profile-catalog-table .agent-brand-icon svg')).toHaveCount(10);
+    const overlaps=await page.locator('.profile-title-line').evaluateAll(lines=>lines.filter(line=>{
+      const icon=line.querySelector('.agent-brand-icon').getBoundingClientRect();
+      const name=line.querySelector('.profile-name').getBoundingClientRect();
+      return icon.right>name.left+0.5;
+    }).length);
+    expect(overlaps,`overlapping profile labels at ${width}`).toBe(0);
     const overflow=await page.evaluate(()=>({document:document.documentElement.scrollWidth,viewport:innerWidth,offenders:[...document.querySelectorAll('*')].filter(el=>el.getBoundingClientRect().right>innerWidth+0.5 && el.getBoundingClientRect().width<innerWidth*2).slice(0,8).map(el=>({tag:el.tagName,class:String(el.className),right:el.getBoundingClientRect().right}))}));
     expect(overflow.document,`page-wide overflow at ${width}`).toBeLessThanOrEqual(overflow.viewport);
   }
+  if (process.env.SDD_REVIEW_SCREENSHOTS) await page.screenshot({path:path.join(os.tmpdir(),'sdd-reviewed-catalog.png')});
   await page.locator('#launch-demo-btn').click();
   await page.locator('[data-phase-tab="requirements"]').click();
   await page.locator('button[data-source-path]').first().click();
   await expect(page.locator('dialog pre')).toContainText('REQ-');
+  await page.getByRole('button',{name:'Close',exact:true}).click();
+  await page.locator('.phase-subtabs-bar [data-phase-tab="overview"]').click();
+  await page.getByRole('button',{name:'Open Traceability Graph',exact:true}).click();
+  await expect(page.getByRole('img',{name:'Traceability Graph',exact:true})).toBeVisible();
+  if (process.env.SDD_REVIEW_SCREENSHOTS) await page.screenshot({path:path.join(os.tmpdir(),'sdd-reviewed-graph.png')});
+  expect(await page.locator('.traceability-svg .edges-group path').count()).toBeGreaterThan(0);
+  await expect(page.locator('.traceability-list')).toContainText('Referenced evidence:');
+  await page.reload();
+  await expect(page.getByRole('img',{name:'Traceability Graph',exact:true})).toBeVisible();
 });
 test('real 60-phase workspace filters tasks and follows requirement/source links',async ({page})=>{
   await page.goto(info.url);
@@ -42,6 +61,10 @@ test('real 60-phase workspace filters tasks and follows requirement/source links
   await expect(page.locator('.phase-nav-sidebar [data-phase-select]')).toHaveCount(60);
   const phaseButton=page.locator('.phase-nav-sidebar [data-phase-select]').first();
   await phaseButton.click();
+  await page.locator('[data-phase-tab="design"]').click();
+  await expect(page.locator('.mermaid-svg svg')).toBeVisible();
+  await expect(page.locator('.mermaid-svg')).toContainText('Markdown files');
+  await expect(page.locator('.mermaid-svg')).toContainText('Visual workspace');
   await page.locator('[data-phase-tab="tasks"]').click();
   await expect(page.locator('.task-card')).toHaveCount(2);
   await page.locator('.tasks-toolbar [data-filter="todo"]').click();
@@ -66,6 +89,9 @@ test('real 60-phase workspace filters tasks and follows requirement/source links
   await expect(page.getByRole('img',{name:'Imported Graphify topology'})).toBeVisible();
   await expect(page.locator('.imported-graph rect')).toHaveCount(2);
   await expect(page.locator('.imported-graph line')).toHaveCount(1);
+  fs.unlinkSync(path.join(root,'graphify-out/graph.json'));
+  await expect(page.getByRole('img',{name:'Derived artifact topology'})).toBeVisible({timeout:5000});
+  expect(await page.locator('.imported-graph rect').count()).toBeGreaterThan(0);
 });
 test('account sign-up is functional and an empty account has no invented projects',async ({page})=>{
   await page.goto(accountInfo.url);

@@ -222,7 +222,7 @@ export function generateTraceabilityList(phase) {
         </div>
         <div class="trace-list-details">
           <div class="trace-detail-group">
-            <span class="detail-label">Implemented by tasks:</span>
+            <span class="detail-label">Mapped tasks:</span>
             ${
               implementingTasks.length > 0
                 ? implementingTasks.map(t => `<span class="badge badge-task">${t}</span>`).join(' ')
@@ -230,7 +230,7 @@ export function generateTraceabilityList(phase) {
             }
           </div>
           <div class="trace-detail-group">
-            <span class="detail-label">Verified by evidence:</span>
+            <span class="detail-label">Referenced evidence:</span>
             ${
               verifyingEv.length > 0
                 ? verifyingEv.map(e => `<span class="badge badge-evidence">${e}</span>`).join(' ')

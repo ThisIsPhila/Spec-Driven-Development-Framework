@@ -3680,3 +3680,15 @@ a {
   .header-left { max-width:100%; flex-shrink:1; }
   .header-project-name { min-width:0; white-space:normal; overflow-wrap:anywhere; }
 }
+
+/* Profile catalog: reserve real space for icons, labels and copyable commands. */
+.profile-catalog-table .skills-row { grid-template-columns:36px minmax(0,1fr) 100px minmax(180px,220px); gap:1rem; cursor:default; }
+.profile-catalog-table .col-agent, .profile-catalog-table .col-runs { min-width:0; }
+.profile-catalog-table .profile-name, .profile-catalog-table code { overflow-wrap:anywhere; }
+.profile-catalog-table .col-agent p { margin:0.35rem 0 0 26px; line-height:1.5; }
+.trace-list-item { padding:0.8rem 0; border-bottom:1px solid var(--border-subtle); }
+.trace-list-header, .trace-detail-group { display:flex; flex-wrap:wrap; align-items:baseline; gap:0.5rem; line-height:1.6; }
+@media (max-width:640px) {
+ .profile-catalog-table .skills-row { grid-template-columns:28px minmax(0,1fr); gap:0.5rem; }
+ .profile-catalog-table .col-error, .profile-catalog-table .col-runs { grid-column:2; }
+}

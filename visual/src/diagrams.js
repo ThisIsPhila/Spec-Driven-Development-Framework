@@ -11,7 +11,9 @@ export async function initMermaid() {
       startOnLoad: false,
       theme: 'dark',
       securityLevel: 'strict',
-      secure: ['securityLevel', 'startOnLoad', 'secure', 'maxTextSize', 'maxEdges'],
+      htmlLabels: false,
+      flowchart: { htmlLabels: false },
+      secure: ['securityLevel', 'startOnLoad', 'secure', 'maxTextSize', 'maxEdges', 'htmlLabels', 'flowchart'],
       maxTextSize: 50000, maxEdges: 500,
       themeVariables: {
         darkMode: true,

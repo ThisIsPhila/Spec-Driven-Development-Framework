@@ -92,7 +92,9 @@ export class SDDWorkspaceApp {
     if (this.token) {
       await this._loadProjects();
     } else {
-      this._loadPublicLanding();
+      const demoIndex = ['demo-orbit-notes','demo-harbor-api','demo-meadow-mobile'].indexOf(new URLSearchParams(location.search).get('project'));
+      if (demoIndex >= 0) this._loadStaticDemo(demoIndex);
+      else this._loadPublicLanding();
     }
     this._setupVisibilityListener();
   }
@@ -132,7 +134,8 @@ export class SDDWorkspaceApp {
     this.currentProjectId = example.id;
     this.snapshot = structuredClone(demoSnapshot);
     this.snapshot.projectId = example.name; this.snapshot.profile = example.profile;
-    this.activePhaseId = this.snapshot.activePhaseId;
+    const route = new URLSearchParams(location.search);
+    this.activePhaseId = route.get('project') === example.id && this.snapshot.phases.some(phase => phase.id === route.get('phase')) ? route.get('phase') : this.snapshot.activePhaseId;
     for (const phase of this.snapshot.phases) {
       for (const [type, artifact] of Object.entries(phase.artifacts || {})) if (artifact && typeof artifact.content === 'string') artifact.path ||= `.sdd/specs/${phase.category || 'active'}/${phase.id}/${type}.md`;
       for (const record of phase.artifacts?.evidence || []) record.path ||= `.sdd/evidence/${phase.id}/${record.filename}`;

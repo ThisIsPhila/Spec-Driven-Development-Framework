@@ -125,7 +125,7 @@ export function renderKnowledgeView(snapshot, activeSubTab = 'templates', select
         <div class="graphify-network-card" style="margin-top: 1.5rem;">
           <header class="doc-view-header">
             <div class="doc-title-row">
-              <h2 class="doc-view-title">Derived Artifact Map</h2>
+              <h2 class="doc-view-title">${graphify.source === 'graphify-export' ? 'Imported Graphify Network' : 'Derived Artifact Map'}</h2>
               <span class="domain-stats-pill font-mono">${graphify.totalNodes || graphify.nodes?.length || 0} Nodes • ${graphify.totalEdges || graphify.edges?.length || 0} Relationships</span>
             </div>
             <p class="text-muted-foreground font-mono text-xs">
@@ -133,7 +133,7 @@ export function renderKnowledgeView(snapshot, activeSubTab = 'templates', select
             </p>
           </header>
 
-          ${graphify.source === 'graphify-export' ? renderImportedGraph(graphify) : ''}
+          ${graphify.nodes?.length ? renderImportedGraph(graphify) : '<p class="empty-state">No graph nodes recorded. Select a phase and open Traceability Graph to inspect its requirement mappings.</p>'}
           <!-- Graphify Visual Entity Matrix -->
           <div class="graphify-entity-grid font-mono">
             <div class="entity-column">
@@ -189,10 +189,12 @@ function renderImportedGraph(graph) {
   const nodes = (graph.nodes || []).slice(0, 150);
   const positions = new Map(nodes.map((node, index) => [node.id, {x:30 + (index % 8) * 180, y:40 + Math.floor(index / 8) * 65}]));
   const edges = (graph.edges || []).filter(edge => positions.has(edge.from) && positions.has(edge.to)).slice(0,500);
-  return `<p class="font-mono">Imported topology: ${nodes.length}/${graph.nodes.length} nodes and ${edges.length} internal edges shown. Full node and provenance lists are below.</p>
-    <div class="imported-graph-scroller"><svg class="imported-graph" viewBox="0 0 1460 ${Math.max(160, Math.ceil(nodes.length/8)*65+50)}" role="img" aria-label="Imported Graphify topology">
+  const imported = graph.source === 'graphify-export';
+  const label = imported ? 'Imported Graphify topology' : 'Derived artifact topology';
+  return `<p class="font-mono">${imported ? 'Imported' : 'Derived'} topology: ${nodes.length}/${graph.nodes.length} nodes and ${edges.length} internal edges shown. Full node and provenance lists are below. Relationships do not require live activity and do not certify completion.</p>
+    <div class="imported-graph-scroller"><svg class="imported-graph" viewBox="0 0 1460 ${Math.max(160, Math.ceil(nodes.length/8)*65+50)}" role="img" aria-label="${label}">
       ${edges.map(edge => {const a=positions.get(edge.from),b=positions.get(edge.to);return `<line x1="${a.x+75}" y1="${a.y+12}" x2="${b.x+75}" y2="${b.y+12}" stroke="#777" stroke-opacity="0.35"><title>${edge.label}: ${edge.provenance || 'UNSPECIFIED'}</title></line>`;}).join('')}
       ${nodes.map(node => {const point=positions.get(node.id);return `<g><title>${node.label} (${node.type})</title><rect x="${point.x}" y="${point.y}" width="150" height="30" rx="4" fill="#161616" stroke="#555"/><text x="${point.x+6}" y="${point.y+19}" fill="#ddd" font-size="10">${node.label.slice(0,23)}</text></g>`;}).join('')}
     </svg></div>
-    <details><summary>All imported nodes (${graph.nodes.length})</summary>${graph.nodes.map(node => `<p>${node.label} — ${node.type}</p>`).join('')}</details>`;
+    <details><summary>All graph nodes (${graph.nodes.length})</summary>${graph.nodes.map(node => `<p>${node.label} — ${node.type}</p>`).join('')}</details>`;
 }

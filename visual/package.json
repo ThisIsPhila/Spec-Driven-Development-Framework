@@ -11,7 +11,8 @@
     "test": "node --import ./tests/setup-dom.js --test tests/*.test.js",
     "workspace": "node server/cli.js",
     "accounts": "node server/account-cli.js",
-    "test:browser": "playwright test"
+    "test:browser": "playwright test",
+    "review": "node scripts/review-workspace.js"
   },
   "dependencies": {
     "dompurify": "^3.2.4",

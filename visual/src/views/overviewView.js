@@ -28,6 +28,7 @@ export function renderOverviewView(phase) {
 
   return `
     <div class="overview-view">
+      <p class="graph-entry-point">See how this phase connects: <button class="btn btn-secondary" data-phase-tab="traceability">Open Traceability Graph</button> <span class="text-muted-foreground">Requirement, task and evidence links are visible without live activity.</span></p>
       <!-- Lifecycle Strip -->
       <section class="lifecycle-section" aria-label="Phase Lifecycle Progress">
         <h3 class="section-subtitle">Observed Lifecycle Stages</h3>
