@@ -3660,3 +3660,9 @@ a {
 .hero-action-buttons { max-width: 100%; }
 @media (min-width: 992px) { .skills-hero-grid { grid-template-columns: minmax(0, 390px) minmax(0, 1fr); } }
 @media (max-width: 768px) { .hero-action-buttons { width: 100%; } .hero-action-buttons .btn { max-width: 100%; white-space: normal; } }
+/* Shared controls use the existing monochrome palette. */
+.btn { display:inline-flex; align-items:center; justify-content:center; gap:0.5rem; padding:0.6rem 0.85rem; border:1px solid var(--border, #333); border-radius:4px; font:inherit; color:var(--foreground, #ededed); background:#111; cursor:pointer; text-decoration:none; }
+.btn-primary { background:#ededed; color:#111; border-color:#ededed; }
+.btn-secondary:hover { background:#222; }
+.btn-primary:hover { background:#fff; }
+.btn:focus-visible { outline:2px solid #ededed; outline-offset:3px; }

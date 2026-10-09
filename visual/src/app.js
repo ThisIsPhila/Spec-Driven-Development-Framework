@@ -354,7 +354,7 @@ npm --prefix visual run workspace -- --project /path/to/project --project /path/
             Demo Sandbox
           </button>
           <button class="btn btn-primary" id="connect-workspace-header-btn" style="padding:0.25rem 0.65rem; font-size:0.75rem; font-family:var(--font-mono);">
-            ${this.token ? 'My Projects' : 'Connect Account'}
+            ${this.token || this.accountSession ? 'My Projects' : 'Connect local'}
           </button>
         </div>
       `;

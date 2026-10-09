@@ -55,6 +55,7 @@ test('real 60-phase workspace filters tasks and follows requirement/source links
   const deepLink=page.url(); await page.goto(deepLink);
   await expect(page.locator('[data-phase-tab="tasks"]')).toHaveClass(/active/);
   await expect(page.locator('.task-card')).toHaveCount(2);
+  for (const width of [320,390,768,1024,1440]) { await page.setViewportSize({width,height:844}); const sizes=await page.evaluate(()=>({document:document.documentElement.scrollWidth,viewport:innerWidth})); expect(sizes.document, `workspace overflow at ${width}`).toBeLessThanOrEqual(sizes.viewport); }
 });
 test('account sign-up is functional and an empty account has no invented projects',async ({page})=>{
   await page.goto(accountInfo.url);
