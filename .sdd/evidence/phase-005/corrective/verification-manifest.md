@@ -1,7 +1,7 @@
 # Corrective implementation — local verification
 
 **Result:** PASS for the local procedures listed below; no hosted deployment or owner acceptance asserted.
-**Assessed Tree / Revision:** `d1f51499c9ddd62587183410c6ae8b95f08c7930` / `3d802d70cdd6d95819f327bb8be89203c12f62e8`
+**Assessed Tree / Revision:** `458d3e4b885a1eb4403303cdcb84a7c5fa406a42` / `52dd7bacac5f74fcdfa87a74da5971bf1fb63fcf`
 **Environment:** macOS arm64, Node v22.22.3, system Bash, Playwright Chromium 156; isolated synthetic test projects/accounts plus read-only inspection of three owner projects.
 **Timestamp:** 2026-10-09T19:24:27Z
 **Requirements:** REQ-005.1–REQ-005.8 and owner-directed skills/accounts extensions.
@@ -36,3 +36,7 @@ F12: independent behavioral/browser/core tests and raw outputs replace source-pr
 - Optional accounts require Node 22.13+; built-in SQLite is experimental in Node 22. Backups and hosted operational configuration remain deployment responsibilities.
 - Extraction is bounded, regex/filesystem-based, not an AST engine. Unsupported legacy task formats emit diagnostics. Graph import caps 3,000 nodes / 10,000 edges, and the drawn topology shows up to 150 nodes / 500 internal edges, with full imported lists available.
 - Hook logs describe retained observed executions; Git bypasses remain possible. Source references and checked task boxes are declarations, not independent certification.
+
+## Clean-checkout validation
+
+`git archive` of source commit 52dd7ba, without private active specs, installed hooks or runtime files: all 28 unit/integration tests pass using the already-installed dependency versions. See clean-checkout-output.txt. GitHub CI now installs from the lockfile, runs these checks, builds the bundle and runs Chromium journeys. CI configuration is recorded separately from its remote execution status. The spec-lint job uses the canonical Doctor/.cjs path and honors the historical threshold.
