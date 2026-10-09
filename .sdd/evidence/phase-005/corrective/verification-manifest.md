@@ -1,9 +1,9 @@
 # Corrective implementation — local verification
 
 **Result:** PASS for the local procedures listed below; no hosted deployment or owner acceptance asserted.
-**Assessed Tree / Revision:** `458d3e4b885a1eb4403303cdcb84a7c5fa406a42` / `52dd7bacac5f74fcdfa87a74da5971bf1fb63fcf`
+**Assessed Tree / Revision:** `29679a05bd3e6d1382dd0409f4f05f9d40986da1` / `3db34d0312be2ad492270dcf89e9b4151a69753e`
 **Environment:** macOS arm64, Node v22.22.3, system Bash, Playwright Chromium 156; isolated synthetic test projects/accounts plus read-only inspection of three owner projects.
-**Timestamp:** 2026-10-09T19:24:27Z
+**Timestamp:** 2026-10-09T19:40:30Z
 **Requirements:** REQ-005.1–REQ-005.8 and owner-directed skills/accounts extensions.
 **Tasks:** T005.2–T005.6; corrective C1–C8.
 
@@ -40,3 +40,9 @@ F12: independent behavioral/browser/core tests and raw outputs replace source-pr
 ## Clean-checkout validation
 
 `git archive` of source commit 52dd7ba, without private active specs, installed hooks or runtime files: all 28 unit/integration tests pass using the already-installed dependency versions. See clean-checkout-output.txt. GitHub CI now installs from the lockfile, runs these checks, builds the bundle and runs Chromium journeys. CI configuration is recorded separately from its remote execution status. The spec-lint job uses the canonical Doctor/.cjs path and honors the historical threshold.
+
+## Independent GitHub verification
+
+Source revision `3db34d0312be2ad492270dcf89e9b4151a69753e` passed [GitHub CI run 37981710676](https://github.com/ThisIsPhila/Spec-Driven-Development-Framework/actions/runs/37981710676): Linux and macOS structure/skills/profile/core validation, canonical spec lint, 28 unit/integration tests, production build and all 3 Chromium journeys. This verifies clean lockfile installation and Linux browser rendering independently of the local workspace.
+
+Earlier independent runs exposed an untracked required archive directory, Bash 5 counter exit behavior and a two-pixel mobile identity overflow. The required directory is now tracked, counters use portable assignments and identity wraps within the header. Public fictional demos also provide functional source dialogs without local credentials. No checks were bypassed or weakened.

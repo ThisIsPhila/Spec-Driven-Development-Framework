@@ -30,7 +30,9 @@ test_documented_paths.sh
     ok   consumer .sdd/scripts/ created
     ok   consumer .sdd/scripts/phase.sh present
     ok   consumer: bash .sdd/scripts/phase.sh status exits 0
-  test_documented_paths.sh: 14 run, 0 failed
+  - profile validator completes every template under the current Bash
+    ok   profile validator reaches its final success result
+  test_documented_paths.sh: 15 run, 0 failed
 
 test_governance_upgrade.sh
   - fresh install contains canonical governance and learning topology
