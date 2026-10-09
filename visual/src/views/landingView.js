@@ -1,9 +1,10 @@
 /**
  * Public Landing Page View (skills.sh authentic directory design)
- * Focused on:
- * 1. AI Agents on SDD Leaderboard (error rate, guardrail interceptions, compliance, runs)
- * 2. Profile Ecosystem Insight (single distribution graph + composition overlap matrix)
- * 3. Framework Foundations & CLI Reference
+ * Side-by-side responsive grid:
+ * 1. Hero: Left Column (ASCII Logo, subkicker, action CTAs) + Right Column (Lead description, Try-it-now, Agent marquee)
+ * 2. Leaderboard: Tabs + Search bar side-by-side
+ * 3. Profile Ecosystem: Distribution Graph (Left) + Overlap Matrix (Right) side-by-side
+ * 4. Foundations: 4 Gates side-by-side
  */
 
 export const AGENT_LEADERBOARD = [
@@ -200,10 +201,10 @@ export function renderLandingView() {
 
   return `
     <div class="skills-page-wrapper">
-      <!-- Hero Grid Section (Exact skills.sh Structure) -->
+      <!-- Hero Grid Section (Exact skills.sh Side-by-Side 2-Column Grid) -->
       <section class="skills-hero-container">
         <div class="skills-hero-grid">
-          <!-- ASCII Logo & Kicker -->
+          <!-- LEFT COLUMN: ASCII Logo, Kicker, and Action CTAs -->
           <div class="hero-left-col">
             <div class="ascii-wrapper" aria-hidden="true">
               <pre class="ascii-logo">███████╗██████╗ ██████╗ 
@@ -214,57 +215,57 @@ export function renderLandingView() {
 ╚══════╝╚═════╝ ╚═════╝ </pre>
             </div>
             <p class="hero-kicker-mono">The Open Spec-Driven Development Ecosystem</p>
-          </div>
 
-          <!-- Hero Headline & Description -->
-          <div class="hero-right-col">
-            <h1 class="skills-sr-only">Spec-Driven Development</h1>
-            <p class="hero-lead-text">
-              Specs are reusable contracts for AI agents and human engineers. Enforce intent before code with verifiable requirement gates, automated git guardrails, and audit-ready governance.
-            </p>
-          </div>
-
-          <!-- Try it now command box -->
-          <div class="hero-try-it-now">
-            <h2 class="try-kicker">Try it now</h2>
-            <div class="cli-command-box" id="install-cmd-box" role="button" tabindex="0" title="Click to copy install command">
-              <code class="command-code">
-                <span class="prompt-symbol">$</span>
-                <span class="cmd-run-text">curl -fsSL https://raw.githubusercontent.com/ThisIsPhila/Spec-Driven-Development-Framework/main/setup.sh | bash</span>
-              </code>
-              <button class="copy-trigger-btn" id="copy-cmd-btn" aria-label="Copy to clipboard" title="Copy to clipboard">
-                <svg viewBox="0 0 16 16" height="16" width="16" fill="currentColor">
-                  <path fill-rule="evenodd" d="M2.75.5C1.78.5 1 1.28 1 2.25v7.5c0 .97.78 1.75 1.75 1.75H4.5V10H2.75a.25.25 0 0 1-.25-.25v-7.5c0-.14.11-.25.25-.25h5.5c.14 0 .25.11.25.25V3H10v-.75C10 1.28 9.22.5 8.25.5zm5 4C6.78 4.5 6 5.28 6 6.25v7.5c0 .97.78 1.75 1.75 1.75h5.5c.97 0 1.75-.78 1.75-1.75v-7.5c0-.97-.78-1.75-1.75-1.75zM7.5 6.25c0-.14.11-.25.25-.25h5.5c.14 0 .25.11.25.25v7.5q-.02.23-.25.25h-5.5a.25.25 0 0 1-.25-.25z" clip-rule="evenodd"/>
-                </svg>
-                <span class="copy-status-bubble" id="copy-status-bubble">Copied</span>
+            <!-- Hero Action CTAs -->
+            <div class="hero-action-buttons">
+              <button id="launch-demo-btn" class="btn btn-primary">
+                🚀 Launch Interactive Demo
               </button>
+              <button id="connect-workspace-btn" class="btn btn-secondary">
+                🔑 Connect Local Workspace
+              </button>
+              <a href="https://github.com/ThisIsPhila/Spec-Driven-Development-Framework" target="_blank" rel="noopener noreferrer" class="btn btn-secondary">
+                View on GitHub ↗
+              </a>
             </div>
           </div>
 
-          <!-- Hero Action CTAs -->
-          <div class="hero-action-buttons">
-            <button id="launch-demo-btn" class="btn btn-primary">
-              🚀 Launch Interactive Demo
-            </button>
-            <button id="connect-workspace-btn" class="btn btn-secondary">
-              🔑 Connect Local Workspace
-            </button>
-            <a href="https://github.com/ThisIsPhila/Spec-Driven-Development-Framework" target="_blank" rel="noopener noreferrer" class="btn btn-secondary">
-              View on GitHub ↗
-            </a>
-          </div>
+          <!-- RIGHT COLUMN (Side-by-Side): Description, Try it now, and Agents -->
+          <div class="hero-right-col">
+            <h1 class="skills-sr-only">Spec-Driven Development</h1>
+            <p class="hero-lead-text">
+              Specs are reusable contracts for AI agents and human engineers. Install procedural workflows with verifiable requirement gates, automated git guardrails, and audit-ready governance.
+            </p>
 
-          <!-- Agents strip -->
-          <div class="hero-agents-container">
-            <h2 class="try-kicker">Verified Agent Runtimes</h2>
-            <div class="agents-scroll-wrapper">
-              <div class="agents-track">
-                ${agents.map(a => `
-                  <div class="agent-chip" title="Compatible with ${a.name}">
-                    <span class="agent-chip-icon">🤖</span>
-                    <span class="agent-chip-title">${a.name}</span>
-                  </div>
-                `).join('')}
+            <!-- Try it now command box -->
+            <div class="hero-try-it-now">
+              <h2 class="try-kicker">Try it now</h2>
+              <div class="cli-command-box" id="install-cmd-box" role="button" tabindex="0" title="Click to copy install command">
+                <code class="command-code">
+                  <span class="prompt-symbol">$</span>
+                  <span class="cmd-run-text">curl -fsSL https://raw.githubusercontent.com/ThisIsPhila/Spec-Driven-Development-Framework/main/setup.sh | bash</span>
+                </code>
+                <button class="copy-trigger-btn" id="copy-cmd-btn" aria-label="Copy to clipboard" title="Copy to clipboard">
+                  <svg viewBox="0 0 16 16" height="16" width="16" fill="currentColor">
+                    <path fill-rule="evenodd" d="M2.75.5C1.78.5 1 1.28 1 2.25v7.5c0 .97.78 1.75 1.75 1.75H4.5V10H2.75a.25.25 0 0 1-.25-.25v-7.5c0-.14.11-.25.25-.25h5.5c.14 0 .25.11.25.25V3H10v-.75C10 1.28 9.22.5 8.25.5zm5 4C6.78 4.5 6 5.28 6 6.25v7.5c0 .97.78 1.75 1.75 1.75h5.5c.97 0 1.75-.78 1.75-1.75v-7.5c0-.97-.78-1.75-1.75-1.75zM7.5 6.25c0-.14.11-.25.25-.25h5.5c.14 0 .25.11.25.25v7.5q-.02.23-.25.25h-5.5a.25.25 0 0 1-.25-.25z" clip-rule="evenodd"/>
+                  </svg>
+                  <span class="copy-status-bubble" id="copy-status-bubble">Copied</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Agents strip -->
+            <div class="hero-agents-container">
+              <h2 class="try-kicker">Verified Agent Runtimes</h2>
+              <div class="agents-scroll-wrapper">
+                <div class="agents-track">
+                  ${agents.map(a => `
+                    <div class="agent-chip" title="Compatible with ${a.name}">
+                      <span class="agent-chip-icon">🤖</span>
+                      <span class="agent-chip-title">${a.name}</span>
+                    </div>
+                  `).join('')}
+                </div>
               </div>
             </div>
           </div>
@@ -283,23 +284,24 @@ export function renderLandingView() {
           <span class="leaderboard-count-tag font-mono">9 Verified Harnesses</span>
         </div>
 
-        <!-- Search Bar with '/' keyboard hint -->
-        <div class="directory-search-bar">
-          <div class="search-input-container">
-            <svg class="search-glyph" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="m21 21-4.34-4.34"></path><circle cx="11" cy="11" r="8"></circle>
-            </svg>
-            <input type="text" id="leaderboard-search-input" placeholder="Search agents, models, harnesses..." class="search-field font-mono" autocomplete="off" spellcheck="false" />
-            <kbd class="kbd-pill font-mono">/</kbd>
+        <!-- Controls Row: Tabs on left, Search Bar on right (Side-by-Side!) -->
+        <div class="leaderboard-controls-row">
+          <div class="leaderboard-tabs-bar font-mono">
+            <button class="tab-btn active" data-filter="all">All Agents (9)</button>
+            <button class="tab-btn" data-filter="low-error">Lowest Error Rate</button>
+            <button class="tab-btn" data-filter="high-runs">Most Spec Runs</button>
+            <button class="tab-btn" data-filter="official">Official Harnesses</button>
           </div>
-        </div>
 
-        <!-- Tabs: All Agents, Lowest Error Rate, Most Runs, Official -->
-        <div class="leaderboard-tabs-bar font-mono">
-          <button class="tab-btn active" data-filter="all">All Agents (9)</button>
-          <button class="tab-btn" data-filter="low-error">Lowest Error Rate</button>
-          <button class="tab-btn" data-filter="high-runs">Most Spec Runs</button>
-          <button class="tab-btn" data-filter="official">Official Harnesses</button>
+          <div class="directory-search-bar">
+            <div class="search-input-container">
+              <svg class="search-glyph" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="m21 21-4.34-4.34"></path><circle cx="11" cy="11" r="8"></circle>
+              </svg>
+              <input type="text" id="leaderboard-search-input" placeholder="Search agents, models..." class="search-field font-mono" autocomplete="off" spellcheck="false" />
+              <kbd class="kbd-pill font-mono">/</kbd>
+            </div>
+          </div>
         </div>
 
         <!-- Leaderboard Table -->
@@ -342,7 +344,7 @@ export function renderLandingView() {
                       <defs>
                         <linearGradient id="grad-${a.id}" x1="0" y1="0" x2="0" y2="24" gradientUnits="userSpaceOnUse">
                           <stop offset="0%" stop-color="#ededed" stop-opacity="0.3"></stop>
-                          <stop offset="100%" stop-color="#ededed" stop-opacity="0"></stop>
+                          <stop offset="100%" stop-color="#ededed" stop-opacity="0.3"></stop>
                         </linearGradient>
                       </defs>
                       <path d="${a.sparkArea}" fill="url(#grad-${a.id})"></path>
@@ -359,7 +361,7 @@ export function renderLandingView() {
         </div>
       </main>
 
-      <!-- Profiles Ecosystem Insight (1 Unified Distribution Graph & Overlap Matrix) -->
+      <!-- Profiles Ecosystem Insight (Side-by-Side: Distribution Graph on Left + Overlap Matrix on Right) -->
       <section class="profile-insights-section" id="profiles">
         <div class="foundations-heading">
           <div class="flex items-center justify-between">
@@ -374,52 +376,54 @@ export function renderLandingView() {
           </p>
         </div>
 
-        <!-- Single Comprehensive Insight Bar -->
-        <div class="distribution-card">
-          <div class="distribution-header font-mono">
-            <span>Overall Ecosystem Distribution</span>
-            <span>Total Spec Runs: <strong>6.8M</strong></span>
-          </div>
-
-          <!-- Stacked Proportional Bar -->
-          <div class="distribution-stacked-bar">
-            ${PROFILE_INSIGHTS.distribution.map(d => `
-              <div class="bar-segment" style="width: ${d.percent}%; background-color: ${d.color};" title="${d.name}: ${d.percent}% (${d.runs} runs)"></div>
-            `).join('')}
-          </div>
-
-          <!-- Legend Items -->
-          <div class="distribution-legend-grid font-mono">
-            ${PROFILE_INSIGHTS.distribution.map(d => `
-              <div class="legend-item" title="${d.name} (${d.runs} runs)">
-                <span class="legend-color-dot" style="background-color: ${d.color};"></span>
-                <span class="legend-name">${d.name}</span>
-                <span class="legend-pct">${d.percent}%</span>
-                <span class="legend-runs text-muted-foreground">(${d.runs})</span>
-              </div>
-            `).join('')}
-          </div>
-        </div>
-
-        <!-- Overlap & Modifier Compositions Grid -->
-        <div class="overlap-composition-grid">
-          ${PROFILE_INSIGHTS.compositions.map(c => `
-            <div class="composition-card" role="button" tabindex="0" title="Click to copy init command">
-              <div class="composition-top-row">
-                <span class="composition-combo font-mono font-bold">${c.combo}</span>
-                <span class="composition-overlap-tag font-mono">${c.overlap} Overlap</span>
-              </div>
-              <p class="composition-desc text-muted-foreground">${c.desc}</p>
-              <div class="composition-cmd-box">
-                <code class="font-mono text-xs">$ ${c.cmd}</code>
-                <span class="copy-hint font-mono text-xs">Copy</span>
-              </div>
+        <div class="insights-side-by-side-grid">
+          <!-- LEFT: Comprehensive Distribution Card -->
+          <div class="distribution-card">
+            <div class="distribution-header font-mono">
+              <span>Overall Ecosystem Distribution</span>
+              <span>Total Spec Runs: <strong>6.8M</strong></span>
             </div>
-          `).join('')}
+
+            <!-- Stacked Proportional Bar -->
+            <div class="distribution-stacked-bar">
+              ${PROFILE_INSIGHTS.distribution.map(d => `
+                <div class="bar-segment" style="width: ${d.percent}%; background-color: ${d.color};" title="${d.name}: ${d.percent}% (${d.runs} runs)"></div>
+              `).join('')}
+            </div>
+
+            <!-- Legend Items -->
+            <div class="distribution-legend-grid font-mono">
+              ${PROFILE_INSIGHTS.distribution.map(d => `
+                <div class="legend-item" title="${d.name} (${d.runs} runs)">
+                  <span class="legend-color-dot" style="background-color: ${d.color};"></span>
+                  <span class="legend-name">${d.name}</span>
+                  <span class="legend-pct">${d.percent}%</span>
+                  <span class="legend-runs text-muted-foreground">(${d.runs})</span>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+
+          <!-- RIGHT (Side-by-Side): Overlap & Modifier Compositions Grid -->
+          <div class="overlap-composition-grid">
+            ${PROFILE_INSIGHTS.compositions.map(c => `
+              <div class="composition-card" role="button" tabindex="0" title="Click to copy init command">
+                <div class="composition-top-row">
+                  <span class="composition-combo font-mono font-bold">${c.combo}</span>
+                  <span class="composition-overlap-tag font-mono">${c.overlap} Overlap</span>
+                </div>
+                <p class="composition-desc text-muted-foreground">${c.desc}</p>
+                <div class="composition-cmd-box">
+                  <code class="font-mono text-xs">$ ${c.cmd}</code>
+                  <span class="copy-hint font-mono text-xs">Copy</span>
+                </div>
+              </div>
+            `).join('')}
+          </div>
         </div>
       </section>
 
-      <!-- Framework Foundations & Gates (skills.sh Minimal Audit Card Pattern) -->
+      <!-- Framework Foundations & Gates (skills.sh Minimal Audit Card Pattern: 4 Side-by-Side Gates) -->
       <section class="skills-foundations-section">
         <div class="foundations-heading">
           <h2 class="try-kicker">Core System Architecture</h2>
