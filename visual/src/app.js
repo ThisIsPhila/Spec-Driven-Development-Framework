@@ -2,6 +2,11 @@ import { renderMarkdown } from './markdown.js';
 import { renderMermaidBlocks } from './diagrams.js';
 import { generateTraceabilitySvg, generateTraceabilityList } from './traceability.js';
 import { renderLandingView } from './views/landingView.js';
+import { renderPhaseExplorerView } from './views/phaseExplorerView.js';
+import { renderGovernanceView } from './views/governanceView.js';
+import { renderReportsView } from './views/reportsView.js';
+import { renderAutomationView } from './views/automationView.js';
+import { renderKnowledgeView } from './views/knowledgeView.js';
 import { ICONS } from './icons.js';
 import demoSnapshot from '../demo/demo-project.json';
 
@@ -16,13 +21,29 @@ export class SDDWorkspaceApp {
     // View Routing:
     // 'landing'  -> Tier 1: Public Framework Landing Page (skills.sh style, zero private data)
     // 'projects' -> Tier 2: Logged In Account Multi-Project Dashboard (all user projects)
-    // 'project'  -> Tier 3: Direct Project SDD Page (live progress, direct header phase links, sync status)
+    // 'project'  -> Tier 3: Direct Project SDD Page
     // 'profiles' -> Composable Profiles Catalog
     this.currentView = this.token ? 'project' : 'landing';
-    this.activePhaseId = null;
-    this.activeTab = 'overview'; // 'overview' | 'requirements' | 'design' | 'tasks' | 'evidence' | 'metrics' | 'traceability'
-    this.dirFilter = 'active'; // 'active' | 'all' | 'backlog' | 'archive'
-    this.searchQuery = '';
+
+    // Domain Sections inside 'project' view:
+    // 'phases'     -> Phase Explorer & Sprints (handles 50+ phases without header clutter!)
+    // 'governance' -> Memory & Rules (Active Context, Project Overview, Decisions, Rules Engine, Exceptions)
+    // 'reports'    -> Reports & Audits (Closeout Assessments, Product Roadmap Audits)
+    // 'automation' -> Scripts & Hooks (Framework scripts, Git hook status & telemetry)
+    // 'knowledge'  -> Docs & Templates & Graphify (Templates, Docs library, Graphify network)
+    // 'metrics'    -> Project Engineering Metrics & Assurance Matrix
+    this.projectSection = 'phases';
+
+    this.activePhaseId = null; // null = All Sprints Overview, string = specific phase ID
+    this.phaseTab = 'overview'; // 'overview' | 'requirements' | 'design' | 'tasks' | 'evidence' | 'remediations' | 'traceability'
+    this.phaseScopeFilter = 'all'; // 'all' | 'active' | 'backlog' | 'archive'
+    this.phaseSearchQuery = '';
+
+    this.activeGovTab = 'active-context';
+    this.activeReportId = null;
+    this.activeScriptName = 'doctor.sh';
+    this.activeKnowledgeSection = 'templates';
+    this.selectedKnowledgeItemId = null;
 
     this.connectionStatus = this.token ? 'connecting' : 'public';
     this.sseSource = null;
@@ -305,25 +326,25 @@ export class SDDWorkspaceApp {
         </div>
       </div>
 
-      <!-- DIRECT PHASE LINKS IN THE HEADER -->
-      <nav class="header-phase-nav" aria-label="Phases quick navigation">
-        <button class="phase-header-btn ${this.activePhaseId === null && this.activeTab !== 'metrics' ? 'active' : ''}" id="header-all-sprints-btn">
-          All Sprints
+      <!-- High-Level Domain Navigation (ZERO phases in header!) -->
+      <nav class="header-nav header-domain-nav" aria-label="Project Workspace Navigation">
+        <button class="nav-domain-btn ${this.projectSection === 'phases' ? 'active' : ''}" data-domain="phases">
+          ${ICONS.clock} <span>Phases & Specs</span>
         </button>
-        ${phases.map(p => {
-          const isActive = this.activePhaseId === p.id;
-          const cleanLabel = p.id.replace(/^phase-0*/i, 'Phase ');
-          return `
-            <button class="phase-header-btn ${isActive ? 'active' : ''}" data-phase-id="${p.id}">
-              <span class="phase-header-dot ${p.category === 'active' ? 'dot-active' : p.category === 'archive' ? 'dot-complete' : 'dot-backlog'}"></span>
-              ${cleanLabel}
-              ${p.category === 'active' ? `<span class="header-mini-badge">${p.taskCounts?.percent || 0}%</span>` : ''}
-            </button>
-          `;
-        }).join('')}
-        <button class="phase-header-btn ${this.activeTab === 'metrics' && this.activePhaseId === null ? 'active' : ''}" id="header-metrics-btn">
-          ${ICONS.chart}
-          <span>Metrics</span>
+        <button class="nav-domain-btn ${this.projectSection === 'governance' ? 'active' : ''}" data-domain="governance">
+          ${ICONS.shieldCheck} <span>Memory & Rules</span>
+        </button>
+        <button class="nav-domain-btn ${this.projectSection === 'reports' ? 'active' : ''}" data-domain="reports">
+          ${ICONS.sparkles} <span>Reports & Audits</span>
+        </button>
+        <button class="nav-domain-btn ${this.projectSection === 'automation' ? 'active' : ''}" data-domain="automation">
+          ${ICONS.terminal} <span>Scripts & Hooks</span>
+        </button>
+        <button class="nav-domain-btn ${this.projectSection === 'knowledge' ? 'active' : ''}" data-domain="knowledge">
+          ${ICONS.activity} <span>Docs & Templates</span>
+        </button>
+        <button class="nav-domain-btn ${this.projectSection === 'metrics' ? 'active' : ''}" data-domain="metrics">
+          ${ICONS.chart} <span>Project Metrics</span>
         </button>
       </nav>
 
@@ -361,13 +382,26 @@ export class SDDWorkspaceApp {
     if (this.currentView === 'profiles') {
       return this._renderProfilesView();
     }
-    if (this.activePhaseId) {
-      return this._renderPhaseDetailView();
+
+    // Tier 3: Direct Project Views based on Domain Section:
+    if (this.projectSection === 'governance') {
+      return renderGovernanceView(this.snapshot, this.activeGovTab);
     }
-    if (this.activeTab === 'metrics') {
+    if (this.projectSection === 'reports') {
+      return renderReportsView(this.snapshot, this.activeReportId);
+    }
+    if (this.projectSection === 'automation') {
+      return renderAutomationView(this.snapshot, this.activeScriptName);
+    }
+    if (this.projectSection === 'knowledge') {
+      return renderKnowledgeView(this.snapshot, this.activeKnowledgeSection, this.selectedKnowledgeItemId);
+    }
+    if (this.projectSection === 'metrics') {
       return this._renderProjectMetricsView();
     }
-    return this._renderDirectoryView();
+
+    // Default: 'phases' section with On-Screen Phase Explorer
+    return renderPhaseExplorerView(this.snapshot, this);
   }
 
   // ---------------------------------------------------------------------------
@@ -1413,34 +1447,131 @@ export class SDDWorkspaceApp {
       });
     }
 
-    // DIRECT PHASE BUTTONS IN HEADER
-    this.container.querySelectorAll('.phase-header-btn[data-phase-id]').forEach(btn => {
+    // High-Level Domain Navigation (ZERO phases in header!)
+    this.container.querySelectorAll('.nav-domain-btn[data-domain]').forEach(btn => {
       btn.addEventListener('click', () => {
-        const phaseId = btn.getAttribute('data-phase-id');
-        this.activePhaseId = phaseId;
-        this.activeTab = 'overview';
+        this.projectSection = btn.getAttribute('data-domain');
         this.currentView = 'project';
         this.render();
       });
     });
 
-    const headerAllSprintsBtn = document.getElementById('header-all-sprints-btn');
-    if (headerAllSprintsBtn) {
-      headerAllSprintsBtn.addEventListener('click', () => {
+    // On-screen Phase Navigator selection (Scales to 50+ phases!)
+    this.container.querySelectorAll('[data-phase-select]').forEach(el => {
+      el.addEventListener('click', () => {
+        const pId = el.getAttribute('data-phase-select');
+        this.activePhaseId = pId;
+        this.phaseTab = 'overview';
+        this.render();
+      });
+    });
+
+    // Toggle All Sprints Overview
+    const toggleAllSprintsBtn = document.getElementById('toggle-all-sprints-btn');
+    if (toggleAllSprintsBtn) {
+      toggleAllSprintsBtn.addEventListener('click', () => {
         this.activePhaseId = null;
-        this.activeTab = 'overview';
-        this.currentView = 'project';
         this.render();
       });
     }
 
-    const headerMetricsBtn = document.getElementById('header-metrics-btn');
-    if (headerMetricsBtn) {
-      headerMetricsBtn.addEventListener('click', () => {
-        this.activePhaseId = null;
-        this.activeTab = 'metrics';
-        this.currentView = 'project';
+    // Scope filters (All, Active, Backlog, Archive)
+    this.container.querySelectorAll('[data-scope-filter]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        this.phaseScopeFilter = btn.getAttribute('data-scope-filter');
         this.render();
+      });
+    });
+
+    // Real-time search for 50+ phases
+    const phaseSearchInput = document.getElementById('phase-search-field');
+    if (phaseSearchInput) {
+      phaseSearchInput.addEventListener('input', (e) => {
+        this.phaseSearchQuery = e.target.value;
+        this.render();
+        const inputNow = document.getElementById('phase-search-field');
+        if (inputNow) {
+          inputNow.focus();
+          inputNow.selectionStart = inputNow.selectionEnd = inputNow.value.length;
+        }
+      });
+    }
+
+    const clearPhaseSearch = document.getElementById('clear-phase-search');
+    if (clearPhaseSearch) {
+      clearPhaseSearch.addEventListener('click', () => {
+        this.phaseSearchQuery = '';
+        this.render();
+      });
+    }
+
+    // Phase Sub-tabs
+    this.container.querySelectorAll('[data-phase-tab]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        this.phaseTab = btn.getAttribute('data-phase-tab');
+        this.render();
+      });
+    });
+
+    // Governance & Memory tabs
+    this.container.querySelectorAll('[data-gov-tab]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        this.activeGovTab = btn.getAttribute('data-gov-tab');
+        this.render();
+      });
+    });
+
+    // Reports tabs
+    this.container.querySelectorAll('[data-report-id]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        this.activeReportId = btn.getAttribute('data-report-id');
+        this.render();
+      });
+    });
+
+    // Automation / Scripts
+    this.container.querySelectorAll('[data-script-name]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        this.activeScriptName = btn.getAttribute('data-script-name');
+        this.render();
+      });
+    });
+
+    // Knowledge / Docs & Templates
+    this.container.querySelectorAll('[data-know-section]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        this.activeKnowledgeSection = btn.getAttribute('data-know-section');
+        this.render();
+      });
+    });
+
+    this.container.querySelectorAll('[data-tpl-id]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        this.selectedKnowledgeItemId = btn.getAttribute('data-tpl-id');
+        this.render();
+      });
+    });
+
+    this.container.querySelectorAll('[data-doc-id]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        this.selectedKnowledgeItemId = btn.getAttribute('data-doc-id');
+        this.render();
+      });
+    });
+
+    // Copy template content button
+    const copyTplBtn = document.getElementById('copy-tpl-content-btn');
+    if (copyTplBtn) {
+      copyTplBtn.addEventListener('click', () => {
+        const mdEl = document.querySelector('.markdown-body');
+        if (mdEl) {
+          navigator.clipboard.writeText(mdEl.innerText).then(() => {
+            copyTplBtn.innerHTML = `${ICONS.check} <span>Copied</span>`;
+            setTimeout(() => {
+              copyTplBtn.innerHTML = `${ICONS.copy} <span>Copy Template</span>`;
+            }, 1800);
+          });
+        }
       });
     }
 

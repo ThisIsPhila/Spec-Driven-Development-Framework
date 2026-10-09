@@ -127,6 +127,21 @@
         { "from": "T003.4", "to": "REQ-003.1", "type": "implements", "source": "tasks.md" },
         { "from": "webhook-idempotency.md", "to": "REQ-003.2", "type": "verifies", "source": "webhook-idempotency.md" }
       ],
+      "acceptanceCriteria": [
+        { "reqId": "REQ-003.1", "text": "Reject any webhook request without valid HMAC-SHA256 signature header with HTTP 401.", "done": true },
+        { "reqId": "REQ-003.2", "text": "Duplicate webhook deliveries within 24h return HTTP 200 without reprocessing.", "done": true },
+        { "reqId": "REQ-003.3", "text": "Valid webhook payloads are published to Redis event queue within 50ms.", "done": false }
+      ],
+      "limitations": [
+        { "source": "webhook-idempotency.md", "text": "Tested using synthetic replay attacks and simulated network drops." }
+      ],
+      "remediations": [
+        { "issue": "Ensure redis cluster failover fallback lock when primary node restarts.", "status": "TRACKED", "severity": "WARNING" }
+      ],
+      "futureWork": [
+        "No external third-party webhook sender credentials stored in plaintext.",
+        "Dead-letter queue consumer alerting threshold to be configured in phase 004."
+      ],
       "warnings": []
     },
     {
@@ -190,5 +205,213 @@
       "warnings": []
     }
   ],
+  "framework": {
+    "constitution": {
+      "title": "SDD Framework Constitution",
+      "content": "# SDD Framework Constitution\n\n1. Specifications before implementation.\n2. Verification through repeatable evidence records.\n3. Human developer retains ultimate milestone closure governance.\n4. Zero undocumented scope deviations."
+    },
+    "onboarding": {
+      "title": "Agent Onboarding",
+      "content": "# Agent Onboarding\n\nBefore framework work, read `AGENTS.md`, `.sdd/constitution.md`, and the active phase documents."
+    },
+    "config": {
+      "parsed": { "frameworkVersion": "0.5.0", "profile": "api" },
+      "raw": "{\n  \"frameworkVersion\": \"0.5.0\",\n  \"profile\": \"api\"\n}"
+    },
+    "glossary": {
+      "title": "SDD Glossary",
+      "content": "# SDD Framework Glossary\n\n- **Phase**: Formal milestone unit containing requirements, design, tasks, and evidence.\n- **Evidence**: Auditable test record bound to a specific tree and environment.\n- **Profile**: Role and tech-stack constraint ruleset."
+    }
+  },
+  "memories": [
+    {
+      "id": "active-context",
+      "filename": "active-context.md",
+      "title": "Active Sprint Context",
+      "type": "current-state",
+      "relativePath": "current-state/active-context.md",
+      "content": "# Active Context\n\n**Current Phase:** phase-003-stripe-webhook-handling\n**Goal:** Finalize Redis lock mechanism and dispatch events to async queue."
+    },
+    {
+      "id": "project-overview",
+      "filename": "project-overview.md",
+      "title": "Project Architecture Overview",
+      "type": "general",
+      "relativePath": "project-overview.md",
+      "content": "# Project Overview\n\nCloud billing backend handling subscriptions, invoicing, and webhooks with SDD quality gates."
+    },
+    {
+      "id": "technical-decisions",
+      "filename": "technical-decisions.md",
+      "title": "Technical Decisions Record",
+      "type": "general",
+      "relativePath": "technical-decisions.md",
+      "content": "# Technical Decisions\n\n- **ADR-001**: Adopt Redis SETNX for distributed idempotent lock keys.\n- **ADR-002**: HMAC-SHA256 signature verification occurs in early HTTP middleware."
+    },
+    {
+      "id": "progress-tracker",
+      "filename": "progress-tracker.md",
+      "title": "Master Progress Tracker",
+      "type": "general",
+      "relativePath": "progress-tracker.md",
+      "content": "# Master Progress Tracker\n\n- [x] Phase 001: Account Provisioning (100% complete)\n- [x] Phase 002: Invoice Generation (100% complete)\n- [/] Phase 003: Stripe Webhook Handling (50% in progress)\n- [ ] Phase 004: Dunning & Retry Strategy (Backlog)"
+    }
+  ],
+  "rules": [
+    {
+      "id": "before-task",
+      "filename": "before-task.md",
+      "title": "Rule: Before Starting Any Task",
+      "trigger": "before-task",
+      "enforcement": "Enforced by Git pre-commit hooks & SDD Doctor",
+      "content": "# Rule: Before Task\n\n1. Confirm active phase status is APPROVED.\n2. Ensure task ID exists in tasks.md.\n3. Validate test runner environment."
+    },
+    {
+      "id": "during-task",
+      "filename": "during-task.md",
+      "title": "Rule: During Implementation",
+      "trigger": "during-task",
+      "enforcement": "Enforced by Git pre-commit hooks & SDD Doctor",
+      "content": "# Rule: During Task\n\n1. Small focused commits referencing task and requirement IDs.\n2. Do not mutate contracts or unrelated files.\n3. Never disable pre-commit hooks."
+    },
+    {
+      "id": "after-task",
+      "filename": "after-task.md",
+      "title": "Rule: After Task Completion",
+      "trigger": "after-task",
+      "enforcement": "Enforced by Git pre-commit hooks & SDD Doctor",
+      "content": "# Rule: After Task\n\n1. Run automated tests and capture evidence in `.sdd/evidence/`.\n2. Mark task complete in `tasks.md`.\n3. Synchronize `active-context.md`."
+    },
+    {
+      "id": "file-placement",
+      "filename": "file-placement.md",
+      "title": "Rule: File Placement & Organization",
+      "trigger": "file-placement",
+      "enforcement": "Enforced by Git pre-commit hooks & SDD Doctor",
+      "content": "# Rule: File Placement\n\nSpecs must reside in `.sdd/specs/active/`, evidence in `.sdd/evidence/`, rules in `.sdd/memory/rules/`."
+    },
+    {
+      "id": "spec-naming",
+      "filename": "spec-naming.md",
+      "title": "Rule: Phase & Spec Naming",
+      "trigger": "spec-naming",
+      "enforcement": "Enforced by Git pre-commit hooks & SDD Doctor",
+      "content": "# Rule: Spec Naming\n\nPhases must follow `phase-NNN-kebab-description` format."
+    }
+  ],
+  "reports": [
+    {
+      "id": "closeout-assessment",
+      "filename": "closeout-assessment.md",
+      "title": "Phase 002 Closeout Assessment",
+      "phase": "phase-002",
+      "type": "assessment",
+      "relativePath": "phase-002/closeout-assessment.md",
+      "content": "# Closeout Assessment — Phase 002 (Invoice Generation)\n\n**Verdict:** PASS  \n**Assessed Revision:** c89d120  \n**Summary:** All 4 invoice generation tasks passed automated integration tests with zero requirement regressions."
+    },
+    {
+      "id": "next-version-product-direction",
+      "filename": "next-version-product-direction.md",
+      "title": "Product Direction & Roadmap",
+      "phase": "framework",
+      "type": "direction",
+      "relativePath": "next-version-product-direction.md",
+      "content": "# Next-Version Product Direction\n\nDeliver the connected visual framework workspace, real-time agent telemetry, and interactive traceability matrices."
+    }
+  ],
+  "scripts": [
+    {
+      "name": "doctor.sh",
+      "description": "Comprehensive health check, spec validator, and invariant diagnostics",
+      "usage": "bash scripts/doctor.sh",
+      "lines": 420,
+      "isExecutable": true
+    },
+    {
+      "name": "phase.sh",
+      "description": "Active phase sprint lifecycle, task transition, and context synchronization",
+      "usage": "bash scripts/phase.sh [start|task|close]",
+      "lines": 650,
+      "isExecutable": true
+    },
+    {
+      "name": "setup.sh",
+      "description": "Framework initialization, base profiles, and git pre-commit quality gate installer",
+      "usage": "bash scripts/setup.sh",
+      "lines": 558,
+      "isExecutable": true
+    },
+    {
+      "name": "skills.sh",
+      "description": "Discovers and validates agent skills adhering to the AGY skill schema",
+      "usage": "bash scripts/skills.sh validate",
+      "lines": 280,
+      "isExecutable": true
+    }
+  ],
+  "templates": [
+    {
+      "id": "requirements-template",
+      "filename": "requirements-template.md",
+      "title": "Requirements Specification Template",
+      "purpose": "Requirements Specification Template (User stories, criteria, constraints)",
+      "content": "# Requirements Specification Template\n\n### REQ-001.1: Title\n**User Story:** ...\n**Acceptance Criteria:**\n1. Criterion 1"
+    },
+    {
+      "id": "evidence-template",
+      "filename": "evidence-template.md",
+      "title": "Verification & Evidence Record Template",
+      "purpose": "Verification & Evidence Record Template (Assessed trees, test logs, limitations)",
+      "content": "# Evidence Record Template\n\n**Result:** PASS\n**Assessed Tree / Revision:** SHA\n**Environment:** OS, Runtime\n**Limitations:** ..."
+    }
+  ],
+  "hooks": {
+    "installed": true,
+    "path": ".git/hooks/pre-commit",
+    "gates": ["doctor.sh", "skills.sh validate", "validate-spec.cjs"],
+    "telemetry": {
+      "activeHooksCount": 1,
+      "totalGatesRun": 5,
+      "lastRunTimestamp": "2026-10-09T17:40:00Z",
+      "lastCommitChecked": "7b29e01",
+      "enforcementLevel": "BLOCKING (Intercepts and blocks commits on quality regression)",
+      "passRate": "100%",
+      "gatesList": [
+        { "name": "Core Structure & Memory Integrity", "command": "bash scripts/doctor.sh", "status": "PASS", "frequency": "Every commit", "enforced": true },
+        { "name": "Spec Lifecycle Approval Invariants (APPROVED)", "command": "scripts/doctor.sh (gate check)", "status": "PASS", "frequency": "Every commit", "enforced": true },
+        { "name": "Profile-Aware AST Spec Linting", "command": "node scripts/validate-spec.cjs", "status": "PASS", "frequency": "Every commit", "enforced": true },
+        { "name": "Agent Skills Schema Validator", "command": "bash scripts/skills.sh validate", "status": "PASS", "frequency": "Every commit", "enforced": true },
+        { "name": "Stray Spec Interception Guard", "command": "bash scripts/scan-strays.sh", "status": "PASS", "frequency": "Every commit", "enforced": true }
+      ]
+    }
+  },
+  "docs": [
+    {
+      "id": "architecture",
+      "filename": "architecture.md",
+      "title": "Framework Architecture",
+      "content": "# Architecture\n\nSpec-Driven Development architecture and governance layers."
+    },
+    {
+      "id": "cli-reference",
+      "filename": "cli-reference.md",
+      "title": "CLI Reference",
+      "content": "# CLI Reference\n\nCommands and options for framework automation scripts."
+    }
+  ],
+  "graphify": {
+    "nodes": [
+      { "id": "constitution", "label": "Constitution", "type": "constitution" },
+      { "id": "phase-003", "label": "Phase 003", "type": "phase" },
+      { "id": "pre-commit", "label": "Pre-Commit Hook", "type": "hook" }
+    ],
+    "edges": [
+      { "from": "constitution", "to": "phase-003", "label": "constrains" },
+      { "from": "pre-commit", "to": "constitution", "label": "enforces" }
+    ],
+    "totalNodes": 3,
+    "totalEdges": 2,
+    "summary": "SDD Knowledge Graph connecting core framework entities."
+  },
   "diagnostics": []
 }

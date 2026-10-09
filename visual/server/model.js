@@ -33,6 +33,36 @@ export function createProjectSnapshot(projectId, projectRoot) {
       phasesBurndown: [],
     },
     phases: [],
+    framework: {
+      constitution: null,
+      onboarding: null,
+      config: null,
+      glossary: null,
+    },
+    memories: [],
+    rules: [],
+    reports: [],
+    scripts: [],
+    templates: [],
+    hooks: {
+      installed: false,
+      path: '',
+      gates: [],
+      telemetry: {
+        activeHooksCount: 0,
+        totalGatesRun: 0,
+        lastRunTimestamp: '',
+        lastCommitChecked: '',
+        enforcementLevel: 'STRICT',
+        gatesList: [],
+      },
+    },
+    docs: [],
+    graphify: {
+      nodes: [],
+      edges: [],
+      summary: '',
+    },
     diagnostics: [],
   };
 }
@@ -48,6 +78,10 @@ export function createPhaseModel(id, category) {
       design: null,
       tasks: null,
       evidence: [],
+      acceptance: null,
+      remediations: [],
+      limitations: [],
+      future: [],
     },
     taskCounts: {
       total: 0,
@@ -91,6 +125,10 @@ export function createPhaseModel(id, category) {
     requirements: [],
     tasks: [],
     relationships: [],
+    acceptanceCriteria: [],
+    remediations: [],
+    limitations: [],
+    futureWork: [],
     warnings: [],
   };
 }

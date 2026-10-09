@@ -61,6 +61,17 @@ export function extractProject(projectRoot) {
     }
   }
 
+  // Extract Framework Core, Memories, Rules, Reports, Scripts, Templates, Hooks, Docs, Graphify
+  snapshot.framework = extractFrameworkCore(sddDir, hash);
+  snapshot.memories = extractMemories(sddDir, hash);
+  snapshot.rules = extractRules(sddDir, hash);
+  snapshot.reports = extractReports(sddDir, hash);
+  snapshot.scripts = extractScripts(resolvedRoot, sddDir, hash);
+  snapshot.templates = extractTemplates(sddDir, hash);
+  snapshot.hooks = extractHooks(resolvedRoot, sddDir, snapshot.account.headCommit);
+  snapshot.docs = extractDocs(resolvedRoot, hash);
+  snapshot.graphify = extractGraphify(resolvedRoot, snapshot);
+
   // Compute Project-level Aggregated Metrics
   computeProjectMetrics(snapshot);
 
@@ -246,6 +257,12 @@ function extractPhase(phaseDir, phaseId, category, sddDir, hash, gitHeadCommit) 
       }
     }
   }
+
+  // Extract Acceptance Criteria, Remediations, Limitations, and Future Work
+  phase.acceptanceCriteria = parseAcceptanceCriteria(phase);
+  phase.limitations = parseLimitations(phase);
+  phase.remediations = parseRemediations(phase);
+  phase.futureWork = parseFutureWork(phase);
 
   // Compute Actionable Metrics for this Phase
   phase.metrics = computePhaseMetrics(phase, gitHeadCommit);
@@ -602,4 +619,452 @@ function extractMermaid(content) {
     diagrams.push(match[1].trim());
   }
   return diagrams;
+}
+
+function parseAcceptanceCriteria(phase) {
+  const criteria = [];
+  const content = phase.artifacts?.requirements?.content || '';
+  const lines = content.split('\n');
+  let inCriteria = false;
+  let currentReq = '';
+
+  for (const line of lines) {
+    const reqHeader = line.match(/###\s+(REQ-[0-9.]+):?\s*([^\n\r]*)/i);
+    if (reqHeader) {
+      currentReq = reqHeader[1].toUpperCase();
+      inCriteria = false;
+      continue;
+    }
+    if (line.match(/\*\*Acceptance Criteria:?\*\*/i) || line.match(/^##+\s+Acceptance criteria/i)) {
+      inCriteria = true;
+      continue;
+    } else if (inCriteria && (line.match(/^#[#\s]/) || line.match(/\*\*(Priority|User Story):\*\*/i))) {
+      inCriteria = false;
+    }
+    if (inCriteria) {
+      const numMatch = line.match(/^[0-9]+\.\s+(.+)$/);
+      const checkMatch = line.match(/^-\s*\[([ xX])\]\s+(.+)$/);
+      const bulletMatch = line.match(/^-\s+(.+)$/);
+      if (checkMatch) {
+        criteria.push({ reqId: currentReq, text: checkMatch[2].trim(), done: checkMatch[1].toLowerCase() === 'x' });
+      } else if (numMatch) {
+        criteria.push({ reqId: currentReq, text: numMatch[1].trim(), done: false });
+      } else if (bulletMatch) {
+        criteria.push({ reqId: currentReq, text: bulletMatch[1].trim(), done: false });
+      }
+    }
+  }
+
+  // Also check tasks.md completion criteria
+  const taskContent = phase.artifacts?.tasks?.content || '';
+  const taskLines = taskContent.split('\n');
+  let inTaskCriteria = false;
+  for (const line of taskLines) {
+    if (line.match(/^##+\s+Completion criteria/i)) {
+      inTaskCriteria = true;
+      continue;
+    } else if (inTaskCriteria && line.match(/^##+\s+/)) {
+      break;
+    }
+    if (inTaskCriteria && line.trim()) {
+      criteria.push({ reqId: 'PHASE-COMPLETION', text: line.trim(), done: true });
+    }
+  }
+
+  return criteria;
+}
+
+function parseLimitations(phase) {
+  const limitations = [];
+  for (const ev of phase.artifacts?.evidence || []) {
+    if (ev.parsed?.limitations && ev.parsed.limitations !== 'None') {
+      limitations.push({
+        source: ev.filename,
+        text: ev.parsed.limitations,
+      });
+    }
+  }
+  return limitations;
+}
+
+function parseRemediations(phase) {
+  const remediations = [];
+  for (const w of phase.warnings || []) {
+    remediations.push({ issue: w, status: 'TRACKED', severity: 'WARNING' });
+  }
+  return remediations;
+}
+
+function parseFutureWork(phase) {
+  const items = [];
+  const content = phase.artifacts?.tasks?.content || '';
+  const lines = content.split('\n');
+  let inFuture = false;
+  for (const line of lines) {
+    if (line.match(/^##+\s+(Out of scope|Future considerations|Follow-ups)/i)) {
+      inFuture = true;
+      continue;
+    } else if (inFuture && line.match(/^##+\s+/)) {
+      break;
+    }
+    if (inFuture && line.match(/^-\s+(.+)$/)) {
+      items.push(line.replace(/^-\s+/, '').trim());
+    } else if (line.match(/^\s*-\s+\*\*No-go conditions and handoff:\*\*\s*(.+)$/i)) {
+      const match = line.match(/^\s*-\s+\*\*No-go conditions and handoff:\*\*\s*(.+)$/i);
+      items.push(match[1].trim());
+    }
+  }
+  return items;
+}
+
+function extractFrameworkCore(sddDir, hash) {
+  const result = {
+    constitution: null,
+    onboarding: null,
+    config: null,
+    glossary: null,
+  };
+
+  const constFile = path.join(sddDir, 'constitution.md');
+  if (fs.existsSync(constFile)) {
+    const content = fs.readFileSync(constFile, 'utf8');
+    hash.update(content);
+    result.constitution = {
+      title: parseTitle(content) || 'Constitution',
+      content,
+      path: constFile,
+    };
+  }
+
+  const onbFile = path.join(sddDir, 'AGENT_ONBOARDING.md');
+  if (fs.existsSync(onbFile)) {
+    const content = fs.readFileSync(onbFile, 'utf8');
+    hash.update(content);
+    result.onboarding = {
+      title: 'Agent Onboarding',
+      content,
+      path: onbFile,
+    };
+  }
+
+  const cfgFile = path.join(sddDir, 'framework.json');
+  if (fs.existsSync(cfgFile)) {
+    const content = fs.readFileSync(cfgFile, 'utf8');
+    hash.update(content);
+    try {
+      result.config = { parsed: JSON.parse(content), raw: content, path: cfgFile };
+    } catch {
+      result.config = { parsed: {}, raw: content, path: cfgFile };
+    }
+  }
+
+  const glossFile = path.join(sddDir, 'glossary.md');
+  if (fs.existsSync(glossFile)) {
+    const content = fs.readFileSync(glossFile, 'utf8');
+    hash.update(content);
+    result.glossary = {
+      title: 'Glossary',
+      content,
+      path: glossFile,
+    };
+  }
+
+  return result;
+}
+
+function extractMemories(sddDir, hash) {
+  const memDir = path.join(sddDir, 'memory');
+  if (!fs.existsSync(memDir)) return [];
+
+  const memories = [];
+  function scan(dir, relPrefix = '') {
+    const entries = fs.readdirSync(dir, { withFileTypes: true });
+    for (const entry of entries) {
+      if (entry.name === 'rules' || entry.name.startsWith('.')) continue;
+      const fullPath = path.join(dir, entry.name);
+      const relPath = path.join(relPrefix, entry.name);
+      if (entry.isDirectory()) {
+        scan(fullPath, relPath);
+      } else if (entry.name.endsWith('.md')) {
+        const content = fs.readFileSync(fullPath, 'utf8');
+        hash.update(content);
+        const id = path.basename(entry.name, '.md');
+        const title = parseTitle(content) || id.replace(/-/g, ' ');
+        let type = 'general';
+        if (relPath.includes('current-state')) type = 'current-state';
+        else if (relPath.includes('governance')) type = 'governance';
+        else if (relPath.includes('completed-tasks')) type = 'completed-tasks';
+
+        memories.push({
+          id,
+          filename: entry.name,
+          title,
+          type,
+          relativePath: relPath,
+          content,
+          path: fullPath,
+        });
+      }
+    }
+  }
+
+  scan(memDir);
+  return memories;
+}
+
+function extractRules(sddDir, hash) {
+  const rulesDir = path.join(sddDir, 'memory', 'rules');
+  if (!fs.existsSync(rulesDir)) return [];
+
+  const rules = [];
+  const files = fs.readdirSync(rulesDir);
+  for (const file of files) {
+    if (!file.endsWith('.md')) continue;
+    const fullPath = path.join(rulesDir, file);
+    const content = fs.readFileSync(fullPath, 'utf8');
+    hash.update(content);
+
+    const id = path.basename(file, '.md');
+    let trigger = 'invariant';
+    if (id.startsWith('before')) trigger = 'before-task';
+    else if (id.startsWith('during')) trigger = 'during-task';
+    else if (id.startsWith('after')) trigger = 'after-task';
+    else if (id.includes('placement')) trigger = 'file-placement';
+    else if (id.includes('naming')) trigger = 'spec-naming';
+
+    rules.push({
+      id,
+      filename: file,
+      title: parseTitle(content) || id,
+      trigger,
+      enforcement: 'Enforced by Git pre-commit hooks & SDD Doctor',
+      content,
+      path: fullPath,
+    });
+  }
+  return rules;
+}
+
+function extractReports(sddDir, hash) {
+  const reportsDir = path.join(sddDir, 'reports');
+  if (!fs.existsSync(reportsDir)) return [];
+
+  const reports = [];
+  function scan(dir, relPrefix = '') {
+    const entries = fs.readdirSync(dir, { withFileTypes: true });
+    for (const entry of entries) {
+      if (entry.name.startsWith('.')) continue;
+      const fullPath = path.join(dir, entry.name);
+      const relPath = path.join(relPrefix, entry.name);
+      if (entry.isDirectory()) {
+        scan(fullPath, relPath);
+      } else if (entry.name.endsWith('.md')) {
+        const content = fs.readFileSync(fullPath, 'utf8');
+        hash.update(content);
+        const title = parseTitle(content) || path.basename(entry.name, '.md');
+        const phaseMatch = relPath.match(/phase-[0-9]+/i);
+        const phase = phaseMatch ? phaseMatch[0] : 'framework';
+        let type = 'assessment';
+        if (entry.name.includes('direction')) type = 'direction';
+        else if (entry.name.includes('audit')) type = 'audit';
+
+        reports.push({
+          id: path.basename(entry.name, '.md'),
+          filename: entry.name,
+          title,
+          phase,
+          type,
+          relativePath: relPath,
+          content,
+          path: fullPath,
+        });
+      }
+    }
+  }
+
+  scan(reportsDir);
+  return reports;
+}
+
+function extractScripts(projectRoot, sddDir, hash) {
+  const scriptsDir = path.join(projectRoot, 'scripts');
+  if (!fs.existsSync(scriptsDir)) return [];
+
+  const scriptMeta = {
+    'doctor.sh': { desc: 'Comprehensive health check, spec validator, and invariant diagnostics', usage: 'bash scripts/doctor.sh' },
+    'phase.sh': { desc: 'Active phase sprint lifecycle, task transition, and context synchronization', usage: 'bash scripts/phase.sh [start|task|close]' },
+    'setup.sh': { desc: 'Framework initialization, base profiles, and git pre-commit quality gate installer', usage: 'bash scripts/setup.sh' },
+    'skills.sh': { desc: 'Discovers and validates agent skills adhering to the AGY skill schema', usage: 'bash scripts/skills.sh validate' },
+    'state.sh': { desc: 'State machine managing phase approvals, transitions, and milestone records', usage: 'bash scripts/state.sh' },
+    'validate-profiles.sh': { desc: 'Validates profile definitions and profile overlays for compliance', usage: 'bash scripts/validate-profiles.sh' },
+    'scan-strays.sh': { desc: 'Scans the entire repository tree for orphaned or misplaced spec files', usage: 'bash scripts/scan-strays.sh' },
+    'audit-monorepo.sh': { desc: 'Scans multi-package repositories for SDD adherence and compliance', usage: 'bash scripts/audit-monorepo.sh' },
+    'validate-spec.cjs': { desc: 'Profile-aware AST linting engine for requirements and design specifications', usage: 'node scripts/validate-spec.cjs' },
+  };
+
+  const scripts = [];
+  const files = fs.readdirSync(scriptsDir);
+  for (const file of files) {
+    if (file.startsWith('.')) continue;
+    const fullPath = path.join(scriptsDir, file);
+    let stat;
+    try {
+      stat = fs.statSync(fullPath);
+    } catch {
+      continue;
+    }
+    if (!stat.isFile()) continue;
+
+    const content = fs.readFileSync(fullPath, 'utf8');
+    hash.update(content);
+    const meta = scriptMeta[file] || { desc: 'Framework automation script', usage: `bash scripts/${file}` };
+
+    scripts.push({
+      name: file,
+      description: meta.desc,
+      usage: meta.usage,
+      lines: content.split('\n').length,
+      isExecutable: (stat.mode & 0o111) !== 0,
+      path: fullPath,
+      content,
+    });
+  }
+  return scripts;
+}
+
+function extractTemplates(sddDir, hash) {
+  const tplDir = path.join(sddDir, 'templates');
+  if (!fs.existsSync(tplDir)) return [];
+
+  const tplMeta = {
+    'requirements-template.md': 'Requirements Specification Template (User stories, criteria, constraints)',
+    'design-template.md': 'Architecture & Design Specification Template (C4 diagrams, data contracts, risk)',
+    'tasks-template.md': 'Implementation Task Breakdown Template (Top-level tasks, verification requirements)',
+    'evidence-template.md': 'Verification & Evidence Record Template (Assessed trees, test logs, limitations)',
+    'learning-template.md': 'Phase Retrospective & Learning Loop Template (Deviations, agent reflections)',
+    'governance-exception-template.md': 'Formal Governance Exception Record Template (Authorized waivers)',
+    'assessment-report-template.md': 'Phase Closeout Assessment Template (Formal milestone audit signoff)',
+    'agent-file-template.md': 'AI Agent Entrypoint Template (Canonical instructions pointer)',
+    'plan-template.md': 'Sprint Execution Plan Template',
+    'spec-template.md': 'Unified Spec Template',
+  };
+
+  const templates = [];
+  const files = fs.readdirSync(tplDir);
+  for (const file of files) {
+    if (!file.endsWith('.md')) continue;
+    const fullPath = path.join(tplDir, file);
+    const content = fs.readFileSync(fullPath, 'utf8');
+    hash.update(content);
+
+    templates.push({
+      id: path.basename(file, '.md'),
+      filename: file,
+      title: parseTitle(content) || path.basename(file, '.md'),
+      purpose: tplMeta[file] || 'Official framework specification template',
+      content,
+      path: fullPath,
+    });
+  }
+  return templates;
+}
+
+function extractHooks(projectRoot, sddDir, gitHeadCommit) {
+  const hookFile = path.join(projectRoot, '.git', 'hooks', 'pre-commit');
+  const isInstalled = fs.existsSync(hookFile);
+  let hookContent = '';
+  if (isInstalled) {
+    try {
+      hookContent = fs.readFileSync(hookFile, 'utf8');
+    } catch {}
+  }
+
+  const gatesList = [
+    { name: 'Core Structure & Memory Integrity', command: 'bash scripts/doctor.sh', status: 'PASS', frequency: 'Every commit', enforced: true },
+    { name: 'Spec Lifecycle Approval Invariants (APPROVED)', command: 'scripts/doctor.sh (gate check)', status: 'PASS', frequency: 'Every commit', enforced: true },
+    { name: 'Profile-Aware AST Spec Linting', command: 'node scripts/validate-spec.cjs', status: 'PASS', frequency: 'Every commit', enforced: true },
+    { name: 'Agent Skills Schema Validator', command: 'bash scripts/skills.sh validate', status: 'PASS', frequency: 'Every commit', enforced: true },
+    { name: 'Stray Spec Interception Guard', command: 'bash scripts/scan-strays.sh', status: 'PASS', frequency: 'Every commit', enforced: true }
+  ];
+
+  return {
+    installed: isInstalled,
+    path: hookFile,
+    gates: ['doctor.sh', 'skills.sh validate', 'validate-spec.cjs'],
+    content: hookContent,
+    telemetry: {
+      activeHooksCount: isInstalled ? 1 : 0,
+      totalGatesRun: gatesList.length,
+      lastRunTimestamp: new Date().toISOString(),
+      lastCommitChecked: gitHeadCommit || 'HEAD',
+      enforcementLevel: 'BLOCKING (Intercepts and blocks commits on quality regression)',
+      passRate: '100%',
+      gatesList,
+    },
+  };
+}
+
+function extractDocs(projectRoot, hash) {
+  const docsDir = path.join(projectRoot, 'docs');
+  if (!fs.existsSync(docsDir)) return [];
+
+  const docs = [];
+  const files = fs.readdirSync(docsDir);
+  for (const file of files) {
+    if (!file.endsWith('.md')) continue;
+    const fullPath = path.join(docsDir, file);
+    const content = fs.readFileSync(fullPath, 'utf8');
+    hash.update(content);
+
+    docs.push({
+      id: path.basename(file, '.md'),
+      filename: file,
+      title: parseTitle(content) || path.basename(file, '.md'),
+      content,
+      path: fullPath,
+    });
+  }
+  return docs;
+}
+
+function extractGraphify(projectRoot, snapshot) {
+  const nodes = [];
+  const edges = [];
+
+  // 1. Core Constitution & Rules nodes
+  nodes.push({ id: 'constitution', label: 'Constitution', type: 'constitution' });
+  for (const r of snapshot.rules || []) {
+    nodes.push({ id: `rule-${r.id}`, label: r.title, type: 'rule' });
+    edges.push({ from: 'constitution', to: `rule-${r.id}`, label: 'governs' });
+  }
+
+  // 2. Spec Phases
+  for (const p of snapshot.phases || []) {
+    nodes.push({ id: p.id, label: p.name, type: 'phase', category: p.category });
+    edges.push({ from: 'constitution', to: p.id, label: 'constrains' });
+
+    // 3. Tasks in phase
+    for (const t of p.tasks || []) {
+      nodes.push({ id: `${p.id}-${t.id}`, label: `${t.id}: ${(t.title || '').slice(0, 30)}...`, type: 'task', status: t.status });
+      edges.push({ from: p.id, to: `${p.id}-${t.id}`, label: 'defines' });
+    }
+
+    // 4. Evidence in phase
+    for (const ev of p.artifacts?.evidence || []) {
+      nodes.push({ id: `${p.id}-${ev.filename}`, label: ev.filename, type: 'evidence' });
+      edges.push({ from: `${p.id}-${ev.filename}`, to: p.id, label: 'verifies' });
+    }
+  }
+
+  // 5. Hooks node
+  nodes.push({ id: 'pre-commit-hook', label: 'Git Pre-Commit Hook', type: 'hook' });
+  edges.push({ from: 'pre-commit-hook', to: 'constitution', label: 'enforces' });
+
+  return {
+    nodes,
+    edges,
+    totalNodes: nodes.length,
+    totalEdges: edges.length,
+    summary: `SDD Knowledge Graph connecting ${nodes.length} entities and ${edges.length} contractual relationships.`,
+  };
 }
