@@ -1,0 +1,897 @@
+SDD Framework Test Suite
+Framework root: /Users/phila/Desktop/coding/PROJECTS/Spec-Driven-Development-Framework
+Bash version:   3.2.57(1)-release
+node:           v22.22.3
+
+test_doctor_spec_lint.sh
+  - doctor fails when the integrated spec linter fails
+    ok   bad active requirements fail doctor
+    ok   corrected active requirements pass doctor
+  - doctor source has no blanket framework-repository exemption
+    ok   IS_FRAMEWORK escape hatch removed
+  test_doctor_spec_lint.sh: 3 run, 0 failed
+
+test_documented_paths.sh
+  - documented .sdd/scripts/ path resolves in the framework repo
+    ok   .sdd/scripts/ exists (mandated by AGENTS.md)
+    ok   .sdd/scripts/phase.sh symlink resolves
+    ok   .sdd/scripts/doctor.sh symlink resolves
+    ok   .sdd/scripts/scan-strays.sh symlink resolves
+    ok   .sdd/scripts/skills.sh symlink resolves
+  - documented paths are actually executable as written
+    ok   bash .sdd/scripts/phase.sh status exits 0
+  - no documentation references a nonexistent tests/ path
+    ok   after-task.md reference resolves: scripts/phase.sh
+    ok   after-task.md reference resolves: scripts/setup.sh
+    ok   after-task.md reference resolves: scripts/validate-profiles.sh
+    ok   after-task.md reference resolves: tests/run.sh
+  - consumer install exposes .sdd/scripts/
+    ok   setup.sh --profile general succeeds in a clean repo
+    ok   consumer .sdd/scripts/ created
+    ok   consumer .sdd/scripts/phase.sh present
+    ok   consumer: bash .sdd/scripts/phase.sh status exits 0
+  test_documented_paths.sh: 14 run, 0 failed
+
+test_governance_upgrade.sh
+  - fresh install contains canonical governance and learning topology
+    ok   fresh install succeeds
+    ok   .sdd/constitution.md installed
+    ok   .sdd/framework.json installed
+    ok   .sdd/evidence installed
+    ok   .sdd/reports installed
+    ok   .sdd/memory/governance installed
+    ok   .sdd/memory/archive installed
+    ok   .sdd/templates/evidence-template.md installed
+    ok   .sdd/templates/learning-template.md installed
+    ok   .sdd/templates/governance-exception-template.md installed
+    ok   universal truth article installed
+    ok   project extension point installed
+  - ES-module consumer runs the CommonJS validator
+    ok   doctor passes inside an ES-module consumer
+  - upgrade preserves project meaning and existing hook
+    ok   upgrade succeeds
+    ok   existing hook preserved byte-for-byte
+    ok   project constitution preserved
+    ok   project skill preserved
+    ok   upgrade manifest recorded inside .sdd
+  test_governance_upgrade.sh: 18 run, 0 failed
+
+test_hook_records.sh
+  - observed hooks record successful and failed commands and block failure
+    ok   failing skill gate blocks execution
+    ok   only executed gates are recorded
+    ok   doctor success is recorded
+    ok   actual failing exit code is recorded
+  - missing gate is recorded as skipped and does not claim success
+    ok   missing required gate blocks execution
+    ok   missing doctor is recorded as skipped
+  test_hook_records.sh: 6 run, 0 failed
+
+test_install_compositions.sh
+  - all 56 supported base + modifier-subset compositions install
+    ok   general installs
+    ok   general metadata is exact
+    ok   general: self-contained phase runner
+    ok   general: machine state seeded
+    ok   general: canonical constitution installed
+    ok   general: no duplicate legacy constitution
+    ok   general: core requirements template
+    ok   general+devsecops installs
+    ok   general+devsecops metadata is exact
+    ok   general+devsecops: self-contained phase runner
+    ok   general+devsecops: machine state seeded
+    ok   general+devsecops: canonical constitution installed
+    ok   general+devsecops: no duplicate legacy constitution
+    ok   general: core requirements template
+    ok   devsecops: security design template
+    ok   devsecops: security rule
+    ok   devsecops: constitutional amendment applied to canonical constitution
+    ok   general+mlops installs
+    ok   general+mlops metadata is exact
+    ok   general+mlops: self-contained phase runner
+    ok   general+mlops: machine state seeded
+    ok   general+mlops: canonical constitution installed
+    ok   general+mlops: no duplicate legacy constitution
+    ok   general: core requirements template
+    ok   mlops: model design template
+    ok   mlops: dataset card
+    ok   mlops: constitutional amendment applied to canonical constitution
+    ok   general+devsecops+mlops installs
+    ok   general+devsecops+mlops metadata is exact
+    ok   general+devsecops+mlops: self-contained phase runner
+    ok   general+devsecops+mlops: machine state seeded
+    ok   general+devsecops+mlops: canonical constitution installed
+    ok   general+devsecops+mlops: no duplicate legacy constitution
+    ok   general: core requirements template
+    ok   devsecops: security design template
+    ok   devsecops: security rule
+    ok   devsecops: constitutional amendment applied to canonical constitution
+    ok   mlops: model design template
+    ok   mlops: dataset card
+    ok   mlops: constitutional amendment applied to canonical constitution
+    ok   general+devops installs
+    ok   general+devops metadata is exact
+    ok   general+devops: self-contained phase runner
+    ok   general+devops: machine state seeded
+    ok   general+devops: canonical constitution installed
+    ok   general+devops: no duplicate legacy constitution
+    ok   general: core requirements template
+    ok   devops: pipeline template
+    ok   devops: infrastructure template
+    ok   devops: deployment rule
+    ok   general+devsecops+devops installs
+    ok   general+devsecops+devops metadata is exact
+    ok   general+devsecops+devops: self-contained phase runner
+    ok   general+devsecops+devops: machine state seeded
+    ok   general+devsecops+devops: canonical constitution installed
+    ok   general+devsecops+devops: no duplicate legacy constitution
+    ok   general: core requirements template
+    ok   devsecops: security design template
+    ok   devsecops: security rule
+    ok   devsecops: constitutional amendment applied to canonical constitution
+    ok   devops: pipeline template
+    ok   devops: infrastructure template
+    ok   devops: deployment rule
+    ok   general+mlops+devops installs
+    ok   general+mlops+devops metadata is exact
+    ok   general+mlops+devops: self-contained phase runner
+    ok   general+mlops+devops: machine state seeded
+    ok   general+mlops+devops: canonical constitution installed
+    ok   general+mlops+devops: no duplicate legacy constitution
+    ok   general: core requirements template
+    ok   mlops: model design template
+    ok   mlops: dataset card
+    ok   mlops: constitutional amendment applied to canonical constitution
+    ok   devops: pipeline template
+    ok   devops: infrastructure template
+    ok   devops: deployment rule
+    ok   general+devsecops+mlops+devops installs
+    ok   general+devsecops+mlops+devops metadata is exact
+    ok   general+devsecops+mlops+devops: self-contained phase runner
+    ok   general+devsecops+mlops+devops: machine state seeded
+    ok   general+devsecops+mlops+devops: canonical constitution installed
+    ok   general+devsecops+mlops+devops: no duplicate legacy constitution
+    ok   general: core requirements template
+    ok   devsecops: security design template
+    ok   devsecops: security rule
+    ok   devsecops: constitutional amendment applied to canonical constitution
+    ok   mlops: model design template
+    ok   mlops: dataset card
+    ok   mlops: constitutional amendment applied to canonical constitution
+    ok   devops: pipeline template
+    ok   devops: infrastructure template
+    ok   devops: deployment rule
+    ok   web installs
+    ok   web metadata is exact
+    ok   web: self-contained phase runner
+    ok   web: machine state seeded
+    ok   web: canonical constitution installed
+    ok   web: no duplicate legacy constitution
+    ok   web: component design template
+    ok   web: accessibility rule
+    ok   web+devsecops installs
+    ok   web+devsecops metadata is exact
+    ok   web+devsecops: self-contained phase runner
+    ok   web+devsecops: machine state seeded
+    ok   web+devsecops: canonical constitution installed
+    ok   web+devsecops: no duplicate legacy constitution
+    ok   web: component design template
+    ok   web: accessibility rule
+    ok   devsecops: security design template
+    ok   devsecops: security rule
+    ok   devsecops: constitutional amendment applied to canonical constitution
+    ok   web+mlops installs
+    ok   web+mlops metadata is exact
+    ok   web+mlops: self-contained phase runner
+    ok   web+mlops: machine state seeded
+    ok   web+mlops: canonical constitution installed
+    ok   web+mlops: no duplicate legacy constitution
+    ok   web: component design template
+    ok   web: accessibility rule
+    ok   mlops: model design template
+    ok   mlops: dataset card
+    ok   mlops: constitutional amendment applied to canonical constitution
+    ok   web+devsecops+mlops installs
+    ok   web+devsecops+mlops metadata is exact
+    ok   web+devsecops+mlops: self-contained phase runner
+    ok   web+devsecops+mlops: machine state seeded
+    ok   web+devsecops+mlops: canonical constitution installed
+    ok   web+devsecops+mlops: no duplicate legacy constitution
+    ok   web: component design template
+    ok   web: accessibility rule
+    ok   devsecops: security design template
+    ok   devsecops: security rule
+    ok   devsecops: constitutional amendment applied to canonical constitution
+    ok   mlops: model design template
+    ok   mlops: dataset card
+    ok   mlops: constitutional amendment applied to canonical constitution
+    ok   web+devops installs
+    ok   web+devops metadata is exact
+    ok   web+devops: self-contained phase runner
+    ok   web+devops: machine state seeded
+    ok   web+devops: canonical constitution installed
+    ok   web+devops: no duplicate legacy constitution
+    ok   web: component design template
+    ok   web: accessibility rule
+    ok   devops: pipeline template
+    ok   devops: infrastructure template
+    ok   devops: deployment rule
+    ok   web+devsecops+devops installs
+    ok   web+devsecops+devops metadata is exact
+    ok   web+devsecops+devops: self-contained phase runner
+    ok   web+devsecops+devops: machine state seeded
+    ok   web+devsecops+devops: canonical constitution installed
+    ok   web+devsecops+devops: no duplicate legacy constitution
+    ok   web: component design template
+    ok   web: accessibility rule
+    ok   devsecops: security design template
+    ok   devsecops: security rule
+    ok   devsecops: constitutional amendment applied to canonical constitution
+    ok   devops: pipeline template
+    ok   devops: infrastructure template
+    ok   devops: deployment rule
+    ok   web+mlops+devops installs
+    ok   web+mlops+devops metadata is exact
+    ok   web+mlops+devops: self-contained phase runner
+    ok   web+mlops+devops: machine state seeded
+    ok   web+mlops+devops: canonical constitution installed
+    ok   web+mlops+devops: no duplicate legacy constitution
+    ok   web: component design template
+    ok   web: accessibility rule
+    ok   mlops: model design template
+    ok   mlops: dataset card
+    ok   mlops: constitutional amendment applied to canonical constitution
+    ok   devops: pipeline template
+    ok   devops: infrastructure template
+    ok   devops: deployment rule
+    ok   web+devsecops+mlops+devops installs
+    ok   web+devsecops+mlops+devops metadata is exact
+    ok   web+devsecops+mlops+devops: self-contained phase runner
+    ok   web+devsecops+mlops+devops: machine state seeded
+    ok   web+devsecops+mlops+devops: canonical constitution installed
+    ok   web+devsecops+mlops+devops: no duplicate legacy constitution
+    ok   web: component design template
+    ok   web: accessibility rule
+    ok   devsecops: security design template
+    ok   devsecops: security rule
+    ok   devsecops: constitutional amendment applied to canonical constitution
+    ok   mlops: model design template
+    ok   mlops: dataset card
+    ok   mlops: constitutional amendment applied to canonical constitution
+    ok   devops: pipeline template
+    ok   devops: infrastructure template
+    ok   devops: deployment rule
+    ok   mobile installs
+    ok   mobile metadata is exact
+    ok   mobile: self-contained phase runner
+    ok   mobile: machine state seeded
+    ok   mobile: canonical constitution installed
+    ok   mobile: no duplicate legacy constitution
+    ok   mobile: screen design template
+    ok   mobile: platform rule
+    ok   mobile+devsecops installs
+    ok   mobile+devsecops metadata is exact
+    ok   mobile+devsecops: self-contained phase runner
+    ok   mobile+devsecops: machine state seeded
+    ok   mobile+devsecops: canonical constitution installed
+    ok   mobile+devsecops: no duplicate legacy constitution
+    ok   mobile: screen design template
+    ok   mobile: platform rule
+    ok   devsecops: security design template
+    ok   devsecops: security rule
+    ok   devsecops: constitutional amendment applied to canonical constitution
+    ok   mobile+mlops installs
+    ok   mobile+mlops metadata is exact
+    ok   mobile+mlops: self-contained phase runner
+    ok   mobile+mlops: machine state seeded
+    ok   mobile+mlops: canonical constitution installed
+    ok   mobile+mlops: no duplicate legacy constitution
+    ok   mobile: screen design template
+    ok   mobile: platform rule
+    ok   mlops: model design template
+    ok   mlops: dataset card
+    ok   mlops: constitutional amendment applied to canonical constitution
+    ok   mobile+devsecops+mlops installs
+    ok   mobile+devsecops+mlops metadata is exact
+    ok   mobile+devsecops+mlops: self-contained phase runner
+    ok   mobile+devsecops+mlops: machine state seeded
+    ok   mobile+devsecops+mlops: canonical constitution installed
+    ok   mobile+devsecops+mlops: no duplicate legacy constitution
+    ok   mobile: screen design template
+    ok   mobile: platform rule
+    ok   devsecops: security design template
+    ok   devsecops: security rule
+    ok   devsecops: constitutional amendment applied to canonical constitution
+    ok   mlops: model design template
+    ok   mlops: dataset card
+    ok   mlops: constitutional amendment applied to canonical constitution
+    ok   mobile+devops installs
+    ok   mobile+devops metadata is exact
+    ok   mobile+devops: self-contained phase runner
+    ok   mobile+devops: machine state seeded
+    ok   mobile+devops: canonical constitution installed
+    ok   mobile+devops: no duplicate legacy constitution
+    ok   mobile: screen design template
+    ok   mobile: platform rule
+    ok   devops: pipeline template
+    ok   devops: infrastructure template
+    ok   devops: deployment rule
+    ok   mobile+devsecops+devops installs
+    ok   mobile+devsecops+devops metadata is exact
+    ok   mobile+devsecops+devops: self-contained phase runner
+    ok   mobile+devsecops+devops: machine state seeded
+    ok   mobile+devsecops+devops: canonical constitution installed
+    ok   mobile+devsecops+devops: no duplicate legacy constitution
+    ok   mobile: screen design template
+    ok   mobile: platform rule
+    ok   devsecops: security design template
+    ok   devsecops: security rule
+    ok   devsecops: constitutional amendment applied to canonical constitution
+    ok   devops: pipeline template
+    ok   devops: infrastructure template
+    ok   devops: deployment rule
+    ok   mobile+mlops+devops installs
+    ok   mobile+mlops+devops metadata is exact
+    ok   mobile+mlops+devops: self-contained phase runner
+    ok   mobile+mlops+devops: machine state seeded
+    ok   mobile+mlops+devops: canonical constitution installed
+    ok   mobile+mlops+devops: no duplicate legacy constitution
+    ok   mobile: screen design template
+    ok   mobile: platform rule
+    ok   mlops: model design template
+    ok   mlops: dataset card
+    ok   mlops: constitutional amendment applied to canonical constitution
+    ok   devops: pipeline template
+    ok   devops: infrastructure template
+    ok   devops: deployment rule
+    ok   mobile+devsecops+mlops+devops installs
+    ok   mobile+devsecops+mlops+devops metadata is exact
+    ok   mobile+devsecops+mlops+devops: self-contained phase runner
+    ok   mobile+devsecops+mlops+devops: machine state seeded
+    ok   mobile+devsecops+mlops+devops: canonical constitution installed
+    ok   mobile+devsecops+mlops+devops: no duplicate legacy constitution
+    ok   mobile: screen design template
+    ok   mobile: platform rule
+    ok   devsecops: security design template
+    ok   devsecops: security rule
+    ok   devsecops: constitutional amendment applied to canonical constitution
+    ok   mlops: model design template
+    ok   mlops: dataset card
+    ok   mlops: constitutional amendment applied to canonical constitution
+    ok   devops: pipeline template
+    ok   devops: infrastructure template
+    ok   devops: deployment rule
+    ok   api installs
+    ok   api metadata is exact
+    ok   api: self-contained phase runner
+    ok   api: machine state seeded
+    ok   api: canonical constitution installed
+    ok   api: no duplicate legacy constitution
+    ok   api: API design template
+    ok   api: schema template
+    ok   api+devsecops installs
+    ok   api+devsecops metadata is exact
+    ok   api+devsecops: self-contained phase runner
+    ok   api+devsecops: machine state seeded
+    ok   api+devsecops: canonical constitution installed
+    ok   api+devsecops: no duplicate legacy constitution
+    ok   api: API design template
+    ok   api: schema template
+    ok   devsecops: security design template
+    ok   devsecops: security rule
+    ok   devsecops: constitutional amendment applied to canonical constitution
+    ok   api+mlops installs
+    ok   api+mlops metadata is exact
+    ok   api+mlops: self-contained phase runner
+    ok   api+mlops: machine state seeded
+    ok   api+mlops: canonical constitution installed
+    ok   api+mlops: no duplicate legacy constitution
+    ok   api: API design template
+    ok   api: schema template
+    ok   mlops: model design template
+    ok   mlops: dataset card
+    ok   mlops: constitutional amendment applied to canonical constitution
+    ok   api+devsecops+mlops installs
+    ok   api+devsecops+mlops metadata is exact
+    ok   api+devsecops+mlops: self-contained phase runner
+    ok   api+devsecops+mlops: machine state seeded
+    ok   api+devsecops+mlops: canonical constitution installed
+    ok   api+devsecops+mlops: no duplicate legacy constitution
+    ok   api: API design template
+    ok   api: schema template
+    ok   devsecops: security design template
+    ok   devsecops: security rule
+    ok   devsecops: constitutional amendment applied to canonical constitution
+    ok   mlops: model design template
+    ok   mlops: dataset card
+    ok   mlops: constitutional amendment applied to canonical constitution
+    ok   api+devops installs
+    ok   api+devops metadata is exact
+    ok   api+devops: self-contained phase runner
+    ok   api+devops: machine state seeded
+    ok   api+devops: canonical constitution installed
+    ok   api+devops: no duplicate legacy constitution
+    ok   api: API design template
+    ok   api: schema template
+    ok   devops: pipeline template
+    ok   devops: infrastructure template
+    ok   devops: deployment rule
+    ok   api+devsecops+devops installs
+    ok   api+devsecops+devops metadata is exact
+    ok   api+devsecops+devops: self-contained phase runner
+    ok   api+devsecops+devops: machine state seeded
+    ok   api+devsecops+devops: canonical constitution installed
+    ok   api+devsecops+devops: no duplicate legacy constitution
+    ok   api: API design template
+    ok   api: schema template
+    ok   devsecops: security design template
+    ok   devsecops: security rule
+    ok   devsecops: constitutional amendment applied to canonical constitution
+    ok   devops: pipeline template
+    ok   devops: infrastructure template
+    ok   devops: deployment rule
+    ok   api+mlops+devops installs
+    ok   api+mlops+devops metadata is exact
+    ok   api+mlops+devops: self-contained phase runner
+    ok   api+mlops+devops: machine state seeded
+    ok   api+mlops+devops: canonical constitution installed
+    ok   api+mlops+devops: no duplicate legacy constitution
+    ok   api: API design template
+    ok   api: schema template
+    ok   mlops: model design template
+    ok   mlops: dataset card
+    ok   mlops: constitutional amendment applied to canonical constitution
+    ok   devops: pipeline template
+    ok   devops: infrastructure template
+    ok   devops: deployment rule
+    ok   api+devsecops+mlops+devops installs
+    ok   api+devsecops+mlops+devops metadata is exact
+    ok   api+devsecops+mlops+devops: self-contained phase runner
+    ok   api+devsecops+mlops+devops: machine state seeded
+    ok   api+devsecops+mlops+devops: canonical constitution installed
+    ok   api+devsecops+mlops+devops: no duplicate legacy constitution
+    ok   api: API design template
+    ok   api: schema template
+    ok   devsecops: security design template
+    ok   devsecops: security rule
+    ok   devsecops: constitutional amendment applied to canonical constitution
+    ok   mlops: model design template
+    ok   mlops: dataset card
+    ok   mlops: constitutional amendment applied to canonical constitution
+    ok   devops: pipeline template
+    ok   devops: infrastructure template
+    ok   devops: deployment rule
+    ok   cli installs
+    ok   cli metadata is exact
+    ok   cli: self-contained phase runner
+    ok   cli: machine state seeded
+    ok   cli: canonical constitution installed
+    ok   cli: no duplicate legacy constitution
+    ok   cli: command design template
+    ok   cli: CLI UX rule
+    ok   cli+devsecops installs
+    ok   cli+devsecops metadata is exact
+    ok   cli+devsecops: self-contained phase runner
+    ok   cli+devsecops: machine state seeded
+    ok   cli+devsecops: canonical constitution installed
+    ok   cli+devsecops: no duplicate legacy constitution
+    ok   cli: command design template
+    ok   cli: CLI UX rule
+    ok   devsecops: security design template
+    ok   devsecops: security rule
+    ok   devsecops: constitutional amendment applied to canonical constitution
+    ok   cli+mlops installs
+    ok   cli+mlops metadata is exact
+    ok   cli+mlops: self-contained phase runner
+    ok   cli+mlops: machine state seeded
+    ok   cli+mlops: canonical constitution installed
+    ok   cli+mlops: no duplicate legacy constitution
+    ok   cli: command design template
+    ok   cli: CLI UX rule
+    ok   mlops: model design template
+    ok   mlops: dataset card
+    ok   mlops: constitutional amendment applied to canonical constitution
+    ok   cli+devsecops+mlops installs
+    ok   cli+devsecops+mlops metadata is exact
+    ok   cli+devsecops+mlops: self-contained phase runner
+    ok   cli+devsecops+mlops: machine state seeded
+    ok   cli+devsecops+mlops: canonical constitution installed
+    ok   cli+devsecops+mlops: no duplicate legacy constitution
+    ok   cli: command design template
+    ok   cli: CLI UX rule
+    ok   devsecops: security design template
+    ok   devsecops: security rule
+    ok   devsecops: constitutional amendment applied to canonical constitution
+    ok   mlops: model design template
+    ok   mlops: dataset card
+    ok   mlops: constitutional amendment applied to canonical constitution
+    ok   cli+devops installs
+    ok   cli+devops metadata is exact
+    ok   cli+devops: self-contained phase runner
+    ok   cli+devops: machine state seeded
+    ok   cli+devops: canonical constitution installed
+    ok   cli+devops: no duplicate legacy constitution
+    ok   cli: command design template
+    ok   cli: CLI UX rule
+    ok   devops: pipeline template
+    ok   devops: infrastructure template
+    ok   devops: deployment rule
+    ok   cli+devsecops+devops installs
+    ok   cli+devsecops+devops metadata is exact
+    ok   cli+devsecops+devops: self-contained phase runner
+    ok   cli+devsecops+devops: machine state seeded
+    ok   cli+devsecops+devops: canonical constitution installed
+    ok   cli+devsecops+devops: no duplicate legacy constitution
+    ok   cli: command design template
+    ok   cli: CLI UX rule
+    ok   devsecops: security design template
+    ok   devsecops: security rule
+    ok   devsecops: constitutional amendment applied to canonical constitution
+    ok   devops: pipeline template
+    ok   devops: infrastructure template
+    ok   devops: deployment rule
+    ok   cli+mlops+devops installs
+    ok   cli+mlops+devops metadata is exact
+    ok   cli+mlops+devops: self-contained phase runner
+    ok   cli+mlops+devops: machine state seeded
+    ok   cli+mlops+devops: canonical constitution installed
+    ok   cli+mlops+devops: no duplicate legacy constitution
+    ok   cli: command design template
+    ok   cli: CLI UX rule
+    ok   mlops: model design template
+    ok   mlops: dataset card
+    ok   mlops: constitutional amendment applied to canonical constitution
+    ok   devops: pipeline template
+    ok   devops: infrastructure template
+    ok   devops: deployment rule
+    ok   cli+devsecops+mlops+devops installs
+    ok   cli+devsecops+mlops+devops metadata is exact
+    ok   cli+devsecops+mlops+devops: self-contained phase runner
+    ok   cli+devsecops+mlops+devops: machine state seeded
+    ok   cli+devsecops+mlops+devops: canonical constitution installed
+    ok   cli+devsecops+mlops+devops: no duplicate legacy constitution
+    ok   cli: command design template
+    ok   cli: CLI UX rule
+    ok   devsecops: security design template
+    ok   devsecops: security rule
+    ok   devsecops: constitutional amendment applied to canonical constitution
+    ok   mlops: model design template
+    ok   mlops: dataset card
+    ok   mlops: constitutional amendment applied to canonical constitution
+    ok   devops: pipeline template
+    ok   devops: infrastructure template
+    ok   devops: deployment rule
+    ok   full-stack installs
+    ok   full-stack metadata is exact
+    ok   full-stack: self-contained phase runner
+    ok   full-stack: machine state seeded
+    ok   full-stack: canonical constitution installed
+    ok   full-stack: no duplicate legacy constitution
+    ok   full-stack: inherited web template
+    ok   full-stack: inherited API template
+    ok   full-stack: architecture template
+    ok   full-stack+devsecops installs
+    ok   full-stack+devsecops metadata is exact
+    ok   full-stack+devsecops: self-contained phase runner
+    ok   full-stack+devsecops: machine state seeded
+    ok   full-stack+devsecops: canonical constitution installed
+    ok   full-stack+devsecops: no duplicate legacy constitution
+    ok   full-stack: inherited web template
+    ok   full-stack: inherited API template
+    ok   full-stack: architecture template
+    ok   devsecops: security design template
+    ok   devsecops: security rule
+    ok   devsecops: constitutional amendment applied to canonical constitution
+    ok   full-stack+mlops installs
+    ok   full-stack+mlops metadata is exact
+    ok   full-stack+mlops: self-contained phase runner
+    ok   full-stack+mlops: machine state seeded
+    ok   full-stack+mlops: canonical constitution installed
+    ok   full-stack+mlops: no duplicate legacy constitution
+    ok   full-stack: inherited web template
+    ok   full-stack: inherited API template
+    ok   full-stack: architecture template
+    ok   mlops: model design template
+    ok   mlops: dataset card
+    ok   mlops: constitutional amendment applied to canonical constitution
+    ok   full-stack+devsecops+mlops installs
+    ok   full-stack+devsecops+mlops metadata is exact
+    ok   full-stack+devsecops+mlops: self-contained phase runner
+    ok   full-stack+devsecops+mlops: machine state seeded
+    ok   full-stack+devsecops+mlops: canonical constitution installed
+    ok   full-stack+devsecops+mlops: no duplicate legacy constitution
+    ok   full-stack: inherited web template
+    ok   full-stack: inherited API template
+    ok   full-stack: architecture template
+    ok   devsecops: security design template
+    ok   devsecops: security rule
+    ok   devsecops: constitutional amendment applied to canonical constitution
+    ok   mlops: model design template
+    ok   mlops: dataset card
+    ok   mlops: constitutional amendment applied to canonical constitution
+    ok   full-stack+devops installs
+    ok   full-stack+devops metadata is exact
+    ok   full-stack+devops: self-contained phase runner
+    ok   full-stack+devops: machine state seeded
+    ok   full-stack+devops: canonical constitution installed
+    ok   full-stack+devops: no duplicate legacy constitution
+    ok   full-stack: inherited web template
+    ok   full-stack: inherited API template
+    ok   full-stack: architecture template
+    ok   devops: pipeline template
+    ok   devops: infrastructure template
+    ok   devops: deployment rule
+    ok   full-stack+devsecops+devops installs
+    ok   full-stack+devsecops+devops metadata is exact
+    ok   full-stack+devsecops+devops: self-contained phase runner
+    ok   full-stack+devsecops+devops: machine state seeded
+    ok   full-stack+devsecops+devops: canonical constitution installed
+    ok   full-stack+devsecops+devops: no duplicate legacy constitution
+    ok   full-stack: inherited web template
+    ok   full-stack: inherited API template
+    ok   full-stack: architecture template
+    ok   devsecops: security design template
+    ok   devsecops: security rule
+    ok   devsecops: constitutional amendment applied to canonical constitution
+    ok   devops: pipeline template
+    ok   devops: infrastructure template
+    ok   devops: deployment rule
+    ok   full-stack+mlops+devops installs
+    ok   full-stack+mlops+devops metadata is exact
+    ok   full-stack+mlops+devops: self-contained phase runner
+    ok   full-stack+mlops+devops: machine state seeded
+    ok   full-stack+mlops+devops: canonical constitution installed
+    ok   full-stack+mlops+devops: no duplicate legacy constitution
+    ok   full-stack: inherited web template
+    ok   full-stack: inherited API template
+    ok   full-stack: architecture template
+    ok   mlops: model design template
+    ok   mlops: dataset card
+    ok   mlops: constitutional amendment applied to canonical constitution
+    ok   devops: pipeline template
+    ok   devops: infrastructure template
+    ok   devops: deployment rule
+    ok   full-stack+devsecops+mlops+devops installs
+    ok   full-stack+devsecops+mlops+devops metadata is exact
+    ok   full-stack+devsecops+mlops+devops: self-contained phase runner
+    ok   full-stack+devsecops+mlops+devops: machine state seeded
+    ok   full-stack+devsecops+mlops+devops: canonical constitution installed
+    ok   full-stack+devsecops+mlops+devops: no duplicate legacy constitution
+    ok   full-stack: inherited web template
+    ok   full-stack: inherited API template
+    ok   full-stack: architecture template
+    ok   devsecops: security design template
+    ok   devsecops: security rule
+    ok   devsecops: constitutional amendment applied to canonical constitution
+    ok   mlops: model design template
+    ok   mlops: dataset card
+    ok   mlops: constitutional amendment applied to canonical constitution
+    ok   devops: pipeline template
+    ok   devops: infrastructure template
+    ok   devops: deployment rule
+    ok   monorepo installs
+    ok   monorepo metadata is exact
+    ok   monorepo: self-contained phase runner
+    ok   monorepo: machine state seeded
+    ok   monorepo: canonical constitution installed
+    ok   monorepo: no duplicate legacy constitution
+    ok   monorepo: architecture RFC
+    ok   monorepo: coordination status
+    ok   monorepo: governance rule
+    ok   monorepo+devsecops installs
+    ok   monorepo+devsecops metadata is exact
+    ok   monorepo+devsecops: self-contained phase runner
+    ok   monorepo+devsecops: machine state seeded
+    ok   monorepo+devsecops: canonical constitution installed
+    ok   monorepo+devsecops: no duplicate legacy constitution
+    ok   monorepo: architecture RFC
+    ok   monorepo: coordination status
+    ok   monorepo: governance rule
+    ok   devsecops: security design template
+    ok   devsecops: security rule
+    ok   devsecops: constitutional amendment applied to canonical constitution
+    ok   monorepo+mlops installs
+    ok   monorepo+mlops metadata is exact
+    ok   monorepo+mlops: self-contained phase runner
+    ok   monorepo+mlops: machine state seeded
+    ok   monorepo+mlops: canonical constitution installed
+    ok   monorepo+mlops: no duplicate legacy constitution
+    ok   monorepo: architecture RFC
+    ok   monorepo: coordination status
+    ok   monorepo: governance rule
+    ok   mlops: model design template
+    ok   mlops: dataset card
+    ok   mlops: constitutional amendment applied to canonical constitution
+    ok   monorepo+devsecops+mlops installs
+    ok   monorepo+devsecops+mlops metadata is exact
+    ok   monorepo+devsecops+mlops: self-contained phase runner
+    ok   monorepo+devsecops+mlops: machine state seeded
+    ok   monorepo+devsecops+mlops: canonical constitution installed
+    ok   monorepo+devsecops+mlops: no duplicate legacy constitution
+    ok   monorepo: architecture RFC
+    ok   monorepo: coordination status
+    ok   monorepo: governance rule
+    ok   devsecops: security design template
+    ok   devsecops: security rule
+    ok   devsecops: constitutional amendment applied to canonical constitution
+    ok   mlops: model design template
+    ok   mlops: dataset card
+    ok   mlops: constitutional amendment applied to canonical constitution
+    ok   monorepo+devops installs
+    ok   monorepo+devops metadata is exact
+    ok   monorepo+devops: self-contained phase runner
+    ok   monorepo+devops: machine state seeded
+    ok   monorepo+devops: canonical constitution installed
+    ok   monorepo+devops: no duplicate legacy constitution
+    ok   monorepo: architecture RFC
+    ok   monorepo: coordination status
+    ok   monorepo: governance rule
+    ok   devops: pipeline template
+    ok   devops: infrastructure template
+    ok   devops: deployment rule
+    ok   monorepo+devsecops+devops installs
+    ok   monorepo+devsecops+devops metadata is exact
+    ok   monorepo+devsecops+devops: self-contained phase runner
+    ok   monorepo+devsecops+devops: machine state seeded
+    ok   monorepo+devsecops+devops: canonical constitution installed
+    ok   monorepo+devsecops+devops: no duplicate legacy constitution
+    ok   monorepo: architecture RFC
+    ok   monorepo: coordination status
+    ok   monorepo: governance rule
+    ok   devsecops: security design template
+    ok   devsecops: security rule
+    ok   devsecops: constitutional amendment applied to canonical constitution
+    ok   devops: pipeline template
+    ok   devops: infrastructure template
+    ok   devops: deployment rule
+    ok   monorepo+mlops+devops installs
+    ok   monorepo+mlops+devops metadata is exact
+    ok   monorepo+mlops+devops: self-contained phase runner
+    ok   monorepo+mlops+devops: machine state seeded
+    ok   monorepo+mlops+devops: canonical constitution installed
+    ok   monorepo+mlops+devops: no duplicate legacy constitution
+    ok   monorepo: architecture RFC
+    ok   monorepo: coordination status
+    ok   monorepo: governance rule
+    ok   mlops: model design template
+    ok   mlops: dataset card
+    ok   mlops: constitutional amendment applied to canonical constitution
+    ok   devops: pipeline template
+    ok   devops: infrastructure template
+    ok   devops: deployment rule
+    ok   monorepo+devsecops+mlops+devops installs
+    ok   monorepo+devsecops+mlops+devops metadata is exact
+    ok   monorepo+devsecops+mlops+devops: self-contained phase runner
+    ok   monorepo+devsecops+mlops+devops: machine state seeded
+    ok   monorepo+devsecops+mlops+devops: canonical constitution installed
+    ok   monorepo+devsecops+mlops+devops: no duplicate legacy constitution
+    ok   monorepo: architecture RFC
+    ok   monorepo: coordination status
+    ok   monorepo: governance rule
+    ok   devsecops: security design template
+    ok   devsecops: security rule
+    ok   devsecops: constitutional amendment applied to canonical constitution
+    ok   mlops: model design template
+    ok   mlops: dataset card
+    ok   mlops: constitutional amendment applied to canonical constitution
+    ok   devops: pipeline template
+    ok   devops: infrastructure template
+    ok   devops: deployment rule
+    ok   complete composition matrix executed
+    ok   duplicate modifiers are rejected
+  test_install_compositions.sh: 710 run, 0 failed
+
+test_lifecycle.sh
+  - new scaffolds requirements only (mandatory artifact order)
+    ok   phase.sh new succeeds
+    ok   requirements.md created
+    ok   design.md not created before requirements approval
+    ok   tasks.md not created before design approval
+    ok   requirements starts DRAFT
+  - approval order is enforced and each approval creates the next artifact
+    ok   cannot approve design before it exists
+    ok   requirements approval succeeds
+    ok   requirements status updated
+    ok   design created after requirements approval
+    ok   tasks still absent before design approval
+    ok   design approval succeeds
+    ok   design status updated
+    ok   tasks created after design approval
+    ok   tasks starts DRAFT
+    ok   generated task has stable ID T007.1
+  - start is a hard gate until tasks are approved
+    ok   start refuses a DRAFT tasks artifact
+    ok   tasks approval succeeds
+    ok   tasks status updated
+  - approved sprint starts, tracks exact task IDs, and finishes
+    ok   approved sprint starts
+    ok   start creates the expected feature branch
+    ok   active phase recorded in machine state
+    ok   missing tracker anchor is reported honestly instead of silently no-oping
+    ok   T007.1 marked doing
+    ok   T007.1 marked done
+    ok   T007.2 marked done
+    ok   finish passes after every task is complete
+    ok   finish clears active phase state
+    ok   finish also reports absent tracker anchor honestly
+  test_lifecycle.sh: 28 run, 0 failed
+
+test_script_symlinks.sh
+  - every script in scripts/ has a resolving symlink in .sdd/scripts/
+    ok   .sdd/scripts/audit-monorepo.sh resolves
+    ok   .sdd/scripts/common.sh resolves
+    ok   .sdd/scripts/doctor.sh resolves
+    ok   .sdd/scripts/hook-run.sh resolves
+    ok   .sdd/scripts/hooks.sh resolves
+    ok   .sdd/scripts/migrate-structure.sh resolves
+    ok   .sdd/scripts/phase.sh resolves
+    ok   .sdd/scripts/scan-strays.sh resolves
+    ok   .sdd/scripts/setup.sh resolves
+    ok   .sdd/scripts/skills.sh resolves
+    ok   .sdd/scripts/state.sh resolves
+    ok   .sdd/scripts/sync-skills.sh resolves
+    ok   .sdd/scripts/validate-profiles.sh resolves
+  - no orphan symlinks pointing at deleted scripts
+    ok   no orphan symlink: audit-monorepo.sh
+    ok   no orphan symlink: common.sh
+    ok   no orphan symlink: doctor.sh
+    ok   no orphan symlink: hook-run.sh
+    ok   no orphan symlink: hooks.sh
+    ok   no orphan symlink: migrate-structure.sh
+    ok   no orphan symlink: phase.sh
+    ok   no orphan symlink: scan-strays.sh
+    ok   no orphan symlink: setup.sh
+    ok   no orphan symlink: skill-pack.cjs
+    ok   no orphan symlink: skills.sh
+    ok   no orphan symlink: state.sh
+    ok   no orphan symlink: sync-skills.sh
+    ok   no orphan symlink: validate-profiles.sh
+    ok   no orphan symlink: validate-spec.cjs
+  - sourcing chain works through the documented path
+    ok   phase.sh via symlink resolves its sourced dependencies
+  test_script_symlinks.sh: 29 run, 0 failed
+
+test_state.sh
+  - get/set round-trip and absent-key handling
+    ok   absent key returns empty, not an error
+    ok   set then get round-trips
+    ok   overwrite replaces rather than appends
+    ok   overwrite leaves exactly one key line
+    ok   setting one key preserves others
+  - values containing '=' and spaces survive
+    ok   cut -d= -f2- preserves the full value
+  - malformed state file does not crash reads
+    ok   reads a valid key alongside malformed lines
+    ok   missing key in malformed file returns empty
+  - duplicate keys resolve to last assignment
+    ok   last assignment wins
+  - unwritable target fails loudly (REQ-003.3.4)
+    ok   state_set on unwritable dir returns non-zero
+  - resolve_phase_folder maps prose titles to folder names
+    ok   exact folder name passes through
+    ok   prose title resolves to folder (the F1 fix)
+    ok   falls back to phase-number match
+    ok   unresolvable phase returns empty rather than a bogus path
+    ok   empty input returns empty
+  - D2: task state is never stored in the state file
+    ok   no task_* keys in state
+    ok   no checkbox state in state file
+  test_state.sh: 17 run, 0 failed
+
+test_task_ids.sh
+  - stable ID updates exactly one task
+    ok   stable-ID update succeeds
+    ok   T008.1 changed
+    ok   T008.2 unchanged
+  - ambiguous legacy text fails safely and changes nothing
+    ok   ambiguous free-text match is rejected
+    ok   ambiguous match leaves tasks.md byte-for-byte unchanged
+  - zero matches fail safely
+    ok   unknown stable ID is rejected
+  test_task_ids.sh: 6 run, 0 failed
+
+========================================
+Test files run:    9
+Test files failed: 0
+
+All tests passed.

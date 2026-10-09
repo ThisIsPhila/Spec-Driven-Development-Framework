@@ -1,0 +1,170 @@
+🔍 Running SDD validation checks...
+SDD Doctor
+
+Core Structure
+OK   .sdd/specs
+OK   .sdd/specs/active
+OK   .sdd/specs/archive
+OK   .sdd/specs/backlog
+OK   .sdd/templates
+OK   .sdd/scripts
+OK   skills
+OK   .sdd/memory
+OK   .sdd/memory/rules
+OK   .sdd/memory/current-state
+OK   .sdd/memory/completed-tasks
+OK   .sdd/memory/governance
+OK   .sdd/memory/archive
+OK   .sdd/evidence
+OK   .sdd/reports
+
+Memory Files
+OK   .sdd/AGENT_ONBOARDING.md
+OK   .sdd/constitution.md
+OK   .sdd/glossary.md
+OK   .sdd/framework.json
+OK   memory/project-overview.md
+OK   memory/progress-tracker.md
+OK   memory/technical-decisions.md
+OK   memory/current-state/active-context.md
+OK   memory/current-state/progress.md
+OK   memory/rules/before-task.md
+OK   memory/rules/during-task.md
+OK   memory/rules/after-task.md
+OK   memory/rules/file-placement.md
+OK   memory/rules/spec-naming.md
+
+Templates
+OK   templates/requirements-template.md
+OK   templates/design-template.md
+OK   templates/tasks-template.md
+OK   templates/evidence-template.md
+OK   templates/learning-template.md
+OK   templates/governance-exception-template.md
+OK   templates/assessment-report-template.md
+
+Skills
+OK   skills/ (1 SKILL.md file(s))
+
+Agent Entry Points (Recommended)
+OK   AGENTS.md
+OK   CLAUDE.md
+OK   GEMINI.md
+OK   .gemini/GEMINI.md
+OK   .github/copilot-instructions.md
+
+
+Stray Spec Scan
+Stray Spec Scan
+OK   No stray spec files found
+OK   No stray specs detected
+
+Spec Naming Check
+
+Spec Lifecycle Approval Gates
+INFO phase-005-visual-framework-workspace progress status:
+     - Requirements: APPROVED
+     - Design:       APPROVED
+     - Tasks:        READY
+INFO phase-002-skills-management: pre-threshold history (before phase 4); no retroactive task certification.
+INFO phase-002-skills-management progress status:
+     - Requirements: APPROVED
+     - Design:       APPROVED
+     - Tasks:        READY
+
+Spec Content Lint
+🔍 Linting spec: .sdd/specs/active/phase-002-skills-management/design.md (Profile: general)
+✅ Spec passed all profile-aware validation checks.
+🔍 Linting spec: .sdd/specs/active/phase-002-skills-management/requirements.md (Profile: general)
+✅ Spec passed all profile-aware validation checks.
+🔍 Linting spec: .sdd/specs/active/phase-005-visual-framework-workspace/design.md (Profile: general)
+✅ Spec passed all profile-aware validation checks.
+🔍 Linting spec: .sdd/specs/active/phase-005-visual-framework-workspace/requirements.md (Profile: general)
+✅ Spec passed all profile-aware validation checks.
+Result: OK
+✅ Validation passed. All skills in skills/ are valid.
+✅ All SDD validation checks passed.
+SDD Doctor
+
+Core Structure
+OK   .sdd/specs
+OK   .sdd/specs/active
+OK   .sdd/specs/archive
+OK   .sdd/specs/backlog
+OK   .sdd/templates
+OK   .sdd/scripts
+OK   skills
+OK   .sdd/memory
+OK   .sdd/memory/rules
+OK   .sdd/memory/current-state
+OK   .sdd/memory/completed-tasks
+OK   .sdd/memory/governance
+OK   .sdd/memory/archive
+OK   .sdd/evidence
+OK   .sdd/reports
+
+Memory Files
+OK   .sdd/AGENT_ONBOARDING.md
+OK   .sdd/constitution.md
+OK   .sdd/glossary.md
+OK   .sdd/framework.json
+OK   memory/project-overview.md
+OK   memory/progress-tracker.md
+OK   memory/technical-decisions.md
+OK   memory/current-state/active-context.md
+OK   memory/current-state/progress.md
+OK   memory/rules/before-task.md
+OK   memory/rules/during-task.md
+OK   memory/rules/after-task.md
+OK   memory/rules/file-placement.md
+OK   memory/rules/spec-naming.md
+
+Templates
+OK   templates/requirements-template.md
+OK   templates/design-template.md
+OK   templates/tasks-template.md
+OK   templates/evidence-template.md
+OK   templates/learning-template.md
+OK   templates/governance-exception-template.md
+OK   templates/assessment-report-template.md
+
+Skills
+OK   skills/ (1 SKILL.md file(s))
+
+Agent Entry Points (Recommended)
+OK   AGENTS.md
+OK   CLAUDE.md
+OK   GEMINI.md
+OK   .gemini/GEMINI.md
+OK   .github/copilot-instructions.md
+
+
+Stray Spec Scan
+Stray Spec Scan
+OK   No stray spec files found
+OK   No stray specs detected
+
+Spec Naming Check
+
+Spec Lifecycle Approval Gates
+INFO phase-005-visual-framework-workspace progress status:
+     - Requirements: APPROVED
+     - Design:       APPROVED
+     - Tasks:        READY
+INFO phase-002-skills-management: pre-threshold history (before phase 4); no retroactive task certification.
+INFO phase-002-skills-management progress status:
+     - Requirements: APPROVED
+     - Design:       APPROVED
+     - Tasks:        READY
+
+Spec Content Lint
+🔍 Linting spec: .sdd/specs/active/phase-002-skills-management/design.md (Profile: general)
+✅ Spec passed all profile-aware validation checks.
+🔍 Linting spec: .sdd/specs/active/phase-002-skills-management/requirements.md (Profile: general)
+✅ Spec passed all profile-aware validation checks.
+🔍 Linting spec: .sdd/specs/active/phase-005-visual-framework-workspace/design.md (Profile: general)
+✅ Spec passed all profile-aware validation checks.
+🔍 Linting spec: .sdd/specs/active/phase-005-visual-framework-workspace/requirements.md (Profile: general)
+✅ Spec passed all profile-aware validation checks.
+Result: OK
+✅ Validation passed. All skills in skills/ are valid.

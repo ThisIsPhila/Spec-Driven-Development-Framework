@@ -102,14 +102,18 @@ The SDD Framework includes an optional, zero-dependency-on-core visual cockpit t
 # Install isolated visual dependencies
 npm --prefix visual install
 
-# Launch local cockpit (loopback-only with ephemeral token)
-npm --prefix visual run workspace
-
-# Or build static documentation and demo bundle
+# Build the static introduction and workspace interface
 npm --prefix visual run build
+
+# Launch local cockpit (loopback-only with ephemeral token)
+npm --prefix visual run workspace -- --project "$PWD"
+# Repeat --project to connect additional local projects.
 ```
 
 - **Live Auto-Updates:** Reflects file changes on disk via Server-Sent Events (SSE) within seconds without losing scroll or selection.
 - **Traceability Visualizations:** Responsive SVG graphs and accessible lists connect Requirements (`REQ-*`), Tasks (`T*`), and Evidence records.
 - **Public Demonstration:** Inspired by `skills.sh`, includes an interactive synthetic demonstration that runs completely statically without backend servers or credentials.
 - **Strictly Read-Only:** Exposes no file-mutation endpoints, eliminating write-race conflicts with autonomous agents.
+
+
+Optional [accounts and cross-machine snapshots](docs/accounts-and-sync.md) use a separate service; anonymous local viewing remains independent. [Community skill packs](docs/community-skill-packs.md) compose standard SKILL.md packages while preserving existing profile compatibility. [Recorded hooks](docs/visual-workspace.md) preserve and chain existing hooks, expose observed results, and never invent execution history.

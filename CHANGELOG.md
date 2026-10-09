@@ -4,6 +4,14 @@ All notable changes to the SDD Framework are documented here.
 
 ## [2.0.0] - Unreleased
 
+### Corrected and extended
+- Replace invented verification, acceptance, hook telemetry and adoption claims with explicit source declarations, unknown states and observed records.
+- Enforce realpath artifact isolation, bounded extraction, loopback/origin checks, header-authenticated streams, real DOM sanitization and escaped display metadata.
+- Repair real task/requirement mappings, task filters, source readers, deep links, mobile containment, 60-phase navigation and repeatable project registration.
+- Add refresh fallback, conditional snapshots, preserved focus/reading state, recursive artifact coverage and provenance-aware Graphify import.
+- Add preserved/chained recorded Git gates and community SKILL.md composition packs with content-hash update protection.
+- Add optional persisted private accounts, connector publishing/revocation and owner-scoped local project bootstrap. Hosted deployment is separately configured; local use remains account-free.
+
 ### Added
 - **Visual Framework Workspace (`visual/`)**: Optional read-only interactive cockpit and static documentation site for Spec-Driven Development (Phase 005).
   - Derived snapshot extraction pipeline parsing requirements, designs, tasks, and explicit traceability links with SHA-256 content revision digests.

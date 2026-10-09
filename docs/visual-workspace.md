@@ -77,3 +77,26 @@ Generates a static web bundle in `visual/dist/` ready for hosting on GitHub Page
 - **Loopback Only:** Binds strictly to `127.0.0.1`; external network requests are refused.
 - **Path Traversal Guards:** Resolves and validates real filesystem paths against registered project roots. Attempts to access paths outside `.sdd` or escape via symlinks return `403 Forbidden`.
 - **HTML & URI Sanitization:** All Markdown rendered through `marked` is sanitized via `DOMPurify` to neutralize `<script>`, `<iframe>`, and dangerous protocols (`javascript:`).
+
+## Functional correctness and privacy
+
+Launch credentials use the URL fragment and are moved into tab session storage. API reads and live streams send a Bearer header; old query-token API clients are supported for compatibility. Do not share a local launch URL. Host and Origin are checked, unrelated repository files and escaping symlinks are rejected, reads are bounded, and local raster media uses typed responses. Markdown and UI metadata use DOM sanitization plus metadata escaping.
+
+Filesystem watchers are an optimization; a two-second server refresh fallback also detects Git, hooks and documentation changes. Browser task filters and source navigation operate on real extracted relationships. Markdown is canonical and HTML is derived. Evidence mentions are references. Missing results and unassessed acceptance stay unknown; completeness is a heuristic, not a verification grade. Hook configuration is separate from recorded execution.
+
+Enable observed gate records while preserving and chaining an existing hook:
+
+```sh
+bash .sdd/scripts/hooks.sh status
+bash .sdd/scripts/hooks.sh install
+```
+
+The runner records command, actual exit/result, timestamp, indexed tree, author identity and OS in `.sdd/evidence/hooks/runs.tsv`. A failed or missing required gate blocks its invocation. Recorded pass rate describes the retained log, not all commits or bypasses. Git hook bypass remains possible. New installations get this runner; existing hooks are preserved until explicitly chained.
+
+The artifact map shows derived organizational links. If a real Graphify export exists at `graphify-out/graph.json` or `.sdd/graphify/graph.json`, the workspace imports it and retains edge provenance/confidence. Graphify inference is useful for exploration, while explicit requirement/task/evidence references remain the framework's contractual traceability.
+
+See [community skill packs](community-skill-packs.md) and [accounts and synchronization](accounts-and-sync.md).
+
+Core Bash compatibility is tested on this macOS environment. Windows core use requires Git Bash plus its Unix utilities; no native PowerShell lifecycle implementation or Windows runtime certification is claimed. The optional visual/account services require Node; account SQLite requires Node 22.13+. Current browser coverage uses Chromium.
+
+Imported Graphify topology draws a bounded subset (150 nodes / 500 internal edges); full imported node and provenance lists remain available. Display limits are visible. Public Connect local accepts the complete loopback launch URL and opens that service; it does not send a local token to a hosted account API.
