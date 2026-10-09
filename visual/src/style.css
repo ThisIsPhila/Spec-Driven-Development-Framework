@@ -925,51 +925,295 @@ a {
 }
 
 /* ==========================================================================
-   Header Account & Project Context (Authenticated Workspace Mode)
+   Clean Header Navigation with Direct Phase Links
    ========================================================================== */
-.header-context-row {
+.header-left {
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  min-width: 0;
+  flex-shrink: 0;
 }
 
-.context-pill {
+.header-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  font-size: 0.85rem;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.header-account-name {
+  color: var(--ds-gray-500);
+  cursor: pointer;
+  transition: color 0.15s ease;
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+}
+
+.header-account-name:hover {
+  color: var(--foreground);
+}
+
+.header-project-name {
+  color: var(--foreground);
+  font-weight: 600;
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+}
+
+.header-phase-nav {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  padding: 0 0.5rem;
+  max-width: calc(100vw - 360px);
+}
+
+.header-phase-nav::-webkit-scrollbar {
+  display: none;
+}
+
+.phase-header-btn {
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid var(--border);
+  background: transparent;
+  border: 1px solid transparent;
   border-radius: 6px;
-  padding: 0.3rem 0.65rem;
+  padding: 0.35rem 0.65rem;
   font-family: var(--font-mono);
   font-size: 0.75rem;
-  color: var(--foreground);
+  color: var(--muted-foreground);
+  cursor: pointer;
+  white-space: nowrap;
   transition: all 0.15s ease;
 }
 
-.context-pill:hover {
+.phase-header-btn:hover {
+  color: var(--foreground);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.phase-header-btn.active {
+  color: var(--foreground);
   background: rgba(255, 255, 255, 0.08);
-  border-color: var(--ds-gray-500);
+  border-color: var(--border);
+  font-weight: 600;
 }
 
-.context-pill .icon {
-  font-size: 0.85rem;
-  opacity: 0.8;
-}
-
-.context-pill .dirty-dot {
+.phase-header-dot {
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: var(--amber-glow);
-  box-shadow: 0 0 6px var(--amber-glow);
+  flex-shrink: 0;
 }
 
-.context-pill .clean-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
+.dot-active {
   background: var(--green-glow);
+  box-shadow: 0 0 6px var(--green-glow);
+}
+
+.dot-complete {
+  background: var(--ds-gray-500);
+}
+
+.dot-backlog {
+  background: var(--amber-glow);
+}
+
+.header-mini-badge {
+  font-size: 0.65rem;
+  padding: 0.1rem 0.3rem;
+  border-radius: 3px;
+  background: rgba(16, 185, 129, 0.15);
+  color: #10b981;
+  font-weight: 600;
+}
+
+.sync-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border);
+}
+
+.sync-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+.sync-dot.live {
+  background: var(--green-glow);
+  box-shadow: 0 0 6px var(--green-glow);
+}
+
+.sync-dot.standalone {
+  background: var(--ds-gray-500);
+}
+
+.sync-text {
+  color: var(--ds-gray-700);
+  font-weight: 600;
+}
+
+.nav-link-subtle {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--ds-gray-600);
+  cursor: pointer;
+  text-decoration: none;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  transition: all 0.15s ease;
+}
+
+.nav-link-subtle:hover {
+  color: var(--foreground);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+/* ==========================================================================
+   Level 2: User Account & Multi-Project Dashboard
+   ========================================================================== */
+.projects-dashboard {
+  margin-top: 1.5rem;
+}
+
+.account-hero-bar {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 2.5rem;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 1.5rem;
+}
+
+.account-identity {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.account-avatar-large {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+}
+
+.account-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  margin: 0 0 0.25rem;
+  color: var(--foreground);
+}
+
+.account-sub {
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  color: var(--ds-gray-500);
+  margin: 0;
+}
+
+.project-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 3rem;
+}
+
+@media (max-width: 600px) {
+  .project-card-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.project-dash-card {
+  background: var(--muted-bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.project-dash-card:hover {
+  border-color: var(--ds-gray-500);
+  transform: translateY(-2px);
+}
+
+.project-dash-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.project-dash-title {
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin: 0 0 0.25rem;
+  color: var(--foreground);
+}
+
+.project-dash-path {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--ds-gray-500);
+  margin: 0;
+}
+
+.project-dash-meta-box {
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid var(--border-subtle);
+  border-radius: 6px;
+  padding: 0.85rem;
+  margin: 1rem 0;
+}
+
+.project-meta-label {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  color: var(--ds-gray-500);
+  margin-bottom: 0.25rem;
+}
+
+.project-meta-value {
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  color: var(--foreground);
+}
+
+.project-dash-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 1rem;
+  padding-top: 0.85rem;
+  border-top: 1px solid var(--border-subtle);
 }
 
 .preview-mode-tag {

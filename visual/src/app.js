@@ -12,8 +12,12 @@ export class SDDWorkspaceApp {
     this.currentProjectId = null;
     this.snapshot = null;
 
-    // View Routing: 'landing' | 'directory' | 'phase-detail' | 'metrics' | 'profiles'
-    this.currentView = this.token ? 'directory' : 'landing';
+    // View Routing:
+    // 'landing'  -> Tier 1: Public Framework Landing Page (skills.sh style, zero private data)
+    // 'projects' -> Tier 2: Logged In Account Multi-Project Dashboard (all user projects)
+    // 'project'  -> Tier 3: Direct Project SDD Page (live progress, direct header phase links, sync status)
+    // 'profiles' -> Composable Profiles Catalog
+    this.currentView = this.token ? 'project' : 'landing';
     this.activePhaseId = null;
     this.activeTab = 'overview'; // 'overview' | 'requirements' | 'design' | 'tasks' | 'evidence' | 'metrics' | 'traceability'
     this.dirFilter = 'active'; // 'active' | 'all' | 'backlog' | 'archive'
@@ -73,7 +77,7 @@ export class SDDWorkspaceApp {
           }
         }
       } catch {
-        // Fall back to public demo
+        // Fall back to demo
       }
     }
 
@@ -86,16 +90,20 @@ export class SDDWorkspaceApp {
       name: demoSnapshot.projectId,
       profile: demoSnapshot.profile,
       activePhaseId: demoSnapshot.activePhaseId,
+      account: demoSnapshot.account,
+      metrics: demoSnapshot.metrics,
+      phasesCount: demoSnapshot.phases.length,
     }];
     this.currentProjectId = demoSnapshot.projectId;
     this.snapshot = demoSnapshot;
     this.connectionStatus = 'demo';
-    this.currentView = 'directory';
+    this.currentView = 'project';
     this.render();
   }
 
   async selectProject(projectId) {
     this.currentProjectId = projectId;
+    this.currentView = 'project';
     await this._fetchSnapshot();
     this._connectSSE();
     this._startPolling();
@@ -193,37 +201,11 @@ export class SDDWorkspaceApp {
   render() {
     if (!this.container) return;
 
-    const isLanding = this.currentView === 'landing';
-    const hasActiveToken = Boolean(this.token);
-
     this.container.innerHTML = `
       <div class="skills-layout">
-        ${isLanding && hasActiveToken ? `
-          <div style="background:rgba(6,182,212,0.1); border-bottom:1px solid rgba(6,182,212,0.25); padding:0.5rem 1.5rem; display:flex; justify-content:space-between; align-items:center; font-family:var(--font-mono); font-size:0.75rem; color:#06b6d4;">
-            <span>🌐 <strong>Public Landing Preview</strong>: Real project and account details are isolated and hidden from public view.</span>
-            <button id="return-workspace-banner-btn" class="preview-mode-tag">← Return to Workspace</button>
-          </div>
-        ` : ''}
-
-        <!-- Header -->
+        <!-- Clean, Un-cluttered Header -->
         <header class="skills-header">
-          <div class="header-brand" id="brand-home-btn" style="cursor:pointer;">
-            <svg data-testid="geist-icon" height="18" stroke-linejoin="round" viewBox="0 0 16 16" width="18" style="color:currentcolor">
-              <path fill-rule="evenodd" clip-rule="evenodd" d="M8 1L16 15H0L8 1Z" fill="currentColor"></path>
-            </svg>
-            <span class="header-slash">/</span>
-            <span class="font-mono">SDD</span>
-          </div>
-
-          ${this._renderHeaderContext()}
-
-          <nav class="header-nav" aria-label="Primary navigation">
-            ${this._renderHeaderNav()}
-          </nav>
-
-          <div class="header-right">
-            ${this._renderStatusBadge()}
-          </div>
+          ${this._renderHeaderContent()}
         </header>
 
         <!-- Main Page Container -->
@@ -236,121 +218,349 @@ export class SDDWorkspaceApp {
 
     this._bindEvents();
 
-    if (this.currentView === 'phase-detail' && this.activeTab === 'design') {
+    if (this.currentView === 'project' && this.activePhaseId && this.activeTab === 'design') {
       renderMermaidBlocks(this.container);
     }
   }
 
-  _renderHeaderContext() {
-    if (this.currentView === 'landing' && !this.token) {
-      return '';
+  _renderHeaderContent() {
+    const isLanding = this.currentView === 'landing';
+    const isProjectsList = this.currentView === 'projects';
+    const isProfiles = this.currentView === 'profiles';
+
+    // 1. Landing View Header (Minimal, Public)
+    if (isLanding) {
+      return `
+        <div class="header-left">
+          <div class="header-brand" id="brand-home-btn">
+            <svg data-testid="geist-icon" height="16" stroke-linejoin="round" viewBox="0 0 16 16" width="16" style="color:currentcolor">
+              <path fill-rule="evenodd" clip-rule="evenodd" d="M8 1L16 15H0L8 1Z" fill="currentColor"></path>
+            </svg>
+            <span class="header-slash">/</span>
+            <span class="font-mono font-bold">SDD</span>
+          </div>
+        </div>
+
+        <nav class="header-nav" aria-label="Primary navigation">
+          <a class="nav-link active" id="nav-landing-home-btn">Overview</a>
+          <a class="nav-link" id="nav-profiles-btn">Profiles</a>
+          <a class="nav-link" href="https://github.com/ThisIsPhila/Spec-Driven-Development-Framework" target="_blank" rel="noopener noreferrer">Docs ↗</a>
+        </nav>
+
+        <div class="header-right">
+          <button class="btn btn-secondary" id="launch-demo-header-btn" style="padding:0.25rem 0.65rem; font-size:0.75rem; font-family:var(--font-mono);">
+            Demo Sandbox
+          </button>
+          <button class="btn btn-primary" id="connect-workspace-header-btn" style="padding:0.25rem 0.65rem; font-size:0.75rem; font-family:var(--font-mono);">
+            ${this.token ? 'My Projects' : 'Connect Account'}
+          </button>
+        </div>
+      `;
     }
 
-    const account = this.snapshot?.account || {
-      name: 'Local Developer',
-      email: '',
-      branch: 'main',
-      headCommit: '',
-      isDirty: false,
-      dirtyCount: 0,
-    };
+    // 2. Account Multi-Project Dashboard Header
+    if (isProjectsList || isProfiles) {
+      const accountName = this.snapshot?.account?.name || (this.token ? 'Account' : 'Demo');
+      return `
+        <div class="header-left">
+          <div class="header-brand" id="brand-home-btn">
+            <svg data-testid="geist-icon" height="16" stroke-linejoin="round" viewBox="0 0 16 16" width="16" style="color:currentcolor">
+              <path fill-rule="evenodd" clip-rule="evenodd" d="M8 1L16 15H0L8 1Z" fill="currentColor"></path>
+            </svg>
+            <span class="header-slash">/</span>
+            <span class="header-account-name">${accountName}</span>
+            <span class="header-slash">/</span>
+            <span class="header-project-name">${isProfiles ? 'Profiles' : 'Projects'}</span>
+          </div>
+        </div>
 
+        <nav class="header-nav">
+          <a class="nav-link ${isProjectsList ? 'active' : ''}" id="nav-projects-dashboard-btn">All Projects</a>
+          <a class="nav-link ${isProfiles ? 'active' : ''}" id="nav-profiles-btn">Profiles</a>
+          <a class="nav-link" href="https://github.com/ThisIsPhila/Spec-Driven-Development-Framework" target="_blank" rel="noopener noreferrer">Docs ↗</a>
+        </nav>
+
+        <div class="header-right">
+          <a class="nav-link-subtle" id="nav-landing-page-btn">Public Landing</a>
+        </div>
+      `;
+    }
+
+    // 3. Direct Project SDD Page Header (Clean breadcrumbs + DIRECT PHASE LINKS + live account sync indicator)
+    const account = this.snapshot?.account || { name: 'Local', branch: 'main', headCommit: '' };
     const projectName = this.snapshot?.projectId || 'Project';
+    const phases = this.snapshot?.phases || [];
 
     return `
-      <div class="header-context-row">
-        <!-- Project Pill -->
-        <div class="context-pill" title="Project: ${projectName}">
-          <span class="icon">📁</span>
-          <span class="font-bold">${projectName}</span>
+      <div class="header-left">
+        <div class="header-brand" id="brand-home-btn" title="Go to all projects">
+          <svg data-testid="geist-icon" height="16" stroke-linejoin="round" viewBox="0 0 16 16" width="16" style="color:currentcolor">
+            <path fill-rule="evenodd" clip-rule="evenodd" d="M8 1L16 15H0L8 1Z" fill="currentColor"></path>
+          </svg>
+          <span class="header-slash">/</span>
+          <span class="header-account-name" id="nav-header-account-btn" title="View all projects in account">${account.name}</span>
+          <span class="header-slash">/</span>
+          <span class="header-project-name" id="nav-header-project-btn" title="Project overview">${projectName}</span>
+        </div>
+      </div>
+
+      <!-- DIRECT PHASE LINKS IN THE HEADER -->
+      <nav class="header-phase-nav" aria-label="Phases quick navigation">
+        <button class="phase-header-btn ${this.activePhaseId === null && this.activeTab !== 'metrics' ? 'active' : ''}" id="header-all-sprints-btn">
+          All Sprints
+        </button>
+        ${phases.map(p => {
+          const isActive = this.activePhaseId === p.id;
+          const cleanLabel = p.id.replace(/^phase-0*/i, 'Phase ');
+          return `
+            <button class="phase-header-btn ${isActive ? 'active' : ''}" data-phase-id="${p.id}">
+              <span class="phase-header-dot ${p.category === 'active' ? 'dot-active' : p.category === 'archive' ? 'dot-complete' : 'dot-backlog'}"></span>
+              ${cleanLabel}
+              ${p.category === 'active' ? `<span class="header-mini-badge">${p.taskCounts?.percent || 0}%</span>` : ''}
+            </button>
+          `;
+        }).join('')}
+        <button class="phase-header-btn ${this.activeTab === 'metrics' && this.activePhaseId === null ? 'active' : ''}" id="header-metrics-btn">
+          📊 Metrics
+        </button>
+      </nav>
+
+      <div class="header-right">
+        <!-- Live Account Sync Indicator -->
+        <div class="sync-status-pill" title="${this.token ? `Progress simultaneously syncing to account ${account.name}` : 'Local standalone mode'}">
+          <span class="sync-dot ${this.token ? 'live' : 'standalone'}"></span>
+          <span class="sync-text">${this.token ? 'SYNCED' : 'LOCAL'}</span>
         </div>
 
-        <!-- Git Branch & Clean/Dirty Pill -->
-        <div class="context-pill" title="Branch: ${account.branch} (${account.headCommit ? account.headCommit.slice(0, 7) : 'head'})">
-          <span class="icon">🌿</span>
-          <span>${account.branch}</span>
-          <span style="color:var(--ds-gray-500); font-size:0.7rem;">(${account.headCommit ? account.headCommit.slice(0, 7) : 'local'})</span>
-          <span class="${account.isDirty ? 'dirty-dot' : 'clean-dot'}" title="${account.isDirty ? `${account.dirtyCount} modified file(s)` : 'Working tree clean'}"></span>
-        </div>
-
-        <!-- Account Pill -->
-        <div class="context-pill" title="${account.email ? `User: ${account.name} <${account.email}>` : `User: ${account.name}`}">
-          <span class="icon">👤</span>
-          <span>${account.name}</span>
-        </div>
+        <a class="nav-link-subtle" id="nav-projects-dashboard-btn" title="View all projects in account">Projects</a>
+        <a class="nav-link-subtle" id="nav-landing-page-btn" title="Go to public landing">Landing</a>
       </div>
     `;
   }
 
-  _renderHeaderNav() {
-    if (this.currentView === 'landing' && !this.token) {
-      return `
-        <a class="nav-link active" id="nav-landing-home-btn">Overview</a>
-        <a class="nav-link" id="nav-profiles-btn">Profiles</a>
-        <a class="nav-link" href="https://github.com/ThisIsPhila/Spec-Driven-Development-Framework" target="_blank" rel="noopener noreferrer">Docs ↗</a>
-      `;
-    }
-
-    return `
-      <a class="nav-link ${this.currentView === 'directory' ? 'active' : ''}" id="nav-dir-btn">Phases</a>
-      <a class="nav-link" id="nav-sprints-btn">Active Sprints</a>
-      <a class="nav-link ${this.currentView === 'metrics' ? 'active' : ''}" id="nav-metrics-btn">📊 Metrics & Health</a>
-      <a class="nav-link ${this.currentView === 'profiles' ? 'active' : ''}" id="nav-profiles-btn">Profiles</a>
-      <a class="nav-link ${this.currentView === 'landing' ? 'active' : ''}" id="nav-landing-preview-btn" title="Inspect sanitized Public Landing view">🌐 Public Landing</a>
-      <a class="nav-link" href="https://github.com/ThisIsPhila/Spec-Driven-Development-Framework" target="_blank" rel="noopener noreferrer">Docs ↗</a>
-    `;
-  }
-
-  _renderStatusBadge() {
-    if (this.currentView === 'landing' && !this.token) {
-      return `
-        <div style="display:flex; gap:0.5rem; align-items:center;">
-          <button class="btn btn-secondary" id="launch-demo-header-btn" style="padding:0.25rem 0.6rem; font-size:0.75rem; font-family:var(--font-mono);">
-            Demo Sandbox
-          </button>
-          <button class="btn btn-primary" id="connect-workspace-header-btn" style="padding:0.25rem 0.6rem; font-size:0.75rem; font-family:var(--font-mono);">
-            Connect Local
-          </button>
-        </div>
-      `;
-    }
-
-    const rev = (this.snapshot?.contentRevision || '').slice(0, 7) || 'local';
-    if (this.connectionStatus === 'live') {
-      return `<div class="live-badge" title="Live Server-Sent Events sync"><span class="live-dot"></span> LIVE • ${rev}</div>`;
-    }
-    if (this.connectionStatus === 'demo') {
-      return `<div class="live-badge" title="Synthetic Showcase Dataset"><span class="live-dot demo"></span> DEMO</div>`;
-    }
-    if (this.connectionStatus === 'polling') {
-      return `<div class="live-badge" title="Polling every 2 seconds"><span class="live-dot demo"></span> POLL • ${rev}</div>`;
-    }
-    return `<div class="live-badge" title="Offline"><span class="live-dot offline"></span> OFFLINE</div>`;
-  }
-
   _updateStatusBar() {
     const el = document.querySelector('.header-right');
-    if (el) el.innerHTML = this._renderStatusBadge();
+    if (el) el.innerHTML = `
+      <div class="sync-status-pill">
+        <span class="sync-dot ${this.connectionStatus === 'live' ? 'live' : 'standalone'}"></span>
+        <span class="sync-text">${this.connectionStatus.toUpperCase()}</span>
+      </div>
+      <a class="nav-link-subtle" id="nav-projects-dashboard-btn">Projects</a>
+      <a class="nav-link-subtle" id="nav-landing-page-btn">Landing</a>
+    `;
   }
 
   _renderCurrentView() {
     if (this.currentView === 'landing') {
       return renderLandingView();
     }
-    if (this.currentView === 'phase-detail') {
-      return this._renderPhaseDetailView();
-    }
-    if (this.currentView === 'metrics') {
-      return this._renderProjectMetricsView();
+    if (this.currentView === 'projects') {
+      return this._renderAccountProjectsView();
     }
     if (this.currentView === 'profiles') {
       return this._renderProfilesView();
+    }
+    if (this.activePhaseId) {
+      return this._renderPhaseDetailView();
+    }
+    if (this.activeTab === 'metrics') {
+      return this._renderProjectMetricsView();
     }
     return this._renderDirectoryView();
   }
 
   // ---------------------------------------------------------------------------
-  // 1. Directory View (skills.sh Home Leaderboard + Actionable KPI Bar)
+  // Tier 2: The Logged In State (Account Level / Multi-Project Dashboard)
+  // ---------------------------------------------------------------------------
+  _renderAccountProjectsView() {
+    const account = this.snapshot?.account || { name: 'Developer', email: '', branch: 'main', headCommit: '' };
+    const projectsList = this.projects.length > 0 ? this.projects : [{
+      id: this.snapshot?.projectId || 'Spec-Driven-Development-Framework',
+      name: this.snapshot?.projectId || 'Spec-Driven-Development-Framework',
+      profile: this.snapshot?.profile || 'general',
+      activePhaseId: this.snapshot?.activePhaseId || 'phase-005-visual-framework-workspace',
+    }];
+
+    const overallHealth = this.snapshot?.metrics?.overallHealthScore || 95;
+    const overallGrade = this.snapshot?.metrics?.overallHealthGrade || 'EXCELLENT';
+
+    return `
+      <div class="projects-dashboard">
+        <!-- Account Hero Bar -->
+        <div class="account-hero-bar">
+          <div class="account-identity">
+            <div class="account-avatar-large">👤</div>
+            <div>
+              <h1 class="account-title">${account.name}</h1>
+              <p class="account-sub">${account.email || 'Local Developer'} • ${account.branch} (${(account.headCommit || '').slice(0, 7)})</p>
+            </div>
+          </div>
+          <button class="btn btn-secondary" id="dash-connect-another-btn" style="font-family:var(--font-mono); font-size:0.75rem;">
+            + Connect Another Repository
+          </button>
+        </div>
+
+        <!-- High-level Account KPI Tiles -->
+        <div class="kpi-grid" style="margin-top:0;">
+          <div class="kpi-card">
+            <div class="kpi-header">
+              <h3 class="kpi-title">SDD Projects</h3>
+              <span class="kpi-badge status-badge-verified">Active</span>
+            </div>
+            <div class="kpi-body">
+              <span class="kpi-number">${projectsList.length}</span>
+              <span class="kpi-subtext">Repositories</span>
+            </div>
+            <div class="kpi-footer">
+              <span>All workspaces syncing</span>
+            </div>
+          </div>
+
+          <div class="kpi-card">
+            <div class="kpi-header">
+              <h3 class="kpi-title">Average Health</h3>
+              <span class="kpi-badge status-badge-verified">${overallGrade}</span>
+            </div>
+            <div class="kpi-body">
+              <span class="kpi-number">${overallHealth}</span>
+              <span class="kpi-subtext">/ 100</span>
+            </div>
+            <div class="kpi-footer">
+              <span>Spec quality composite</span>
+            </div>
+          </div>
+
+          <div class="kpi-card">
+            <div class="kpi-header">
+              <h3 class="kpi-title">Active Sprints</h3>
+              <span class="kpi-badge status-badge-implemented">Running</span>
+            </div>
+            <div class="kpi-body">
+              <span class="kpi-number">${this.snapshot?.metrics?.activeSprintsCount || 1}</span>
+              <span class="kpi-subtext">In-Flight</span>
+            </div>
+            <div class="kpi-footer">
+              <span>Real-time agent tracking</span>
+            </div>
+          </div>
+
+          <div class="kpi-card">
+            <div class="kpi-header">
+              <h3 class="kpi-title">Sync Status</h3>
+              <span class="kpi-badge status-badge-verified">Live</span>
+            </div>
+            <div class="kpi-body">
+              <span class="kpi-number">100%</span>
+              <span class="kpi-subtext">Automated</span>
+            </div>
+            <div class="kpi-footer">
+              <span>Simultaneous background updates</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="section-bar-header">
+          <span>Connected SDD Repositories (${projectsList.length})</span>
+        </div>
+
+        <!-- Project Cards Grid -->
+        <div class="project-card-grid">
+          ${projectsList.map(proj => {
+            const isCurrent = proj.id === this.currentProjectId;
+            const health = isCurrent ? (this.snapshot?.metrics?.overallHealthScore || 95) : 85;
+            const activePhase = isCurrent ? (this.snapshot?.activePhaseId || 'phase-005') : proj.activePhaseId;
+            const progressPct = isCurrent ? (this.snapshot?.metrics?.overallProgressPct || 88) : 50;
+
+            return `
+              <div class="project-dash-card" data-project-id="${proj.id}">
+                <div>
+                  <div class="project-dash-header">
+                    <div>
+                      <h2 class="project-dash-title">${proj.name || proj.id}</h2>
+                      <p class="project-dash-path mono">${proj.root || '~/' + proj.id}</p>
+                    </div>
+                    <span class="profile-tag-pill mono">${proj.profile || 'general'}</span>
+                  </div>
+
+                  <div class="project-dash-meta-box">
+                    <div style="display:flex; justify-content:space-between; margin-bottom:0.5rem;">
+                      <div>
+                        <div class="project-meta-label">Active Sprint</div>
+                        <div class="project-meta-value mono">${activePhase}</div>
+                      </div>
+                      <div style="text-align:right;">
+                        <div class="project-meta-label">Spec Health</div>
+                        <div class="project-meta-value" style="color:#10b981; font-weight:700;">${health}/100</div>
+                      </div>
+                    </div>
+
+                    <div class="progress-track" style="margin-top:0.75rem;">
+                      <div class="progress-bar" style="width: ${progressPct}%;"></div>
+                    </div>
+                    <div class="progress-pct mono" style="margin-top:0.25rem; font-size:0.7rem;">${progressPct}% tasks closed</div>
+                  </div>
+                </div>
+
+                <div class="project-dash-footer">
+                  <span class="sync-status-pill">
+                    <span class="sync-dot live"></span>
+                    <span class="sync-text">LIVE SYNCED</span>
+                  </span>
+                  <button class="btn btn-primary" style="padding:0.35rem 0.75rem; font-size:0.75rem; font-family:var(--font-mono);">
+                    Open Workspace →
+                  </button>
+                </div>
+              </div>
+            `;
+          }).join('')}
+
+          <!-- Synthetic Demo Showcase Card for comparison -->
+          <div class="project-dash-card" id="demo-showcase-card">
+            <div>
+              <div class="project-dash-header">
+                <div>
+                  <h2 class="project-dash-title">cloud-billing-service</h2>
+                  <p class="project-dash-path mono">/synthetic/workspace/cloud-billing-service</p>
+                </div>
+                <span class="profile-tag-pill mono">api</span>
+              </div>
+
+              <div class="project-dash-meta-box">
+                <div style="display:flex; justify-content:space-between; margin-bottom:0.5rem;">
+                  <div>
+                    <div class="project-meta-label">Active Sprint</div>
+                    <div class="project-meta-value mono">phase-003-stripe-webhook</div>
+                  </div>
+                  <div style="text-align:right;">
+                    <div class="project-meta-label">Spec Health</div>
+                    <div class="project-meta-value" style="color:#06b6d4; font-weight:700;">85/100</div>
+                  </div>
+                </div>
+
+                <div class="progress-track" style="margin-top:0.75rem;">
+                  <div class="progress-bar" style="width: 50%;"></div>
+                </div>
+                <div class="progress-pct mono" style="margin-top:0.25rem; font-size:0.7rem;">2/4 tasks closed (50%)</div>
+              </div>
+            </div>
+
+            <div class="project-dash-footer">
+              <span class="sync-status-pill">
+                <span class="sync-dot standalone"></span>
+                <span class="sync-text">SHOWCASE SANDBOX</span>
+              </span>
+              <button class="btn btn-secondary" style="padding:0.35rem 0.75rem; font-size:0.75rem; font-family:var(--font-mono);">
+                Explore Sandbox →
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  // ---------------------------------------------------------------------------
+  // Tier 3: Direct Project SDD Page (All Sprints Overview)
   // ---------------------------------------------------------------------------
   _renderDirectoryView() {
     const phases = this.snapshot?.phases || [];
@@ -386,52 +596,6 @@ export class SDDWorkspaceApp {
     };
 
     return `
-      <!-- Hero Section (skills.sh grid) -->
-      <section class="hero-grid">
-        <div class="hero-ascii-col">
-          <pre class="ascii-banner" aria-hidden="true"> ██████╗ ██████╗ ██████╗ 
-██╔════╝ ██╔══██╗██╔══██╗
-╚█████╗  ██║  ██║██║  ██║
- ╚═══██╗ ██║  ██║██║  ██║
-██████╔╝ ██████╔╝██████╔╝
-╚═════╝  ╚═════╝ ╚═════╝ </pre>
-          <p class="ascii-kicker">THE OPEN SPEC-DRIVEN ECOSYSTEM</p>
-        </div>
-
-        <div class="hero-desc-col">
-          <p class="hero-headline">
-            <strong>Specifications define intent before code.</strong> Local git guardrails and evidence verification prevent autonomous agent drift.
-          </p>
-
-          <div>
-            <div class="section-label-kicker">Try it now</div>
-            <div class="command-pill" id="copy-cmd-pill">
-              <code><span class="prompt">$</span>bash scripts/phase.sh start &lt;phase&gt;</code>
-              <button class="copy-icon-btn" title="Copy command">
-                <svg viewBox="0 0 16 16" height="14" width="14" fill="currentColor">
-                  <path fill-rule="evenodd" d="M2.75.5C1.78.5 1 1.28 1 2.25v7.5c0 .97.78 1.75 1.75 1.75H4.5V10H2.75a.25.25 0 0 1-.25-.25v-7.5c0-.14.11-.25.25-.25h5.5c.14 0 .25.11.25.25V3H10v-.75C10 1.28 9.22.5 8.25.5zm5 4C6.78 4.5 6 5.28 6 6.25v7.5c0 .97.78 1.75 1.75 1.75h5.5c.97 0 1.75-.78 1.75-1.75v-7.5c0-.97-.78-1.75-1.75-1.75zM7.5 6.25c0-.14.11-.25.25-.25h5.5c.14 0 .25.11.25.25v7.5q-.02.23-.25.25h-5.5a.25.25 0 0 1-.25-.25z" clip-rule="evenodd"/>
-                </svg>
-              </button>
-            </div>
-          </div>
-
-          <div class="agents-section">
-            <div class="section-label-kicker">Compatible with these agents</div>
-            <div class="agents-row">
-              <span class="agent-tag">Claude Code</span>
-              <span class="agent-tag">Cursor</span>
-              <span class="agent-tag">Antigravity</span>
-              <span class="agent-tag">GitHub Copilot</span>
-              <span class="agent-tag">Gemini</span>
-              <span class="agent-tag">Windsurf</span>
-              <span class="agent-tag">Codex</span>
-              <span class="agent-tag">Cline</span>
-              <span class="agent-tag">OpenCode</span>
-            </div>
-          </div>
-        </div>
-      </section>
-
       <!-- Executive KPI Metrics Bar (Not in raw .md) -->
       <section class="kpi-grid">
         <div class="kpi-card">
@@ -493,10 +657,10 @@ export class SDDWorkspaceApp {
         </div>
       </section>
 
-      <!-- Directory / Leaderboard Section -->
+      <!-- Directory / Sprints Leaderboard Section -->
       <section class="directory-section">
         <div class="directory-header">
-          <h2 class="directory-title">Phases & Specifications Directory</h2>
+          <h2 class="directory-title">Project Sprints & Specifications</h2>
         </div>
 
         <div class="search-input-wrapper">
@@ -541,7 +705,6 @@ export class SDDWorkspaceApp {
             const pGrade = p.metrics?.healthGrade || 'UNKNOWN';
             const reqTotal = p.metrics?.traceability?.totalRequirements || p.requirements?.length || 0;
             const reqMapped = p.metrics?.traceability?.mappedRequirements || 0;
-            const evCount = p.artifacts?.evidence?.length || 0;
 
             return `
               <div class="table-row" data-phase-id="${p.id}">
@@ -580,7 +743,7 @@ export class SDDWorkspaceApp {
   }
 
   // ---------------------------------------------------------------------------
-  // 2. Phase Detail View (With Dedicated Metrics & Health Tab)
+  // Tier 3: Phase Detail View (With Dedicated Metrics & Health Tab)
   // ---------------------------------------------------------------------------
   _renderPhaseDetailView() {
     const phases = this.snapshot?.phases || [];
@@ -596,7 +759,7 @@ export class SDDWorkspaceApp {
     return `
       <div class="detail-view">
         <nav class="detail-breadcrumbs" aria-label="Breadcrumb">
-          <a id="back-to-dir-btn">phases</a>
+          <a id="back-to-dir-btn">sprints</a>
           <span>/</span>
           <a id="back-to-dir-btn2">${phase.category}</a>
           <span>/</span>
@@ -701,12 +864,6 @@ export class SDDWorkspaceApp {
               <span class="mono" style="font-size:0.75rem; color:var(--ds-gray-500);">
                 Commit: ${(account.headCommit || '').slice(0, 7)} • ${account.isDirty ? 'Dirty' : 'Clean'}
               </span>
-            </div>
-
-            <div class="sidebar-stat-group">
-              <span class="stat-label">Signed In As</span>
-              <span class="stat-value-text">${account.name}</span>
-              ${account.email ? `<span class="mono" style="font-size:0.75rem; color:var(--ds-gray-500);">${account.email}</span>` : ''}
             </div>
 
             <div class="sidebar-stat-group">
@@ -863,7 +1020,7 @@ export class SDDWorkspaceApp {
   }
 
   // ---------------------------------------------------------------------------
-  // 3. Dedicated Metrics & Health Tab (Actionable Engineering Insights)
+  // Phase Metrics & Health Tab
   // ---------------------------------------------------------------------------
   _renderPhaseMetricsTab(phase) {
     const metrics = phase.metrics || {
@@ -1001,7 +1158,7 @@ export class SDDWorkspaceApp {
   }
 
   // ---------------------------------------------------------------------------
-  // 4. Project-Wide Metrics & Health Dashboard View
+  // Tier 3: Project Engineering Metrics & Assurance Dashboard
   // ---------------------------------------------------------------------------
   _renderProjectMetricsView() {
     const metrics = this.snapshot?.metrics || {
@@ -1141,7 +1298,7 @@ export class SDDWorkspaceApp {
   }
 
   // ---------------------------------------------------------------------------
-  // 5. Profiles View
+  // Profiles View
   // ---------------------------------------------------------------------------
   _renderProfilesView() {
     const profiles = [
@@ -1183,9 +1340,9 @@ export class SDDWorkspaceApp {
           <div>
             <h3 class="footer-col-title">Browse</h3>
             <ul class="footer-links-list">
-              <li><a id="footer-phases-btn">All phases</a></li>
-              <li><a id="footer-sprints-btn">Active sprints</a></li>
-              <li><a id="footer-archive-btn">Archive</a></li>
+              <li><a id="footer-phases-btn">All sprints</a></li>
+              <li><a id="footer-projects-btn">My projects</a></li>
+              <li><a id="footer-landing-btn">Public landing</a></li>
             </ul>
           </div>
           <div>
@@ -1214,7 +1371,7 @@ export class SDDWorkspaceApp {
           </div>
         </div>
         <div class="footer-bottom">
-          <span>Made for autonomous & pair engineering.</span>
+          <span>Spec-Driven Development Framework — Intent before code.</span>
           <span>Open source on <a href="https://github.com/ThisIsPhila/Spec-Driven-Development-Framework" target="_blank" rel="noopener noreferrer" style="text-decoration:underline;">GitHub</a>.</span>
         </div>
       </footer>
@@ -1222,12 +1379,12 @@ export class SDDWorkspaceApp {
   }
 
   _bindEvents() {
-    // Brand click -> home
+    // Brand click -> smart navigate
     const brandBtn = document.getElementById('brand-home-btn');
     if (brandBtn) {
       brandBtn.addEventListener('click', () => {
         if (this.token) {
-          this.currentView = 'directory';
+          this.currentView = 'projects';
         } else {
           this.currentView = 'landing';
         }
@@ -1235,78 +1392,111 @@ export class SDDWorkspaceApp {
       });
     }
 
-    const navDirBtn = document.getElementById('nav-dir-btn');
-    if (navDirBtn) {
-      navDirBtn.addEventListener('click', () => {
-        this.currentView = 'directory';
-        this.dirFilter = 'all';
+    // Header Account breadcrumb click -> Go to Projects Dashboard
+    const navHeaderAccountBtn = document.getElementById('nav-header-account-btn');
+    if (navHeaderAccountBtn) {
+      navHeaderAccountBtn.addEventListener('click', () => {
+        this.currentView = 'projects';
         this.render();
       });
     }
 
-    const navSprintsBtn = document.getElementById('nav-sprints-btn');
-    if (navSprintsBtn) {
-      navSprintsBtn.addEventListener('click', () => {
-        this.currentView = 'directory';
-        this.dirFilter = 'active';
+    // Header Project breadcrumb click -> Go to Project Sprints overview
+    const navHeaderProjectBtn = document.getElementById('nav-header-project-btn');
+    if (navHeaderProjectBtn) {
+      navHeaderProjectBtn.addEventListener('click', () => {
+        this.activePhaseId = null;
+        this.activeTab = 'overview';
+        this.currentView = 'project';
         this.render();
       });
     }
 
-    const navMetricsBtn = document.getElementById('nav-metrics-btn');
-    if (navMetricsBtn) {
-      navMetricsBtn.addEventListener('click', () => {
-        this.currentView = 'metrics';
+    // DIRECT PHASE BUTTONS IN HEADER
+    this.container.querySelectorAll('.phase-header-btn[data-phase-id]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const phaseId = btn.getAttribute('data-phase-id');
+        this.activePhaseId = phaseId;
+        this.activeTab = 'overview';
+        this.currentView = 'project';
+        this.render();
+      });
+    });
+
+    const headerAllSprintsBtn = document.getElementById('header-all-sprints-btn');
+    if (headerAllSprintsBtn) {
+      headerAllSprintsBtn.addEventListener('click', () => {
+        this.activePhaseId = null;
+        this.activeTab = 'overview';
+        this.currentView = 'project';
         this.render();
       });
     }
 
-    const navProfilesBtn = document.getElementById('nav-profiles-btn');
-    if (navProfilesBtn) {
-      navProfilesBtn.addEventListener('click', () => {
-        this.currentView = 'profiles';
+    const headerMetricsBtn = document.getElementById('header-metrics-btn');
+    if (headerMetricsBtn) {
+      headerMetricsBtn.addEventListener('click', () => {
+        this.activePhaseId = null;
+        this.activeTab = 'metrics';
+        this.currentView = 'project';
         this.render();
       });
     }
 
-    const navLandingPreviewBtn = document.getElementById('nav-landing-preview-btn');
-    if (navLandingPreviewBtn) {
-      navLandingPreviewBtn.addEventListener('click', () => {
-        this.currentView = 'landing';
+    // Nav to Projects Dashboard
+    const navProjectsDashboardBtn = document.getElementById('nav-projects-dashboard-btn');
+    const footerProjectsBtn = document.getElementById('footer-projects-btn');
+    const onNavProjects = () => {
+      if (this.token) {
+        this.currentView = 'projects';
         this.render();
-      });
-    }
+      } else {
+        const t = prompt('Enter your local workspace security token to view your account projects:');
+        if (t && t.trim()) {
+          this.token = t.trim();
+          sessionStorage.setItem('sdd_token', this.token);
+          this._loadProjects();
+        }
+      }
+    };
+    if (navProjectsDashboardBtn) navProjectsDashboardBtn.addEventListener('click', onNavProjects);
+    if (footerProjectsBtn) footerProjectsBtn.addEventListener('click', onNavProjects);
 
-    const returnWorkspaceBannerBtn = document.getElementById('return-workspace-banner-btn');
-    if (returnWorkspaceBannerBtn) {
-      returnWorkspaceBannerBtn.addEventListener('click', () => {
-        this.currentView = 'directory';
-        this.render();
-      });
-    }
-
+    // Nav to Public Landing
+    const navLandingPageBtn = document.getElementById('nav-landing-page-btn');
     const navLandingHomeBtn = document.getElementById('nav-landing-home-btn');
-    if (navLandingHomeBtn) {
-      navLandingHomeBtn.addEventListener('click', () => {
-        this.currentView = 'landing';
-        this.render();
-      });
-    }
+    const footerLandingBtn = document.getElementById('footer-landing-btn');
+    const onNavLanding = () => {
+      this.currentView = 'landing';
+      this.render();
+    };
+    if (navLandingPageBtn) navLandingPageBtn.addEventListener('click', onNavLanding);
+    if (navLandingHomeBtn) navLandingHomeBtn.addEventListener('click', onNavLanding);
+    if (footerLandingBtn) footerLandingBtn.addEventListener('click', onNavLanding);
+
+    // Profiles nav
+    const navProfilesBtn = document.getElementById('nav-profiles-btn');
+    const footerProfilesBtn = document.getElementById('footer-profiles-btn');
+    const onNavProfiles = () => {
+      this.currentView = 'profiles';
+      this.render();
+    };
+    if (navProfilesBtn) navProfilesBtn.addEventListener('click', onNavProfiles);
+    if (footerProfilesBtn) footerProfilesBtn.addEventListener('click', onNavProfiles);
 
     // Launch Demo Buttons
     const launchDemoBtn = document.getElementById('launch-demo-btn');
     const launchDemoHeaderBtn = document.getElementById('launch-demo-header-btn');
-    const launchDemoNavBtn = document.getElementById('launch-demo-nav-btn');
     const onLaunchDemo = () => {
       this._loadStaticDemo();
     };
     if (launchDemoBtn) launchDemoBtn.addEventListener('click', onLaunchDemo);
     if (launchDemoHeaderBtn) launchDemoHeaderBtn.addEventListener('click', onLaunchDemo);
-    if (launchDemoNavBtn) launchDemoNavBtn.addEventListener('click', onLaunchDemo);
 
     // Connect Workspace Buttons
     const connectWorkspaceBtn = document.getElementById('connect-workspace-btn');
     const connectWorkspaceHeaderBtn = document.getElementById('connect-workspace-header-btn');
+    const dashConnectAnotherBtn = document.getElementById('dash-connect-another-btn');
     const onConnectWorkspace = () => {
       const userToken = prompt('Enter your local SDD workspace security token:');
       if (userToken && userToken.trim()) {
@@ -1318,19 +1508,58 @@ export class SDDWorkspaceApp {
     };
     if (connectWorkspaceBtn) connectWorkspaceBtn.addEventListener('click', onConnectWorkspace);
     if (connectWorkspaceHeaderBtn) connectWorkspaceHeaderBtn.addEventListener('click', onConnectWorkspace);
+    if (dashConnectAnotherBtn) dashConnectAnotherBtn.addEventListener('click', onConnectWorkspace);
 
-    // Breadcrumb back clicks
+    // Project cards in Account Dashboard
+    this.container.querySelectorAll('.project-dash-card[data-project-id]').forEach(card => {
+      card.addEventListener('click', () => {
+        const pId = card.getAttribute('data-project-id');
+        this.selectProject(pId);
+      });
+    });
+
+    const demoShowcaseCard = document.getElementById('demo-showcase-card');
+    if (demoShowcaseCard) {
+      demoShowcaseCard.addEventListener('click', onLaunchDemo);
+    }
+
+    // Breadcrumb back clicks in Phase detail
     const back1 = document.getElementById('back-to-dir-btn');
     const back2 = document.getElementById('back-to-dir-btn2');
-    if (back1) back1.addEventListener('click', () => { this.currentView = 'directory'; this.render(); });
-    if (back2) back2.addEventListener('click', () => { this.currentView = 'directory'; this.render(); });
+    if (back1) back1.addEventListener('click', () => { this.activePhaseId = null; this.render(); });
+    if (back2) back2.addEventListener('click', () => { this.activePhaseId = null; this.render(); });
 
-    // Clickable table rows in Project Metrics view
-    this.container.querySelectorAll('.clickable-phase-row').forEach(row => {
+    // Clickable table rows in Phase leaderboards
+    this.container.querySelectorAll('.table-row[data-phase-id]').forEach(row => {
       row.addEventListener('click', () => {
         this.activePhaseId = row.getAttribute('data-phase-id');
-        this.currentView = 'phase-detail';
+        this.activeTab = 'overview';
+        this.currentView = 'project';
+        this.render();
+      });
+    });
+
+    this.container.querySelectorAll('.clickable-phase-row[data-phase-id]').forEach(row => {
+      row.addEventListener('click', () => {
+        this.activePhaseId = row.getAttribute('data-phase-id');
         this.activeTab = 'metrics';
+        this.currentView = 'project';
+        this.render();
+      });
+    });
+
+    // Directory filter tabs
+    this.container.querySelectorAll('.dir-tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        this.dirFilter = btn.getAttribute('data-dir-filter');
+        this.render();
+      });
+    });
+
+    // Detail tabs within a Phase
+    this.container.querySelectorAll('.detail-tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        this.activeTab = btn.getAttribute('data-detail-tab');
         this.render();
       });
     });
@@ -1391,38 +1620,14 @@ export class SDDWorkspaceApp {
           bodyEl.querySelectorAll('.table-row').forEach(row => {
             row.addEventListener('click', () => {
               this.activePhaseId = row.getAttribute('data-phase-id');
-              this.currentView = 'phase-detail';
+              this.activeTab = 'overview';
+              this.currentView = 'project';
               this.render();
             });
           });
         }
       });
     }
-
-    // Directory filter tabs
-    this.container.querySelectorAll('.dir-tab-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        this.dirFilter = btn.getAttribute('data-dir-filter');
-        this.render();
-      });
-    });
-
-    // Directory table rows -> open phase detail
-    this.container.querySelectorAll('.table-row').forEach(row => {
-      row.addEventListener('click', () => {
-        this.activePhaseId = row.getAttribute('data-phase-id');
-        this.currentView = 'phase-detail';
-        this.render();
-      });
-    });
-
-    // Detail tabs
-    this.container.querySelectorAll('.detail-tab-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        this.activeTab = btn.getAttribute('data-detail-tab');
-        this.render();
-      });
-    });
 
     // Copy command buttons
     const pill = document.getElementById('copy-cmd-pill');
