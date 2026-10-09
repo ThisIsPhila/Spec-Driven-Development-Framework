@@ -959,13 +959,13 @@ npm --prefix visual run workspace -- --project /path/to/project --project /path/
     const dashConnectAnotherBtn = document.getElementById('dash-connect-another-btn');
     const onConnectWorkspace = () => {
       if (this.accountSession) { this._showConnectorDialog(); return; }
-      const userToken = prompt('Launch the CLI with --project for each project you want to connect. Enter the token for that local service:');
-      if (userToken && userToken.trim()) {
-        const clean = userToken.trim();
-        sessionStorage.setItem('sdd_token', clean);
-        this.token = clean;
-        this._loadProjects();
-      }
+      const launch = prompt('Launch the workspace CLI with --project for each root you want to view, then paste its full local launch URL:');
+      if (!launch?.trim()) return;
+      try {
+        const target = new URL(launch.trim());
+        if (target.protocol !== 'http:' || !['localhost','127.0.0.1','[::1]'].includes(target.hostname) || !/^#token=[a-f0-9]+$/.test(target.hash)) throw new Error('Invalid local launch URL');
+        window.location.assign(target.href);
+      } catch { alert('Use the complete loopback URL with #token printed by the workspace CLI.'); }
     };
     if (connectWorkspaceBtn) connectWorkspaceBtn.addEventListener('click', onConnectWorkspace);
     if (connectWorkspaceHeaderBtn) connectWorkspaceHeaderBtn.addEventListener('click', onConnectWorkspace);

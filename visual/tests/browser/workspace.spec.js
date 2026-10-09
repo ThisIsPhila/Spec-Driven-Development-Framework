@@ -65,6 +65,10 @@ test('real 60-phase workspace filters tasks and follows requirement/source links
 });
 test('account sign-up is functional and an empty account has no invented projects',async ({page})=>{
   await page.goto(accountInfo.url);
+  page.once('dialog', dialog => dialog.accept(info.url));
+  await page.locator('#connect-workspace-btn').click();
+  await expect(page.locator('.phase-nav-sidebar [data-phase-select]')).toHaveCount(60);
+  await page.goto(accountInfo.url);
   await page.getByRole('button',{name:'Sign in',exact:true}).click();
   await page.locator('#account-email').fill('browser@example.test');
   await page.locator('#account-password').fill('browser-test-password');
