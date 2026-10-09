@@ -1,3 +1,4 @@
+import { escapeDisplayModel } from '../sanitize.js';
 import { renderMarkdown } from '../markdown.js';
 import { ICONS } from '../icons.js';
 
@@ -7,6 +8,7 @@ import { ICONS } from '../icons.js';
  * and hook execution tracking telemetry.
  */
 export function renderAutomationView(snapshot, activeScriptName = null) {
+  snapshot = escapeDisplayModel(snapshot);
   if (!snapshot) return `<div class="empty-state">No project loaded.</div>`;
 
   const scripts = snapshot.scripts || [];
@@ -40,22 +42,22 @@ export function renderAutomationView(snapshot, activeScriptName = null) {
         </div>
 
         <p class="telemetry-desc text-muted-foreground font-mono">
-          Intercepts every <code>git commit</code> locally. Enforces that task IDs, specification statuses, profiles, and schemas remain 100% valid before code is committed to Git history.
+          ${telemetry.historyStatus || "Execution history not recorded"}. Git hooks can be bypassed.
         </p>
 
         <!-- Telemetry Stats Row -->
         <div class="telemetry-stats-row font-mono">
           <div class="telemetry-stat-cell">
-            <span class="cell-label">Quality Gates Enforced</span>
-            <span class="cell-val">${telemetry.totalGatesRun || 5} Gates</span>
+            <span class="cell-label">Recorded Gate Runs</span>
+            <span class="cell-val">${telemetry.totalGatesRun ?? 0} Gates</span>
           </div>
           <div class="telemetry-stat-cell">
             <span class="cell-label">Pass Rate</span>
-            <span class="cell-val text-accent">${telemetry.passRate || '100%'}</span>
+            <span class="cell-val text-accent">${telemetry.passRate ?? 'Not recorded'}</span>
           </div>
           <div class="telemetry-stat-cell">
-            <span class="cell-label">Last Checked Tree</span>
-            <span class="cell-val mono">Commit ${(telemetry.lastCommitChecked || snapshot.account?.headCommit || 'HEAD').slice(0, 7)}</span>
+            <span class="cell-label">Last Recorded Indexed Tree</span>
+            <span class="cell-val mono">Commit ${(telemetry.lastCommitChecked || 'Not recorded')}</span>
           </div>
           <div class="telemetry-stat-cell">
             <span class="cell-label">Hook Location</span>
@@ -65,7 +67,7 @@ export function renderAutomationView(snapshot, activeScriptName = null) {
 
         <!-- Telemetry Gates List -->
         <div class="telemetry-gates-table-wrapper">
-          <div class="section-subtitle font-mono" style="margin-bottom:0.75rem;">AUTOMATED GATES EXECUTED ON COMMIT</div>
+          <div class="section-subtitle font-mono" style="margin-bottom:0.75rem;">GATES DECLARED IN HOOK SOURCE</div>
           <table class="telemetry-gates-table font-mono">
             <thead>
               <tr>
@@ -124,7 +126,7 @@ export function renderAutomationView(snapshot, activeScriptName = null) {
                 </p>
                 <div class="script-cmd-pill font-mono">
                   <code>$ ${currentScript.usage}</code>
-                  <span class="copy-hint font-mono text-xs">Copy Command</span>
+                  ${currentScript.usage.startsWith('Helper') ? '' : `<button class="copy-hint font-mono text-xs" data-copy-command="${currentScript.usage}">Copy Command</button>`}
                 </div>
               </header>
 

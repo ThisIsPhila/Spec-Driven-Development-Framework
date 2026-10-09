@@ -1,3 +1,4 @@
+import { escapeDisplayModel } from '../sanitize.js';
 import { ICONS } from '../icons.js';
 
 /**

@@ -1,3 +1,5 @@
+import { escapeHtml } from '../sanitize.js';
+import { escapeDisplayModel } from '../sanitize.js';
 import { renderMarkdown } from '../markdown.js';
 import { ICONS } from '../icons.js';
 
@@ -6,6 +8,7 @@ import { ICONS } from '../icons.js';
  * Surfaces official framework spec templates, architecture docs, and Graphify knowledge networks.
  */
 export function renderKnowledgeView(snapshot, activeSubTab = 'templates', selectedItemId = null) {
+  snapshot = escapeDisplayModel(snapshot);
   if (!snapshot) return `<div class="empty-state">No project loaded.</div>`;
 
   const templates = snapshot.templates || [];
@@ -44,7 +47,7 @@ export function renderKnowledgeView(snapshot, activeSubTab = 'templates', select
           ${ICONS.clock} <span>Architecture & Guides (${docs.length})</span>
         </button>
         <button class="knowledge-tab-btn ${isGraphify ? 'active' : ''}" data-know-section="graphify">
-          ${ICONS.activity} <span>Graphify Knowledge Network</span>
+          ${ICONS.activity} <span>Artifact Map</span>
         </button>
       </div>
 
@@ -118,11 +121,11 @@ export function renderKnowledgeView(snapshot, activeSubTab = 'templates', select
           </main>
         </div>
       ` : `
-        <!-- Graphify Knowledge Network -->
+        <!-- Artifact Map -->
         <div class="graphify-network-card" style="margin-top: 1.5rem;">
           <header class="doc-view-header">
             <div class="doc-title-row">
-              <h2 class="doc-view-title">Graphify Knowledge Network Traceability</h2>
+              <h2 class="doc-view-title">Derived Artifact Map</h2>
               <span class="domain-stats-pill font-mono">${graphify.totalNodes || graphify.nodes?.length || 0} Nodes • ${graphify.totalEdges || graphify.edges?.length || 0} Relationships</span>
             </div>
             <p class="text-muted-foreground font-mono text-xs">
@@ -167,6 +170,16 @@ export function renderKnowledgeView(snapshot, activeSubTab = 'templates', select
           </div>
         </div>
       `}
+      <section class="domain-content-card" style="margin-top:2rem">
+        <h2>Installed skills (${snapshot.skills?.length || 0})</h2>
+        ${(snapshot.skills || []).map(skill => `<details><summary>${skill.name}${skill.duplicate ? ' (duplicate name)' : ''}</summary><p>${skill.description}</p>${skill.path ? `<button class="btn btn-secondary" data-source-path="${escapeHtml(skill.path)}">Open SKILL.md</button>` : ''}</details>`).join('')}
+        <h2>Artifact coverage</h2>
+        ${Object.entries(snapshot.coverage || {}).map(([type, support]) => `<p><strong>${type}</strong>: ${support}</p>`).join('')}
+        <details><summary>All discovered .sdd artifacts (${snapshot.artifactIndex?.length || 0})</summary>
+          ${(snapshot.artifactIndex || []).map(file => `<p><button class="btn btn-secondary" data-source-path="${escapeHtml(file.path)}">${file.relativePath}</button> ${file.kind} · ${file.bytes} bytes</p>`).join('')}
+        </details>
+        <details><summary>Graph relationships and provenance</summary>${(graphify.edges || []).map(edge => `<p>${edge.from} → ${edge.to}: ${edge.label} (${edge.provenance || 'UNSPECIFIED'})</p>`).join('')}</details>
+      </section>
     </div>
   `;
 }

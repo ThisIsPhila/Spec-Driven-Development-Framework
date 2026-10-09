@@ -1,3 +1,4 @@
+import { escapeDisplayModel } from '../sanitize.js';
 import { renderMarkdown } from '../markdown.js';
 import { ICONS } from '../icons.js';
 
@@ -6,6 +7,7 @@ import { ICONS } from '../icons.js';
  * Surfaces formal milestone assessment reports, closeout signoffs, and product roadmap audits.
  */
 export function renderReportsView(snapshot, activeReportId = null) {
+  snapshot = escapeDisplayModel(snapshot);
   if (!snapshot) return `<div class="empty-state">No project loaded.</div>`;
 
   const reports = snapshot.reports || [];

@@ -1,3 +1,5 @@
+import { escapeHtml } from '../sanitize.js';
+import { escapeDisplayModel } from '../sanitize.js';
 import { renderMarkdown } from '../markdown.js';
 import { renderOverviewView } from './overviewView.js';
 import { renderSpecView } from './specView.js';
@@ -11,6 +13,7 @@ import { ICONS } from '../icons.js';
  * Surfaces all phase contents: requirements, design, tasks, evidence, acceptance, remediations, future work.
  */
 export function renderPhaseExplorerView(snapshot, state) {
+  snapshot = escapeDisplayModel(snapshot);
   if (!snapshot) return `<div class="empty-state">No project loaded.</div>`;
 
   const phases = snapshot.phases || [];
@@ -75,7 +78,7 @@ export function renderPhaseExplorerView(snapshot, state) {
               type="text"
               id="phase-search-field"
               placeholder="Filter 50+ phases, tasks..."
-              value="${state.phaseSearchQuery || ''}"
+              value="${escapeHtml(state.phaseSearchQuery || '')}"
               class="phase-search-input font-mono"
               autocomplete="off"
               spellcheck="false"
@@ -88,7 +91,7 @@ export function renderPhaseExplorerView(snapshot, state) {
         <div class="phase-items-scrollable-list" role="list">
           ${filteredPhases.length === 0 ? `
             <div class="empty-state font-mono" style="padding:2rem 1rem; font-size:0.8rem;">
-              No phases match "${state.phaseSearchQuery}".
+              No phases match "${escapeHtml(state.phaseSearchQuery)}".
             </div>
           ` : filteredPhases.map(p => {
             const isSelected = selectedPhase && selectedPhase.id === p.id;
@@ -134,7 +137,7 @@ export function renderPhaseExplorerView(snapshot, state) {
       <main class="phase-workspace-main">
         ${selectedPhase === null
           ? renderAllSprintsOverview(snapshot)
-          : renderSelectedPhaseWorkspace(selectedPhase, currentTab, snapshot)
+          : renderSelectedPhaseWorkspace(selectedPhase, currentTab, snapshot, state)
         }
       </main>
     </div>
@@ -144,9 +147,9 @@ export function renderPhaseExplorerView(snapshot, state) {
 /**
  * Renders the Selected Phase Workspace with all 7 sub-tabs
  */
-function renderSelectedPhaseWorkspace(phase, activeTab, snapshot) {
-  const pHealth = phase.metrics?.healthScore || 90;
-  const pGrade = phase.metrics?.healthGrade || 'EXCELLENT';
+function renderSelectedPhaseWorkspace(phase, activeTab, snapshot, state) {
+  const pHealth = phase.metrics?.healthScore ?? 0;
+  const pGrade = phase.metrics?.healthGrade || 'UNKNOWN';
   const cleanId = phase.id.replace(/^phase-0*/i, 'Phase ');
   const acceptanceCount = phase.acceptanceCriteria?.length || 0;
   const limitationsCount = phase.limitations?.length || 0;
@@ -163,7 +166,7 @@ function renderSelectedPhaseWorkspace(phase, activeTab, snapshot) {
             <span class="header-slash">•</span>
             <span class="phase-id-label">${cleanId}</span>
             <span class="header-slash">•</span>
-            <span class="freshness-tag font-mono">${phase.metrics?.verificationAssurance?.freshness === 'FRESH' ? 'GIT HEAD MATCH' : 'LOCAL BASELINE'}</span>
+            <span class="freshness-tag font-mono">${phase.metrics?.verificationAssurance?.freshness === 'HEAD_MATCH_ONLY' ? 'GIT HEAD MATCH' : 'LOCAL BASELINE'}</span>
           </div>
           <h1 class="phase-main-title">${phase.name || phase.id}</h1>
         </div>
@@ -211,13 +214,13 @@ function renderSelectedPhaseWorkspace(phase, activeTab, snapshot) {
 
       <!-- Tab Content Area -->
       <div class="phase-subtab-content-area">
-        ${renderSubTabContent(phase, activeTab, snapshot)}
+        ${renderSubTabContent(phase, activeTab, snapshot, state)}
       </div>
     </div>
   `;
 }
 
-function renderSubTabContent(phase, tab, snapshot) {
+function renderSubTabContent(phase, tab, snapshot, state) {
   if (tab === 'overview') {
     return renderOverviewView(phase);
   }
@@ -228,7 +231,7 @@ function renderSubTabContent(phase, tab, snapshot) {
     return renderSpecView(phase, 'design');
   }
   if (tab === 'tasks') {
-    return renderSpecView(phase, 'tasks', 'all');
+    return renderSpecView(phase, 'tasks', state.taskFilter || 'all');
   }
   if (tab === 'evidence') {
     return renderEvidenceAndAcceptanceView(phase);
@@ -251,7 +254,7 @@ function renderSubTabContent(phase, tab, snapshot) {
       </div>
     `;
   }
-  return `<div class="empty-state">Unknown tab: ${tab}</div>`;
+  return `<div class="empty-state">Unknown tab: ${escapeHtml(tab)}</div>`;
 }
 
 /**
@@ -275,7 +278,7 @@ function renderEvidenceAndAcceptanceView(phase) {
                 </span>
                 <div class="criteria-body">
                   ${c.reqId ? `<span class="criteria-req-tag">${c.reqId}</span>` : ''}
-                  <span class="criteria-text ${c.done ? 'done-text' : ''}">${c.text}</span>
+                  <span class="criteria-text ${c.done ? 'done-text' : ''}">${c.text}${c.declaredDone ? ' (source checkbox checked; acceptance unassessed)' : ''}</span>
                 </div>
               </div>
             `).join('')}
@@ -366,7 +369,7 @@ function renderRemediationsAndFutureView(phase) {
           </div>
         ` : `
           <p class="text-muted-foreground font-mono text-xs" style="padding: 1rem 0;">
-            No future work items or out-of-scope boundaries defined.
+            No structured future work recorded items or out-of-scope boundaries defined.
           </p>
         `}
       </section>
@@ -386,7 +389,7 @@ function renderAllSprintsOverview(snapshot) {
       <header class="domain-header">
         <div>
           <span class="domain-kicker font-mono">PROJECT PORTFOLIO</span>
-          <h1 class="domain-title">All Sprints & Master Burndown</h1>
+          <h1 class="domain-title">All Sprints & Master Completion overview</h1>
           <p class="domain-subtitle font-mono">
             Holistic cross-phase roadmap, execution burndown, and milestone assurance status.
           </p>
@@ -396,7 +399,7 @@ function renderAllSprintsOverview(snapshot) {
         </div>
       </header>
 
-      <!-- Phases Burndown Grid -->
+      <!-- Phases Completion overview Grid -->
       <div class="all-phases-grid font-mono" style="margin-top: 1.5rem;">
         ${phases.map(p => {
           const percent = p.taskCounts?.percent || 0;

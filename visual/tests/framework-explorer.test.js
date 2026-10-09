@@ -39,7 +39,9 @@ test('extracts comprehensive framework elements from repository', () => {
   assert.ok(snapshot.scripts.some(s => s.name === 'doctor.sh'));
   assert.ok(snapshot.hooks, 'hooks object should exist');
   assert.ok(snapshot.hooks.installed, 'pre-commit hook should be installed');
-  assert.ok(snapshot.hooks.telemetry.enforcementLevel.includes('BLOCKING'));
+  assert.equal(snapshot.hooks.telemetry.totalGatesRun, snapshot.hooks.telemetry.records.length);
+  if (!snapshot.hooks.telemetry.records.length) { assert.equal(snapshot.hooks.telemetry.passRate, null); assert.equal(snapshot.hooks.telemetry.lastRunTimestamp, ''); }
+  else assert.equal(snapshot.hooks.telemetry.lastRunTimestamp, snapshot.hooks.telemetry.records.at(-1).timestamp);
   assert.ok(snapshot.hooks.telemetry.gatesList?.length >= 2);
 
   // Docs & Templates & Graphify
@@ -89,7 +91,7 @@ test('renderGovernanceView surfaces constitution, memories and enforced rules', 
 test('renderAutomationView surfaces scripts and Git pre-commit telemetry', () => {
   const html = renderAutomationView(demoSnapshot, 'doctor.sh');
   assert.ok(html.includes('Git Pre-Commit Quality Gate'), 'must show git hook status');
-  assert.ok(html.includes('AUTOMATED GATES EXECUTED ON COMMIT'), 'must show executed gates table');
+  assert.ok(html.includes('GATES DECLARED IN HOOK SOURCE'), 'must show executed gates table');
   assert.ok(html.includes('doctor.sh'), 'must list scripts');
   assert.ok(html.includes('SOURCE CODE PREVIEW'), 'must include script code preview');
 });
@@ -100,6 +102,6 @@ test('renderKnowledgeView surfaces spec templates, docs and Graphify network', (
   assert.ok(htmlTpl.includes('Copy Template'), 'must include copy template button');
 
   const htmlGraph = renderKnowledgeView(demoSnapshot, 'graphify', null);
-  assert.ok(htmlGraph.includes('Graphify Knowledge Network Traceability'), 'must show graphify network');
+  assert.ok(htmlGraph.includes('Derived Artifact Map'), 'must show graphify network');
   assert.ok(htmlGraph.includes('Governance & Rules'), 'must show governance entity column');
 });

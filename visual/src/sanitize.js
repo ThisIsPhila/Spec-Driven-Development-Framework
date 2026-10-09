@@ -32,9 +32,30 @@ export function sanitizeHtml(dirtyHtml) {
     });
   }
 
-  // Fallback regex sanitizer if DOMPurify is not instantiated (e.g. Node tests without JSDOM)
-  return dirtyHtml
-    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
-    .replace(/<iframe\b[^<]*(?:(?!<\/iframe>)<[^<]*)*<\/iframe>/gi, '')
-    .replace(/javascript:[^"']*/gi, '#unsafe');
+  throw new Error('A DOM-backed sanitizer is required to render source content');
+}
+
+export function sanitizeUi(html) {
+  if (typeof DOMPurify.sanitize !== 'function') throw new Error('DOM sanitizer unavailable');
+  return DOMPurify.sanitize(html, {
+    ADD_TAGS: ['button', 'input'],
+    ADD_ATTR: ['data-code', 'tabindex'],
+    FORBID_TAGS: ['script', 'iframe', 'object', 'embed', 'form', 'img'],
+    FORBID_ATTR: ['srcdoc'],
+  });
+}
+
+export function escapeHtml(value) {
+  return String(value ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;', "'":'&#39;'}[ch]));
+}
+
+const escapedModels = new WeakSet();
+/** Escape display metadata once; source documents go through Markdown sanitization. */
+export function escapeDisplayModel(value, key = '') {
+  if (!value || typeof value !== 'object') {
+    return typeof value === 'string' && !['content', 'contract', 'raw', 'path'].includes(key) ? escapeHtml(value) : value;
+  }
+  if (escapedModels.has(value)) return value;
+  const result = Array.isArray(value) ? value.map(item => escapeDisplayModel(item, key)) : Object.fromEntries(Object.entries(value).map(([k, v]) => [k, escapeDisplayModel(v, k)]));
+  escapedModels.add(result); return result;
 }

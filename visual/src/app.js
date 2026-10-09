@@ -1,3 +1,5 @@
+import { PROFILES, INSTALL_COMMAND } from './catalog.js';
+import { sanitizeUi, escapeHtml, escapeDisplayModel } from './sanitize.js';
 import { renderMarkdown } from './markdown.js';
 import { renderMermaidBlocks } from './diagrams.js';
 import { generateTraceabilitySvg, generateTraceabilityList } from './traceability.js';
@@ -45,6 +47,13 @@ export class SDDWorkspaceApp {
     this.activeKnowledgeSection = 'templates';
     this.selectedKnowledgeItemId = null;
 
+    const route = new URLSearchParams(location.search);
+    this.activePhaseId = route.get('phase') || this.activePhaseId;
+    this.phaseTab = route.get('tab') || this.phaseTab;
+    this.projectSection = route.get('domain') || this.projectSection;
+    this.taskFilter = route.get('filter') || 'all';
+    window.addEventListener('popstate', () => { const route = new URLSearchParams(location.search); this.activePhaseId = route.get('phase'); this.phaseTab = route.get('tab') || 'overview'; this.projectSection = route.get('domain') || 'phases'; this.taskFilter = route.get('filter') || 'all'; this.render(); });
+
     this.connectionStatus = this.token ? 'connecting' : 'public';
     this.sseSource = null;
     this.pollTimer = null;
@@ -64,6 +73,7 @@ export class SDDWorkspaceApp {
     const queryToken = urlParams.get('token');
     if (queryToken) {
       sessionStorage.setItem('sdd_token', queryToken);
+      urlParams.delete('token'); history.replaceState(null, '', location.pathname + (urlParams.size ? '?' + urlParams : ''));
       return queryToken;
     }
 
@@ -71,6 +81,13 @@ export class SDDWorkspaceApp {
   }
 
   async init() {
+    const bootstrap = /bootstrap=([a-f0-9]+)/.exec(location.hash)?.[1];
+    if (bootstrap) { sessionStorage.setItem('sdd_bootstrap', bootstrap); history.replaceState(null, '', location.pathname + location.search); }
+    try {
+      const response = await fetch('/api/account/me');
+      this.accountsAvailable = response.status === 200 || response.status === 401;
+      if (response.ok) { this.accountSession = await response.json(); this.connectionStatus = 'account'; await this._loadProjects(); return; }
+    } catch {}
     this._setupGlobalKeyboardShortcuts();
     if (this.token) {
       await this._loadProjects();
@@ -88,13 +105,13 @@ export class SDDWorkspaceApp {
   }
 
   async _loadProjects() {
-    if (this.token) {
+    if (this.token || this.accountSession) {
       try {
-        const res = await fetch(`/api/projects?token=${encodeURIComponent(this.token)}`);
+        const res = await fetch('/api/projects', this._requestOptions());
         if (res.ok) {
           this.projects = await res.json();
           if (this.projects.length > 0) {
-            await this.selectProject(this.projects[0].id);
+            await this.selectProject(this.projects.find(project => project.id === new URLSearchParams(location.search).get('project'))?.id || this.projects[0].id);
             return;
           }
         }
@@ -103,27 +120,24 @@ export class SDDWorkspaceApp {
       }
     }
 
+    if (this.accountSession) { this.projects = []; this.currentView = 'projects'; this.render(); return; }
+    if (this.token) { this.connectionStatus = 'offline'; this.currentView = 'projects'; this.render(); return; }
     this._loadStaticDemo();
   }
 
-  _loadStaticDemo() {
-    this.projects = [{
-      id: demoSnapshot.projectId,
-      name: demoSnapshot.projectId,
-      profile: demoSnapshot.profile,
-      activePhaseId: demoSnapshot.activePhaseId,
-      account: demoSnapshot.account,
-      metrics: demoSnapshot.metrics,
-      phasesCount: demoSnapshot.phases.length,
-    }];
-    this.currentProjectId = demoSnapshot.projectId;
-    this.snapshot = demoSnapshot;
-    this.connectionStatus = 'demo';
-    this.currentView = 'project';
-    this.render();
+  _loadStaticDemo(index = 0) {
+    const examples = [{id:'demo-orbit-notes',name:'Orbit Notes',profile:'web'}, {id:'demo-harbor-api',name:'Harbor API',profile:'api'}, {id:'demo-meadow-mobile',name:'Meadow Mobile',profile:'mobile'}];
+    const example = examples[index] || examples[0];
+    this.projects = examples.map(project => ({...project,phasesCount:demoSnapshot.phases.length,metrics:demoSnapshot.metrics}));
+    this.currentProjectId = example.id;
+    this.snapshot = structuredClone(demoSnapshot);
+    this.snapshot.projectId = example.name; this.snapshot.profile = example.profile;
+    this.connectionStatus = 'demo'; this.currentView = 'project'; this.render();
   }
 
   async selectProject(projectId) {
+    if (projectId.startsWith('demo-')) { const index = ['demo-orbit-notes','demo-harbor-api','demo-meadow-mobile'].indexOf(projectId); this._loadStaticDemo(index); return; }
+    this.connectionStatus = this.accountSession ? 'account' : 'connecting';
     this.currentProjectId = projectId;
     this.currentView = 'project';
     await this._fetchSnapshot();
@@ -135,12 +149,13 @@ export class SDDWorkspaceApp {
   async _fetchSnapshot() {
     if (this.connectionStatus === 'demo' || this.connectionStatus === 'public') return;
     try {
-      const res = await fetch(`/api/project/${this.currentProjectId}/snapshot?token=${encodeURIComponent(this.token)}`);
+      const res = await fetch(`/api/project/${this.currentProjectId}/snapshot`, { ...this._requestOptions(), headers: { ...this._requestOptions().headers, ...(this.snapshot?.contentRevision ? {'If-None-Match':this.snapshot.contentRevision} : {}) } });
+      if (res.status === 304) { this.connectionStatus = this.snapshot?.readStatus === 'stale' ? 'stale' : this.accountSession ? 'account' : 'live'; return; }
       if (res.ok) {
         const data = await res.json();
         const prevRev = this.snapshot?.contentRevision;
         this.snapshot = data;
-        this.connectionStatus = 'live';
+        this.connectionStatus = data.readStatus === 'stale' ? 'stale' : this.accountSession ? 'account' : 'live';
 
         if (prevRev && prevRev !== data.contentRevision) {
           const scroll = window.scrollY;
@@ -157,46 +172,33 @@ export class SDDWorkspaceApp {
     }
   }
 
-  _connectSSE() {
-    if (this.connectionStatus === 'demo' || this.connectionStatus === 'public') return;
-    if (this.sseSource) this.sseSource.close();
-
+  async _connectSSE() {
+    if (this.accountSession || !this.token) return;
+    this.sseSource?.close();
+    const controller = new AbortController(); this.sseSource = { close: () => controller.abort() };
     try {
-      const url = `/api/project/${this.currentProjectId}/events?token=${encodeURIComponent(this.token)}`;
-      this.sseSource = new EventSource(url);
-
-      this.sseSource.onopen = () => {
-        this.connectionStatus = 'live';
-        this._updateStatusBar();
-      };
-
-      this.sseSource.onmessage = (event) => {
-        try {
-          const msg = JSON.parse(event.data);
-          if (msg.type === 'update' && msg.snapshot) {
-            this.snapshot = msg.snapshot;
-            this.connectionStatus = 'live';
-            const scroll = window.scrollY;
-            this.render();
-            window.scrollTo(0, scroll);
-          }
-        } catch {}
-      };
-
-      this.sseSource.onerror = () => {
-        this.connectionStatus = 'polling';
-        this._updateStatusBar();
-      };
-    } catch {
-      this.connectionStatus = 'polling';
-      this._updateStatusBar();
-    }
+      const response = await fetch(`/api/project/${this.currentProjectId}/events`, { ...this._requestOptions(), signal: controller.signal });
+      if (!response.ok) throw new Error('Stream unavailable');
+      const reader = response.body.getReader(), decoder = new TextDecoder(); let buffer = '';
+      while (!controller.signal.aborted) {
+        const { value, done } = await reader.read(); if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        let boundary;
+        while ((boundary = buffer.indexOf('\n\n')) >= 0) {
+          const event = buffer.slice(0, boundary); buffer = buffer.slice(boundary + 2);
+          const data = event.split('\n').find(line => line.startsWith('data: '));
+          if (!data) continue;
+          const message = JSON.parse(data.slice(6));
+          if (message.type === 'update' && message.snapshot) { this.snapshot = message.snapshot; this.connectionStatus = message.snapshot.readStatus === 'stale' ? 'stale' : 'live'; this.render(); }
+        }
+      }
+    } catch { if (!controller.signal.aborted) { this.connectionStatus = 'polling'; this._updateStatusBar(); } }
   }
 
   _startPolling() {
     if (this.pollTimer) clearInterval(this.pollTimer);
     this.pollTimer = setInterval(() => {
-      if (document.visibilityState === 'visible' && this.token) {
+      if (document.visibilityState === 'visible' && (this.token || this.accountSession)) {
         this._fetchSnapshot();
       }
     }, 2000);
@@ -204,7 +206,7 @@ export class SDDWorkspaceApp {
 
   _setupVisibilityListener() {
     document.addEventListener('visibilitychange', () => {
-      if (document.visibilityState === 'visible' && this.token) {
+      if (document.visibilityState === 'visible' && (this.token || this.accountSession)) {
         this._fetchSnapshot();
       }
     });
@@ -222,8 +224,12 @@ export class SDDWorkspaceApp {
 
   render() {
     if (!this.container) return;
+    this._syncRoute();
 
-    this.container.innerHTML = `
+    const previousFocus = document.activeElement?.id;
+    const readingPositions = [...this.container.querySelectorAll('[class]')].filter(el => el.scrollTop || el.scrollLeft).map(el => ({ key: el.className, top: el.scrollTop, left: el.scrollLeft }));
+    const openDetails = [...this.container.querySelectorAll('details')].map(el => el.open);
+    this.container.innerHTML = sanitizeUi(`
       <div class="skills-layout">
         <!-- Clean, Un-cluttered Header -->
         <header class="skills-header">
@@ -232,17 +238,91 @@ export class SDDWorkspaceApp {
 
         <!-- Main Page Container -->
         <main class="page-container">
+          ${this.snapshot?.readStatus === 'stale' ? `<div class="domain-content-card" role="status">${escapeHtml(this.snapshot.readError)}</div>` : ''}
           ${this._renderCurrentView()}
           ${this._renderFooter()}
         </main>
       </div>
-    `;
+    `);
 
+    const accountButton = document.createElement('button'); accountButton.className = 'btn btn-secondary';
+    accountButton.textContent = this.accountSession ? 'Connect machine' : 'Sign in';
+    if (this.accountsAvailable) { this.container.querySelector('.skills-header').append(accountButton); accountButton.addEventListener('click', () => this.accountSession ? this._showConnectorDialog() : this._showAccountDialog()); }
+    if (this.accountSession) {
+      const logout = document.createElement('button'); logout.className = 'btn btn-secondary'; logout.textContent = 'Sign out';
+      logout.onclick = async () => { await fetch('/api/account/logout', {method:'POST'}); this.accountSession = null; this.snapshot = null; this.projects = []; this._loadPublicLanding(); };
+      this.container.querySelector('.skills-header').append(logout);
+    }
     this._bindEvents();
+    for (const position of readingPositions) {
+      const el = [...this.container.querySelectorAll('[class]')].find(el => el.className === position.key);
+      if (el) { el.scrollTop = position.top; el.scrollLeft = position.left; }
+    }
+    this.container.querySelectorAll('details').forEach((el, i) => { el.open = openDetails[i] || false; });
+    if (previousFocus) document.getElementById(previousFocus)?.focus({ preventScroll: true });
 
-    if (this.currentView === 'project' && this.activePhaseId && this.activeTab === 'design') {
+    if (this.currentView === 'project') {
       renderMermaidBlocks(this.container);
     }
+  }
+
+  _syncRoute(push = false) {
+    if (this.currentView !== 'project') return;
+    const url = new URL(location.href);
+    for (const [key, value] of Object.entries({project:this.currentProjectId,phase:this.activePhaseId,tab:this.phaseTab,domain:this.projectSection,filter:this.taskFilter})) { if (value) url.searchParams.set(key,value); else url.searchParams.delete(key); }
+    if (url.href !== location.href) history[push ? 'pushState' : 'replaceState'](null, '', url);
+  }
+
+  _requestOptions() { return this.accountSession ? { credentials: 'same-origin' } : { headers: { Authorization: `Bearer ${this.token}` } }; }
+
+  async _showAccountDialog() {
+    const dialog = document.createElement('dialog'); dialog.className = 'source-dialog';
+    dialog.innerHTML = sanitizeUi(`<h2>Account access</h2><p>Use an account to read projects published from your machines. Local workspaces work independently.</p><label>Email <input id="account-email" type="email" autocomplete="username"></label><label>Password <input id="account-password" type="password" autocomplete="current-password"></label><p id="account-error" role="status"></p><button id="account-login">Sign in</button><button id="account-register">Create account</button><button id="account-close">Close</button>`);
+    for (const action of ['login', 'register']) dialog.querySelector('#account-' + action).addEventListener('click', async () => {
+      const email = dialog.querySelector('#account-email').value, password = dialog.querySelector('#account-password').value;
+      const response = await fetch('/api/account/' + action, { method: 'POST', headers: {'Content-Type':'application/json', ...(sessionStorage.getItem('sdd_bootstrap') ? {'X-SDD-Bootstrap':sessionStorage.getItem('sdd_bootstrap')} : {})}, body: JSON.stringify({ email, password }) });
+      const result = await response.json();
+      if (!response.ok) { dialog.querySelector('#account-error').textContent = result.error; return; }
+      sessionStorage.removeItem('sdd_bootstrap'); this.accountSession = result; this.connectionStatus = 'account'; dialog.close(); await this._loadProjects();
+    });
+    dialog.querySelector('#account-close').addEventListener('click', () => dialog.close());
+    dialog.addEventListener('close', () => dialog.remove()); document.body.append(dialog); dialog.showModal();
+  }
+
+  async _showConnectorDialog() {
+    const response = await fetch('/api/account/connector', { method: 'POST' });
+    if (!response.ok) return;
+    const { token } = await response.json();
+    const dialog = document.createElement('dialog'); dialog.className = 'source-dialog';
+    dialog.innerHTML = sanitizeUi(`<h2>Connect a machine</h2><p>This credential grants publishing access to your account for 30 days. Keep it private. Add the URL and credential to your workspace process environment, then launch with the project paths you want to share.</p><pre><code>SDD_SYNC_URL=${escapeHtml(location.origin)}
+SDD_SYNC_TOKEN=${escapeHtml(token)}
+SDD_DEVICE_ID=choose-a-stable-machine-name
+
+npm --prefix visual run workspace -- --project /path/to/project --project /path/to/another</code></pre>`);
+    const close = document.createElement('button'); close.textContent = 'Close'; close.onclick = () => dialog.close(); dialog.prepend(close);
+    const revoke = document.createElement('button'); revoke.textContent = 'Revoke all machine credentials';
+    revoke.onclick = async () => { const response = await fetch('/api/account/connector/revoke',{method:'POST'}); if (response.ok) { dialog.querySelector('pre').textContent = 'All connector credentials revoked. Issue a new credential to reconnect a machine.'; revoke.disabled = true; } }; dialog.append(revoke);
+    dialog.addEventListener('close', () => dialog.remove()); document.body.append(dialog); dialog.showModal();
+  }
+
+  async _openArtifact(sourcePath) {
+    if (!this.token && !this.accountSession) return;
+    const response = await fetch(`/api/project/${this.currentProjectId}/artifact?path=${encodeURIComponent(sourcePath)}`, this._requestOptions());
+    const dialog = document.createElement('dialog');
+    dialog.className = 'source-dialog';
+    if (!response.ok) { dialog.textContent = 'Source unavailable or outside permitted scope.'; }
+    else if (response.headers.get('Content-Type')?.startsWith('image/')) {
+      const objectUrl = URL.createObjectURL(await response.blob());
+      const image = document.createElement('img'); image.src = objectUrl; image.alt = sourcePath; image.style.maxWidth = '100%'; dialog.append(image);
+      dialog.addEventListener('close', () => URL.revokeObjectURL(objectUrl));
+    } else {
+      const content = await response.text();
+      dialog.innerHTML = sanitizeUi(`<h2>${escapeHtml(sourcePath)}</h2><pre><code>${escapeHtml(content)}</code></pre>`);
+    }
+    const close = document.createElement('button'); close.textContent = 'Close';
+    close.addEventListener('click', () => { dialog.close(); dialog.remove(); });
+    dialog.prepend(close); dialog.addEventListener('close', () => dialog.remove());
+    document.body.append(dialog); dialog.showModal();
   }
 
   _renderHeaderContent() {
@@ -310,7 +390,7 @@ export class SDDWorkspaceApp {
 
     // 3. Direct Project SDD Page Header (Clean breadcrumbs + DIRECT PHASE LINKS + live account sync indicator)
     const account = this.snapshot?.account || { name: 'Local', branch: 'main', headCommit: '' };
-    const projectName = this.snapshot?.projectId || 'Project';
+    const projectName = escapeHtml(this.snapshot?.projectId || 'Project');
     const phases = this.snapshot?.phases || [];
 
     return `
@@ -320,7 +400,7 @@ export class SDDWorkspaceApp {
             <path fill-rule="evenodd" clip-rule="evenodd" d="M8 1L16 15H0L8 1Z" fill="currentColor"></path>
           </svg>
           <span class="header-slash">/</span>
-          <span class="header-account-name" id="nav-header-account-btn" title="View all projects in account">${account.name}</span>
+          <span class="header-account-name" id="nav-header-account-btn" title="View all projects in account">${escapeHtml(this.accountSession?.email || (this.connectionStatus === 'demo' ? 'Fictional example' : 'Local workspace'))}</span>
           <span class="header-slash">/</span>
           <span class="header-project-name" id="nav-header-project-btn" title="Project overview">${projectName}</span>
         </div>
@@ -350,9 +430,9 @@ export class SDDWorkspaceApp {
 
       <div class="header-right">
         <!-- Live Account Sync Indicator -->
-        <div class="sync-status-pill" title="${this.token ? `Progress simultaneously syncing to account ${account.name}` : 'Local standalone mode'}">
+        <div class="sync-status-pill" title="${this.token ? `Reading local project files ${escapeHtml(this.accountSession?.email || (this.connectionStatus === 'demo' ? 'Fictional example' : 'Local workspace'))}` : 'Local standalone mode'}">
           <span class="sync-dot ${this.token ? 'live' : 'standalone'}"></span>
-          <span class="sync-text">${this.token ? 'SYNCED' : 'LOCAL'}</span>
+          <span class="sync-text">${this.accountSession ? 'ACCOUNT' : this.token ? 'LOCAL CONNECTED' : 'DEMO'}</span>
         </div>
 
         <a class="nav-link-subtle" id="nav-projects-dashboard-btn" title="View all projects in account">Projects</a>
@@ -367,7 +447,7 @@ export class SDDWorkspaceApp {
       const isSynced = this.connectionStatus === 'live';
       pill.innerHTML = `
         <span class="sync-dot ${isSynced ? 'live' : 'standalone'}"></span>
-        <span class="sync-text">${isSynced ? 'SYNCED' : this.connectionStatus.toUpperCase()}</span>
+        <span class="sync-text">${isSynced ? 'LOCAL CONNECTED' : this.connectionStatus.toUpperCase()}</span>
       `;
     }
   }
@@ -408,215 +488,20 @@ export class SDDWorkspaceApp {
   // Tier 2: The Logged In State (Account Level / Multi-Project Dashboard)
   // ---------------------------------------------------------------------------
   _renderAccountProjectsView() {
-    const account = this.snapshot?.account || { name: 'Developer', email: '', branch: 'main', headCommit: '' };
-    const projectsList = this.projects.length > 0 ? this.projects : [{
-      id: this.snapshot?.projectId || 'Spec-Driven-Development-Framework',
-      name: this.snapshot?.projectId || 'Spec-Driven-Development-Framework',
-      profile: this.snapshot?.profile || 'general',
-      activePhaseId: this.snapshot?.activePhaseId || 'phase-005-visual-framework-workspace',
-    }];
-
-    const overallHealth = this.snapshot?.metrics?.overallHealthScore || 95;
-    const overallGrade = this.snapshot?.metrics?.overallHealthGrade || 'EXCELLENT';
-
-    return `
-      <div class="projects-dashboard">
-        <!-- Account Hero Bar -->
-        <div class="account-hero-bar">
-          <div class="account-identity">
-            <div class="account-avatar-large">${ICONS.user}</div>
-            <div>
-              <h1 class="account-title">${account.name}</h1>
-              <p class="account-sub">${account.email || 'Local Developer'} • ${account.branch} (${(account.headCommit || '').slice(0, 7)})</p>
-            </div>
-          </div>
-          <button class="btn btn-secondary" id="dash-connect-another-btn" style="font-family:var(--font-mono); font-size:0.75rem;">
-            + Connect Another Repository
-          </button>
-        </div>
-
-        <!-- High-level Account KPI Tiles -->
-        <div class="kpi-grid" style="margin-top:0;">
-          <div class="kpi-card">
-            <div class="kpi-header">
-              <h3 class="kpi-title">SDD Projects</h3>
-              <span class="kpi-badge status-badge-verified">Active</span>
-            </div>
-            <div class="kpi-body">
-              <span class="kpi-number">${projectsList.length}</span>
-              <span class="kpi-subtext">Repositories</span>
-            </div>
-            <div class="kpi-footer">
-              <span>All workspaces syncing</span>
-            </div>
-          </div>
-
-          <div class="kpi-card">
-            <div class="kpi-header">
-              <h3 class="kpi-title">Average Health</h3>
-              <span class="kpi-badge status-badge-verified">${overallGrade}</span>
-            </div>
-            <div class="kpi-body">
-              <span class="kpi-number">${overallHealth}</span>
-              <span class="kpi-subtext">/ 100</span>
-            </div>
-            <div class="kpi-footer">
-              <span>Spec quality composite</span>
-            </div>
-          </div>
-
-          <div class="kpi-card">
-            <div class="kpi-header">
-              <h3 class="kpi-title">Active Sprints</h3>
-              <span class="kpi-badge status-badge-implemented">Running</span>
-            </div>
-            <div class="kpi-body">
-              <span class="kpi-number">${this.snapshot?.metrics?.activeSprintsCount || 1}</span>
-              <span class="kpi-subtext">In-Flight</span>
-            </div>
-            <div class="kpi-footer">
-              <span>Real-time agent tracking</span>
-            </div>
-          </div>
-
-          <div class="kpi-card">
-            <div class="kpi-header">
-              <h3 class="kpi-title">Sync Status</h3>
-              <span class="kpi-badge status-badge-verified">Live</span>
-            </div>
-            <div class="kpi-body">
-              <span class="kpi-number">100%</span>
-              <span class="kpi-subtext">Automated</span>
-            </div>
-            <div class="kpi-footer">
-              <span>Simultaneous background updates</span>
-            </div>
-          </div>
-        </div>
-
-        <div class="section-bar-header">
-          <span>Connected SDD Repositories (${projectsList.length})</span>
-        </div>
-
-        <!-- Project Cards Grid -->
-        <div class="project-card-grid">
-          ${projectsList.map(proj => {
-            const isCurrent = proj.id === this.currentProjectId;
-            const health = isCurrent ? (this.snapshot?.metrics?.overallHealthScore || 95) : 85;
-            const activePhase = isCurrent ? (this.snapshot?.activePhaseId || 'phase-005') : proj.activePhaseId;
-            const progressPct = isCurrent ? (this.snapshot?.metrics?.overallProgressPct || 88) : 50;
-
-            return `
-              <div class="project-dash-card" data-project-id="${proj.id}">
-                <div>
-                  <div class="project-dash-header">
-                    <div>
-                      <h2 class="project-dash-title">${proj.name || proj.id}</h2>
-                      <p class="project-dash-path mono">${proj.root || '~/' + proj.id}</p>
-                    </div>
-                    <span class="profile-tag-pill mono">${proj.profile || 'general'}</span>
-                  </div>
-
-                  <div class="project-dash-meta-box">
-                    <div style="display:flex; justify-content:space-between; margin-bottom:0.5rem;">
-                      <div>
-                        <div class="project-meta-label">Active Sprint</div>
-                        <div class="project-meta-value mono">${activePhase}</div>
-                      </div>
-                      <div style="text-align:right;">
-                        <div class="project-meta-label">Spec Health</div>
-                        <div class="project-meta-value" style="color:#10b981; font-weight:700;">${health}/100</div>
-                      </div>
-                    </div>
-
-                    <div class="progress-track" style="margin-top:0.75rem;">
-                      <div class="progress-bar" style="width: ${progressPct}%;"></div>
-                    </div>
-                    <div class="progress-pct mono" style="margin-top:0.25rem; font-size:0.7rem;">${progressPct}% tasks closed</div>
-                  </div>
-                </div>
-
-                <div class="project-dash-footer">
-                  <span class="sync-status-pill">
-                    <span class="sync-dot live"></span>
-                    <span class="sync-text">LIVE SYNCED</span>
-                  </span>
-                  <button class="btn btn-primary" style="padding:0.35rem 0.75rem; font-size:0.75rem; font-family:var(--font-mono);">
-                    Open Workspace →
-                  </button>
-                </div>
-              </div>
-            `;
-          }).join('')}
-
-          <!-- Synthetic Demo Showcase Card for comparison -->
-          <div class="project-dash-card" id="demo-showcase-card">
-            <div>
-              <div class="project-dash-header">
-                <div>
-                  <h2 class="project-dash-title">cloud-billing-service</h2>
-                  <p class="project-dash-path mono">/synthetic/workspace/cloud-billing-service</p>
-                </div>
-                <span class="profile-tag-pill mono">api</span>
-              </div>
-
-              <div class="project-dash-meta-box">
-                <div style="display:flex; justify-content:space-between; margin-bottom:0.5rem;">
-                  <div>
-                    <div class="project-meta-label">Active Sprint</div>
-                    <div class="project-meta-value mono">phase-003-stripe-webhook</div>
-                  </div>
-                  <div style="text-align:right;">
-                    <div class="project-meta-label">Spec Health</div>
-                    <div class="project-meta-value" style="color:#06b6d4; font-weight:700;">85/100</div>
-                  </div>
-                </div>
-
-                <div class="progress-track" style="margin-top:0.75rem;">
-                  <div class="progress-bar" style="width: 50%;"></div>
-                </div>
-                <div class="progress-pct mono" style="margin-top:0.25rem; font-size:0.7rem;">2/4 tasks closed (50%)</div>
-              </div>
-            </div>
-
-            <div class="project-dash-footer">
-              <span class="sync-status-pill">
-                <span class="sync-dot standalone"></span>
-                <span class="sync-text">SHOWCASE SANDBOX</span>
-              </span>
-              <button class="btn btn-secondary" style="padding:0.35rem 0.75rem; font-size:0.75rem; font-family:var(--font-mono);">
-                Explore Sandbox →
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    `;
+    if (!this.projects.length) return `<section class="domain-content-card"><h1>No connected projects yet</h1><p>${this.accountSession ? 'Connect a machine to publish the projects you choose.' : 'Launch the local CLI with one or more --project paths. No account is required.'}</p><button class="btn btn-secondary" id="dash-connect-another-btn">Connect projects</button></section>`;
+    return `<div class="projects-dashboard">
+      <div class="account-hero-bar"><div class="account-identity"><div class="account-avatar-large">${ICONS.user}</div><div><h1 class="account-title">${escapeHtml(this.accountSession?.email || (this.connectionStatus === 'demo' ? 'Fictional example' : 'Local workspace'))}</h1><p class="account-sub">${this.projects.length} connected projects · ${this.accountSession ? 'Private published snapshots' : 'Local read service'}</p></div></div><button class="btn btn-secondary" id="dash-connect-another-btn">Connect another project</button></div>
+      <div class="project-card-grid">${this.projects.map(project => `<div class="project-dash-card" data-project-id="${escapeHtml(project.id)}" role="button" tabindex="0">
+        <div class="project-dash-header"><h2 class="project-dash-title">${escapeHtml(project.name || project.id)}</h2><span class="profile-tag-pill mono">${escapeHtml(project.profile || 'general')}</span></div>
+        <p class="project-dash-path mono">${escapeHtml(project.root || 'Private account project')}</p>
+        <div class="project-dash-meta-box"><p>Active phase: ${escapeHtml(project.activePhaseId || 'No active sprint declared')}</p><p>${project.phasesCount ?? 'Unknown'} phases · ${project.metrics?.completedTasks ?? 'Unknown'}/${project.metrics?.totalTasks ?? 'Unknown'} tasks recorded complete</p><p>Read revision: ${escapeHtml(project.contentRevision || 'Not recorded')}</p><p>Updated: ${escapeHtml(project.updated || 'Local snapshot')}</p></div>
+        <div class="project-dash-footer"><button class="btn btn-primary">Open workspace</button></div>
+      </div>`).join('')}</div></div>`;
   }
 
-  // ---------------------------------------------------------------------------
-  // Tier 3: Direct Project SDD Page (All Sprints Overview)
-  // ---------------------------------------------------------------------------
-  _renderDirectoryView() {
-    const phases = this.snapshot?.phases || [];
-    const activePhases = phases.filter(p => p.category === 'active');
-    const backlogPhases = phases.filter(p => p.category === 'backlog');
-    const archivePhases = phases.filter(p => p.category === 'archive');
-
-    let displayed = phases;
-    if (this.dirFilter === 'active') displayed = activePhases;
-    if (this.dirFilter === 'backlog') displayed = backlogPhases;
-    if (this.dirFilter === 'archive') displayed = archivePhases;
-
-    if (this.searchQuery.trim()) {
-      const q = this.searchQuery.toLowerCase();
-      displayed = displayed.filter(p =>
-        p.id.toLowerCase().includes(q) ||
-        (p.name && p.name.toLowerCase().includes(q))
-      );
-    }
-
-    const metrics = this.snapshot?.metrics || {
+  _renderProjectMetricsView() {
+    const snapshot = escapeDisplayModel(this.snapshot);
+    const metrics = snapshot?.metrics || {
       overallHealthScore: 0,
       overallHealthGrade: 'UNKNOWN',
       totalRequirements: 0,
@@ -625,606 +510,26 @@ export class SDDWorkspaceApp {
       overallProgressPct: 0,
       traceabilityCoveragePct: 0,
       verificationAssurancePct: 0,
-      activeSprintsCount: activePhases.length,
-      orphanTaskCount: 0,
-      unmappedReqCount: 0,
-    };
-
-    return `
-      <!-- Executive KPI Metrics Bar (Not in raw .md) -->
-      <section class="kpi-grid">
-        <div class="kpi-card">
-          <div class="kpi-header">
-            <h3 class="kpi-title">Spec Health Index</h3>
-            <span class="kpi-badge status-badge-verified">${metrics.overallHealthGrade}</span>
-          </div>
-          <div class="kpi-body">
-            <span class="kpi-number">${metrics.overallHealthScore}</span>
-            <span class="kpi-subtext">/ 100</span>
-          </div>
-          <div class="kpi-footer">
-            <span>Pillars: Contracts • Governance • Tests</span>
-          </div>
-        </div>
-
-        <div class="kpi-card">
-          <div class="kpi-header">
-            <h3 class="kpi-title">Traceability Coverage</h3>
-            <span class="kpi-badge ${metrics.unmappedReqCount > 0 ? 'status-badge-gap' : 'status-badge-verified'}">
-              ${metrics.unmappedReqCount > 0 ? `${metrics.unmappedReqCount} Gaps` : '100% Mapped'}
-            </span>
-          </div>
-          <div class="kpi-body">
-            <span class="kpi-number">${metrics.traceabilityCoveragePct}%</span>
-            <span class="kpi-subtext">REQ Coverage</span>
-          </div>
-          <div class="kpi-footer">
-            <span>${metrics.totalRequirements} Explicit Requirements</span>
-          </div>
-        </div>
-
-        <div class="kpi-card">
-          <div class="kpi-header">
-            <h3 class="kpi-title">Verification Assurance</h3>
-            <span class="kpi-badge status-badge-verified">${metrics.verificationAssurancePct}% Assured</span>
-          </div>
-          <div class="kpi-body">
-            <span class="kpi-number">${metrics.verificationAssurancePct}%</span>
-            <span class="kpi-subtext">Backed</span>
-          </div>
-          <div class="kpi-footer">
-            <span>Pass Rate across all runs</span>
-          </div>
-        </div>
-
-        <div class="kpi-card">
-          <div class="kpi-header">
-            <h3 class="kpi-title">Task Burndown</h3>
-            <span class="kpi-badge status-badge-implemented">${metrics.activeSprintsCount} Active</span>
-          </div>
-          <div class="kpi-body">
-            <span class="kpi-number">${metrics.overallProgressPct}%</span>
-            <span class="kpi-subtext">Completed</span>
-          </div>
-          <div class="kpi-footer">
-            <span>${metrics.completedTasks} / ${metrics.totalTasks} Tasks Closed</span>
-          </div>
-        </div>
-      </section>
-
-      <!-- Directory / Sprints Leaderboard Section -->
-      <section class="directory-section">
-        <div class="directory-header">
-          <h2 class="directory-title">Project Sprints & Specifications</h2>
-        </div>
-
-        <div class="search-input-wrapper">
-          <input 
-            type="text" 
-            id="skills-search-input" 
-            class="search-input" 
-            placeholder="Search specs & phases..." 
-            value="${this.searchQuery}"
-          />
-          <kbd class="search-kbd">/</kbd>
-        </div>
-
-        <div class="directory-tabs">
-          <button class="dir-tab-btn ${this.dirFilter === 'active' ? 'active' : ''}" data-dir-filter="active">
-            Active Sprints (${activePhases.length})
-          </button>
-          <button class="dir-tab-btn ${this.dirFilter === 'all' ? 'active' : ''}" data-dir-filter="all">
-            All Phases (${phases.length})
-          </button>
-          <button class="dir-tab-btn ${this.dirFilter === 'backlog' ? 'active' : ''}" data-dir-filter="backlog">
-            Backlog (${backlogPhases.length})
-          </button>
-          <button class="dir-tab-btn ${this.dirFilter === 'archive' ? 'active' : ''}" data-dir-filter="archive">
-            Completed Archive (${archivePhases.length})
-          </button>
-        </div>
-
-        <div class="table-header">
-          <div>#</div>
-          <div>Specification / Phase</div>
-          <div>Health</div>
-          <div>Traceability</div>
-          <div>Tasks Progress</div>
-          <div style="text-align:right;">Status</div>
-        </div>
-
-        <div class="table-body">
-          ${displayed.length === 0 ? `<div style="padding: 3rem 0; text-align: center; color: var(--ds-gray-500); font-family: var(--font-mono);">No specifications match query "${this.searchQuery}"</div>` : ''}
-          ${displayed.map((p, idx) => {
-            const pHealth = p.metrics?.healthScore || 0;
-            const pGrade = p.metrics?.healthGrade || 'UNKNOWN';
-            const reqTotal = p.metrics?.traceability?.totalRequirements || p.requirements?.length || 0;
-            const reqMapped = p.metrics?.traceability?.mappedRequirements || 0;
-
-            return `
-              <div class="table-row" data-phase-id="${p.id}">
-                <div class="row-num">${idx + 1}</div>
-                <div class="row-primary">
-                  <div class="row-title">${p.name || p.id}</div>
-                  <div class="row-sub mono">${p.id}</div>
-                </div>
-                <div class="row-health">
-                  <span class="matrix-status-badge ${pHealth >= 75 ? 'status-badge-verified' : pHealth >= 50 ? 'status-badge-implemented' : 'status-badge-gap'}">
-                    ${pHealth}/100 • ${pGrade}
-                  </span>
-                </div>
-                <div class="row-trace">
-                  <span class="mono" style="font-size:0.8rem; color:var(--foreground);">
-                    ${reqMapped}/${reqTotal} REQs (${p.metrics?.traceability?.requirementCoveragePct || 100}%)
-                  </span>
-                </div>
-                <div class="row-progress">
-                  <div class="progress-track">
-                    <div class="progress-bar" style="width: ${p.taskCounts?.percent || 0}%;"></div>
-                  </div>
-                  <div class="progress-pct mono">${p.taskCounts?.completed || 0}/${p.taskCounts?.total || 0} tasks (${p.taskCounts?.percent || 0}%)</div>
-                </div>
-                <div class="row-status">
-                  <span class="status-pill-clean ${p.category === 'archive' ? 'status-clean-complete' : p.category === 'active' ? 'status-clean-active' : 'status-clean-backlog'}">
-                    ${p.category === 'archive' ? 'Completed' : p.category === 'active' ? 'Active Sprint' : 'Backlog'}
-                  </span>
-                </div>
-              </div>
-            `;
-          }).join('')}
-        </div>
-      </section>
-    `;
-  }
-
-  // ---------------------------------------------------------------------------
-  // Tier 3: Phase Detail View (With Dedicated Metrics & Health Tab)
-  // ---------------------------------------------------------------------------
-  _renderPhaseDetailView() {
-    const phases = this.snapshot?.phases || [];
-    const phase = phases.find(p => p.id === this.activePhaseId) || phases[0];
-    if (!phase) return `<div class="empty-state">Phase not found</div>`;
-
-    const activeTask = (phase.tasks || []).find(t => t.status === 'doing');
-    const evCount = phase.artifacts?.evidence?.length || 0;
-    const account = this.snapshot?.account || { name: 'Developer', email: '', branch: 'main', headCommit: '' };
-    const pHealth = phase.metrics?.healthScore || 0;
-    const pGrade = phase.metrics?.healthGrade || 'UNKNOWN';
-
-    return `
-      <div class="detail-view">
-        <nav class="detail-breadcrumbs" aria-label="Breadcrumb">
-          <a id="back-to-dir-btn">sprints</a>
-          <span>/</span>
-          <a id="back-to-dir-btn2">${phase.category}</a>
-          <span>/</span>
-          <span>${phase.id}</span>
-        </nav>
-
-        <header class="detail-title-header">
-          <h1 class="detail-title">${phase.name || phase.id}</h1>
-          <div class="detail-tags-row">
-            <span class="profile-tag-pill mono">${this.snapshot?.profile || 'general'}</span>
-            <span class="status-pill-clean ${phase.category === 'archive' ? 'status-clean-complete' : 'status-clean-active'}">
-              ${phase.category.toUpperCase()}
-            </span>
-            <span class="matrix-status-badge ${pHealth >= 75 ? 'status-badge-verified' : 'status-badge-implemented'}">
-              Health: ${pHealth}/100 • ${pGrade}
-            </span>
-            <span class="mono" style="font-size:0.8rem; color:var(--ds-gray-600);">${phase.taskCounts?.completed || 0}/${phase.taskCounts?.total || 0} Tasks</span>
-          </div>
-        </header>
-
-        <div class="detail-layout-grid">
-          <!-- Left Column (Main Content Body) -->
-          <div class="detail-main-col">
-            <!-- Execution Command Box -->
-            <div style="margin-bottom: 2rem;">
-              <div class="section-bar-header">
-                <span>Task Execution Command</span>
-              </div>
-              <div class="command-pill" style="max-width:100%;">
-                <code><span class="prompt">$</span>bash scripts/phase.sh task ${activeTask ? activeTask.id : 'T-1'} done</code>
-                <button class="copy-icon-btn" title="Copy command">
-                  <svg viewBox="0 0 16 16" height="14" width="14" fill="currentColor">
-                    <path fill-rule="evenodd" d="M2.75.5C1.78.5 1 1.28 1 2.25v7.5c0 .97.78 1.75 1.75 1.75H4.5V10H2.75a.25.25 0 0 1-.25-.25v-7.5c0-.14.11-.25.25-.25h5.5c.14 0 .25.11.25.25V3H10v-.75C10 1.28 9.22.5 8.25.5zm5 4C6.78 4.5 6 5.28 6 6.25v7.5c0 .97.78 1.75 1.75 1.75h5.5c.97 0 1.75-.78 1.75-1.75v-7.5c0-.97-.78-1.75-1.75-1.75zM7.5 6.25c0-.14.11-.25.25-.25h5.5c.14 0 .25.11.25.25v7.5q-.02.23-.25.25h-5.5a.25.25 0 0 1-.25-.25z" clip-rule="evenodd"/>
-                  </svg>
-                </button>
-              </div>
-            </div>
-
-            <!-- Detail Tabs -->
-            <div class="detail-tabs-bar">
-              <button class="detail-tab-btn ${this.activeTab === 'overview' ? 'active' : ''}" data-detail-tab="overview">
-                Overview
-              </button>
-              <button class="detail-tab-btn ${this.activeTab === 'requirements' ? 'active' : ''}" data-detail-tab="requirements">
-                requirements.md (${phase.requirements?.length || 0})
-              </button>
-              <button class="detail-tab-btn ${this.activeTab === 'design' ? 'active' : ''}" data-detail-tab="design">
-                design.md
-              </button>
-              <button class="detail-tab-btn ${this.activeTab === 'tasks' ? 'active' : ''}" data-detail-tab="tasks">
-                tasks.md (${phase.tasks?.length || 0})
-              </button>
-              <button class="detail-tab-btn ${this.activeTab === 'evidence' ? 'active' : ''}" data-detail-tab="evidence">
-                evidence/ (${evCount})
-              </button>
-              <button class="detail-tab-btn ${this.activeTab === 'metrics' ? 'active' : ''}" data-detail-tab="metrics">
-                ${ICONS.chart} Metrics & Health
-              </button>
-              <button class="detail-tab-btn ${this.activeTab === 'traceability' ? 'active' : ''}" data-detail-tab="traceability">
-                Traceability Graph
-              </button>
-            </div>
-
-            <!-- Tab Content Area -->
-            <div class="detail-content-area">
-              ${this._renderDetailTabContent(phase)}
-            </div>
-          </div>
-
-          <!-- Right Sidebar -->
-          <aside class="detail-sidebar">
-            <div class="sidebar-stat-group">
-              <span class="stat-label">Spec Health Score</span>
-              <div class="stat-value-big">${pHealth}<span style="font-size:1.1rem; color:var(--ds-gray-500);">/100</span></div>
-              <span class="stat-value-text" style="color:#10b981; font-weight:600;">Grade: ${pGrade}</span>
-            </div>
-
-            <div class="sidebar-stat-group">
-              <span class="stat-label">Tasks Progress</span>
-              <div class="stat-value-big">${phase.taskCounts?.percent || 0}%</div>
-              <span class="stat-value-text" style="color:var(--ds-gray-600);">
-                ${phase.taskCounts?.completed || 0} done / ${phase.taskCounts?.total || 0} total
-              </span>
-            </div>
-
-            <div class="sidebar-stat-group">
-              <span class="stat-label">Traceability Rate</span>
-              <div class="stat-value-big">${phase.metrics?.traceability?.requirementCoveragePct || 100}%</div>
-              <span class="stat-value-text" style="color:var(--ds-gray-600);">
-                ${phase.metrics?.traceability?.mappedRequirements || 0}/${phase.metrics?.traceability?.totalRequirements || 0} Requirements Mapped
-              </span>
-            </div>
-
-            <div class="sidebar-stat-group">
-              <span class="stat-label">Project Repository</span>
-              <span class="stat-value-text">${this.snapshot?.projectId || 'Spec-Driven-Development'}</span>
-            </div>
-
-            <div class="sidebar-stat-group">
-              <span class="stat-label">Git Branch & Status</span>
-              <span class="stat-value-text mono">${account.branch}</span>
-              <span class="mono" style="font-size:0.75rem; color:var(--ds-gray-500);">
-                Commit: ${(account.headCommit || '').slice(0, 7)} • ${account.isDirty ? 'Dirty' : 'Clean'}
-              </span>
-            </div>
-
-            <div class="sidebar-stat-group">
-              <span class="stat-label">Verification Freshness</span>
-              <div class="audit-item">
-                <span class="audit-name">Evidence State</span>
-                <span class="audit-badge ${phase.metrics?.verificationAssurance?.freshness === 'FRESH' ? 'audit-pass' : 'status-clean-backlog'}">
-                  ${phase.metrics?.verificationAssurance?.freshness || 'UNLINKED'}
-                </span>
-              </div>
-              <div class="audit-item">
-                <span class="audit-name">Evidence Records</span>
-                <span class="audit-badge audit-pass">${evCount} Recorded</span>
-              </div>
-            </div>
-          </aside>
-        </div>
-      </div>
-    `;
-  }
-
-  _renderDetailTabContent(phase) {
-    if (this.activeTab === 'overview') {
-      const pHealth = phase.metrics?.healthScore || 0;
-      const pGrade = phase.metrics?.healthGrade || 'UNKNOWN';
-
-      return `
-        <div class="prose-dark">
-          <div class="card-box">
-            <p>
-              <strong>${phase.name || phase.id}</strong> operates under the <code>${this.snapshot?.profile || 'general'}</code> profile.
-              Every task requires explicit requirement mapping, pre-commit contracts, and verifiable evidence.
-            </p>
-          </div>
-
-          <h3>Observed Lifecycle Gates</h3>
-          <div style="display:flex; gap:0.75rem; margin: 1rem 0 2rem; flex-wrap:wrap;">
-            <div class="profile-tag-pill mono">REQ: ${phase.artifacts?.requirements?.status || 'APPROVED'}</div>
-            <div class="profile-tag-pill mono">DES: ${phase.artifacts?.design?.status || 'APPROVED'}</div>
-            <div class="profile-tag-pill mono">TSK: ${phase.artifacts?.tasks?.status || 'READY'}</div>
-            <div class="profile-tag-pill mono">EV: ${phase.artifacts?.evidence?.length || 0} RECORDED</div>
-            <div class="matrix-status-badge status-badge-verified">HEALTH: ${pHealth}/100 • ${pGrade}</div>
-          </div>
-
-          <h3>Explicit Requirements (${phase.requirements?.length || 0})</h3>
-          <ul>
-            ${(phase.requirements || []).map(r => `
-              <li><strong>${r.id}</strong> — ${r.title}</li>
-            `).join('')}
-          </ul>
-        </div>
-      `;
-    }
-
-    if (this.activeTab === 'requirements') {
-      const content = phase.artifacts?.requirements?.content || '';
-      return `<div class="prose-dark">${renderMarkdown(content)}</div>`;
-    }
-
-    if (this.activeTab === 'design') {
-      const content = phase.artifacts?.design?.content || '';
-      return `<div class="prose-dark">${renderMarkdown(content)}</div>`;
-    }
-
-    if (this.activeTab === 'tasks') {
-      const tasks = phase.tasks || [];
-      return `
-        <div class="tasks-clean-list">
-          ${tasks.map(t => {
-            const isDone = t.status === 'done';
-            const isDoing = t.status === 'doing';
-            return `
-              <div class="task-clean-row">
-                <span class="task-check-icon ${isDone ? 'task-check-done' : isDoing ? 'task-check-doing' : ''}">
-                  ${isDone ? ICONS.checkCircle : isDoing ? ICONS.clock : ICONS.circle}
-                </span>
-                <div class="task-clean-body">
-                  <div class="task-clean-title">
-                    <strong>${t.id}</strong> — ${t.title}
-                  </div>
-                  <div class="task-clean-meta">
-                    <span class="task-clean-id mono">${t.status.toUpperCase()}</span>
-                    ${t.reqRefs && t.reqRefs.length > 0 ? t.reqRefs.map(r => `<span class="matrix-pill mono">${r}</span>`).join('') : ''}
-                  </div>
-                </div>
-              </div>
-            `;
-          }).join('')}
-        </div>
-      `;
-    }
-
-    if (this.activeTab === 'evidence') {
-      const evidence = phase.artifacts?.evidence || [];
-      if (evidence.length === 0) {
-        return `<p class="mono" style="color:var(--ds-gray-500);">No evidence records recorded for this phase.</p>`;
-      }
-      return `
-        <div>
-          ${evidence.map(e => `
-            <div class="evidence-clean-card">
-              <div class="evidence-clean-header">
-                <h4 class="evidence-clean-title">${e.filename}</h4>
-                <span class="audit-badge audit-pass">${e.parsed?.result || 'PASS'}</span>
-              </div>
-              <div class="evidence-grid-meta">
-                <div>
-                  <div class="meta-field-label">Assessed Tree</div>
-                  <div class="meta-field-val">${e.parsed?.assessedTree || 'Not recorded'}</div>
-                </div>
-                <div>
-                  <div class="meta-field-label">Environment</div>
-                  <div class="meta-field-val">${e.parsed?.environment || 'Not recorded'}</div>
-                </div>
-                <div>
-                  <div class="meta-field-label">Timestamp</div>
-                  <div class="meta-field-val">${e.parsed?.timestamp || 'Not recorded'}</div>
-                </div>
-                <div>
-                  <div class="meta-field-label">Limitations</div>
-                  <div class="meta-field-val">${e.parsed?.limitations || 'None'}</div>
-                </div>
-              </div>
-              <details class="prose-dark">
-                <summary style="cursor:pointer; font-family:var(--font-mono); font-size:0.8rem; color:var(--ds-gray-600);">View raw evidence markdown</summary>
-                <div style="margin-top: 1rem;">${renderMarkdown(e.content)}</div>
-              </details>
-            </div>
-          `).join('')}
-        </div>
-      `;
-    }
-
-    if (this.activeTab === 'metrics') {
-      return this._renderPhaseMetricsTab(phase);
-    }
-
-    if (this.activeTab === 'traceability') {
-      return `
-        <div>
-          <div class="section-bar-header">
-            <span>Visual Dependency Graph</span>
-          </div>
-          ${generateTraceabilitySvg(phase)}
-          <div class="section-bar-header" style="margin-top:2.5rem;">
-            <span>Accessible Traceability List</span>
-          </div>
-          ${generateTraceabilityList(phase)}
-        </div>
-      `;
-    }
-
-    return '';
-  }
-
-  // ---------------------------------------------------------------------------
-  // Phase Metrics & Health Tab
-  // ---------------------------------------------------------------------------
-  _renderPhaseMetricsTab(phase) {
-    const metrics = phase.metrics || {
-      healthScore: 0,
-      healthGrade: 'UNKNOWN',
-      pillars: { definition: 0, governance: 0, execution: 0, verification: 0 },
-      traceability: { matrix: [], unmappedRequirements: [], orphanTasks: [], requirementCoveragePct: 100 },
-      verificationAssurance: { freshness: 'UNLINKED', staleDetails: '', passRate: 100 },
-      tasksPerReqRatio: 0,
-    };
-
-    const isFresh = metrics.verificationAssurance.freshness === 'FRESH';
-    const isStale = metrics.verificationAssurance.freshness === 'STALE';
-
-    return `
-      <div>
-        <!-- Evidence Freshness & Commit Drift Banner -->
-        ${isFresh ? `
-          <div class="freshness-banner freshness-banner-fresh">
-            <span class="banner-icon-slot">${ICONS.sparkles}</span>
-            <div>
-              <div class="banner-title">FRESH ASSURANCE: Evidence matches active Git HEAD</div>
-              <p class="banner-desc">All verification runs in this phase were executed against current repository commit state. Zero drift detected.</p>
-            </div>
-          </div>
-        ` : isStale ? `
-          <div class="freshness-banner freshness-banner-stale">
-            <span class="banner-icon-slot">${ICONS.alertTriangle}</span>
-            <div>
-              <div class="banner-title">DRIFT WARNING: Verification Evidence is Stale</div>
-              <p class="banner-desc">${metrics.verificationAssurance.staleDetails}. Code has changed since tests were run. Re-run verification tests before closing this phase.</p>
-            </div>
-          </div>
-        ` : `
-          <div class="freshness-banner freshness-banner-fresh" style="border-color:var(--border);">
-            <span class="banner-icon-slot">${ICONS.shieldCheck}</span>
-            <div>
-              <div class="banner-title">Local Verification Baseline</div>
-              <p class="banner-desc">Verification records captured in evidence files provide auditable proof for all completed tasks.</p>
-            </div>
-          </div>
-        `}
-
-        <!-- 4 Health Pillars Breakdown Cards -->
-        <div class="section-bar-header">
-          <span>Spec Health Index Breakdown (${metrics.healthScore}/100 • ${metrics.healthGrade})</span>
-        </div>
-        <div class="pillars-breakdown-grid">
-          <div class="pillar-box">
-            <div class="pillar-label">1. Definition</div>
-            <div class="pillar-score">${metrics.pillars.definition}<span style="font-size:0.8rem; color:var(--ds-gray-500);"> / 25</span></div>
-            <p class="pillar-desc">Requirements, Architecture Design, and Tasks completeness.</p>
-          </div>
-          <div class="pillar-box">
-            <div class="pillar-label">2. Governance</div>
-            <div class="pillar-score">${metrics.pillars.governance}<span style="font-size:0.8rem; color:var(--ds-gray-500);"> / 25</span></div>
-            <p class="pillar-desc">Formal APPROVED statuses on specifications and contracts.</p>
-          </div>
-          <div class="pillar-box">
-            <div class="pillar-label">3. Execution</div>
-            <div class="pillar-score">${metrics.pillars.execution}<span style="font-size:0.8rem; color:var(--ds-gray-500);"> / 25</span></div>
-            <p class="pillar-desc">Task completion burndown and checklist progress.</p>
-          </div>
-          <div class="pillar-box">
-            <div class="pillar-label">4. Assurance</div>
-            <div class="pillar-score">${metrics.pillars.verification}<span style="font-size:0.8rem; color:var(--ds-gray-500);"> / 25</span></div>
-            <p class="pillar-desc">Evidence logs, test pass rates, and commit freshness.</p>
-          </div>
-        </div>
-
-        <!-- Traceability Matrix & Gap Analysis -->
-        <div class="section-bar-header" style="margin-top:2rem;">
-          <span>Traceability Matrix & Scope Drift Audit</span>
-        </div>
-
-        <!-- Warnings if any gaps exist -->
-        ${metrics.traceability.unmappedRequirements.length > 0 ? `
-          <div class="freshness-banner freshness-banner-stale" style="margin-bottom:1rem;">
-            <span class="banner-icon-slot">${ICONS.alertTriangle}</span>
-            <div>
-              <div class="banner-title">Unmapped Requirements Detected (${metrics.traceability.unmappedRequirements.length})</div>
-              <p class="banner-desc">The following requirements have NO implementing tasks: <code>${metrics.traceability.unmappedRequirements.join(', ')}</code></p>
-            </div>
-          </div>
-        ` : ''}
-
-        ${metrics.traceability.orphanTasks.length > 0 ? `
-          <div class="freshness-banner freshness-banner-stale" style="margin-bottom:1rem;">
-            <span class="banner-icon-slot">${ICONS.alertTriangle}</span>
-            <div>
-              <div class="banner-title">Orphan Tasks Detected (${metrics.traceability.orphanTasks.length})</div>
-              <p class="banner-desc">Tasks lacking requirement references (potential scope creep): <code>${metrics.traceability.orphanTasks.join(', ')}</code></p>
-            </div>
-          </div>
-        ` : ''}
-
-        <div class="matrix-container">
-          <table class="matrix-table">
-            <thead>
-              <tr>
-                <th>Requirement</th>
-                <th>Title</th>
-                <th>Implementing Tasks</th>
-                <th>Verifying Evidence</th>
-                <th>Assurance Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${(metrics.traceability.matrix || []).map(row => `
-                <tr>
-                  <td class="mono font-bold" style="color:var(--foreground);">${row.id}</td>
-                  <td>${row.title}</td>
-                  <td>
-                    <div class="matrix-pill-group">
-                      ${row.tasks.length > 0 ? row.tasks.map(t => `<span class="matrix-pill">${t}</span>`).join('') : '<span style="color:var(--ds-gray-600); font-size:0.75rem;">None</span>'}
-                    </div>
-                  </td>
-                  <td>
-                    <div class="matrix-pill-group">
-                      ${row.evidence.length > 0 ? row.evidence.map(e => `<span class="matrix-pill" style="border-color:rgba(16,185,129,0.3);">${e}</span>`).join('') : '<span style="color:var(--ds-gray-600); font-size:0.75rem;">None</span>'}
-                    </div>
-                  </td>
-                  <td>
-                    <span class="matrix-status-badge ${row.status === 'VERIFIED' ? 'status-badge-verified' : row.status === 'IMPLEMENTED' ? 'status-badge-implemented' : 'status-badge-gap'}">
-                      ${row.status === 'VERIFIED' ? `${ICONS.checkCircle} VERIFIED` : row.status === 'IMPLEMENTED' ? `${ICONS.clock} IMPLEMENTED` : `${ICONS.alertTriangle} GAP`}
-                    </span>
-                  </td>
-                </tr>
-              `).join('')}
-            </tbody>
-          </table>
-        </div>
-      </div>
-    `;
-  }
-
-  // ---------------------------------------------------------------------------
-  // Tier 3: Project Engineering Metrics & Assurance Dashboard
-  // ---------------------------------------------------------------------------
-  _renderProjectMetricsView() {
-    const metrics = this.snapshot?.metrics || {
-      overallHealthScore: 0,
-      overallHealthGrade: 'UNKNOWN',
-      totalRequirements: 0,
-      totalTasks: 0,
-      completedTasks: 0,
-      overallProgressPct: 0,
-      traceabilityCoveragePct: 100,
-      verificationAssurancePct: 100,
       activeSprintsCount: 0,
       orphanTaskCount: 0,
       unmappedReqCount: 0,
       phasesBurndown: [],
     };
 
-    const phases = this.snapshot?.phases || [];
+    const phases = snapshot?.phases || [];
 
     return `
       <section style="margin-top: 1.5rem;">
-        <h1 class="detail-title">Project Engineering Metrics & Assurance</h1>
+        <h1 class="detail-title">Project completeness & recorded progress</h1>
         <p style="color:var(--ds-gray-600); margin-bottom: 2rem; font-size: 1.05rem;">
-          Synthesized quality, traceability, and verification assurance across all specifications in <strong>${this.snapshot?.projectId || 'Project'}</strong>.
+          Heuristic completeness, reference coverage, and recorded task progress across all specifications in <strong>${snapshot?.projectId || 'Project'}</strong>.
         </p>
 
         <!-- KPI Grid -->
         <div class="kpi-grid">
           <div class="kpi-card">
             <div class="kpi-header">
-              <h3 class="kpi-title">Global Health Index</h3>
+              <h3 class="kpi-title">Completeness heuristic</h3>
               <span class="kpi-badge status-badge-verified">${metrics.overallHealthGrade}</span>
             </div>
             <div class="kpi-body">
@@ -1283,7 +588,7 @@ export class SDDWorkspaceApp {
 
         <!-- Phase Burndown & Health Leaderboard -->
         <div class="section-bar-header">
-          <span>Phase-by-Phase Health & Execution Leaderboard</span>
+          <span>Phase completeness and recorded progress</span>
         </div>
 
         <div class="matrix-container">
@@ -1293,8 +598,8 @@ export class SDDWorkspaceApp {
                 <th>Phase ID</th>
                 <th>Phase Title</th>
                 <th>Scope</th>
-                <th>Spec Health Score</th>
-                <th>Tasks Burndown</th>
+                <th>Completeness heuristic</th>
+                <th>Task completion</th>
                 <th>Status</th>
               </tr>
             </thead>
@@ -1336,16 +641,7 @@ export class SDDWorkspaceApp {
   // Profiles View
   // ---------------------------------------------------------------------------
   _renderProfilesView() {
-    const profiles = [
-      { id: 'general', name: 'General', desc: 'Baseline multi-tier engineering with core requirement and design gates.' },
-      { id: 'web', name: 'Web', desc: 'Frontend ergonomics, bundle size budgets, responsive layout, and WCAG accessibility.' },
-      { id: 'api', name: 'API Services', desc: 'Contract definitions, idempotency keys, rate limiting, and backward compatibility.' },
-      { id: 'fullstack', name: 'Fullstack', desc: 'Coordinated client and server specs with end-to-end integration boundaries.' },
-      { id: 'mobile', name: 'Mobile', desc: 'App lifecycle, offline state synchronization, and permission guardrails.' },
-      { id: 'cloud', name: 'Cloud Infrastructure', desc: 'Declarative infrastructure, least-privilege IAM, and zero-trust policies.' },
-      { id: 'devsecops', name: 'DevSecOps', desc: 'Automated vulnerability scanning, SAST/DAST gates, and SBOM verification.' },
-      { id: 'mlops', name: 'MLOps', desc: 'Dataset provenance, model validation metrics, drift detection, and reproducible training.' },
-    ];
+    const profiles = PROFILES.map(p => ({ ...p, desc: p.description }));
 
     return `
       <section style="margin-top: 1.5rem;">
@@ -1430,7 +726,8 @@ export class SDDWorkspaceApp {
     // Header Account breadcrumb click -> Go to Projects Dashboard
     const navHeaderAccountBtn = document.getElementById('nav-header-account-btn');
     if (navHeaderAccountBtn) {
-      navHeaderAccountBtn.addEventListener('click', () => {
+      navHeaderAccountBtn.addEventListener('click', async () => {
+        if (this.token || this.accountSession) await this._loadProjects();
         this.currentView = 'projects';
         this.render();
       });
@@ -1461,6 +758,7 @@ export class SDDWorkspaceApp {
       el.addEventListener('click', () => {
         const pId = el.getAttribute('data-phase-select');
         this.activePhaseId = pId;
+        this._syncRoute(true);
         this.phaseTab = 'overview';
         this.render();
       });
@@ -1505,11 +803,46 @@ export class SDDWorkspaceApp {
       });
     }
 
+    this.container.querySelectorAll('.tasks-toolbar [data-filter]').forEach(btn => {
+      btn.addEventListener('click', () => { this.taskFilter = btn.dataset.filter; this.render(); });
+    });
+
+    const openRef = id => {
+      const phase = this.snapshot?.phases.find(p => p.id === this.activePhaseId);
+      if (!phase) return;
+      if (phase.tasks.some(t => t.id === id)) this.phaseTab = 'tasks';
+      else if (phase.requirements.some(r => r.id === id)) this.phaseTab = 'requirements';
+      else this.phaseTab = 'evidence';
+      this.render();
+      const targets = [...this.container.querySelectorAll('[id], .evidence-filename')];
+      const target = targets.find(el => el.id === 'task-' + id || el.id.toUpperCase().startsWith('SDD-SECTION-' + id.toUpperCase()) || el.textContent.trim() === id);
+      target?.scrollIntoView({ block: 'center' });
+      if (target) { target.tabIndex = -1; target.focus({ preventScroll: true }); }
+    };
+    this.container.querySelectorAll('.trace-node[data-id], [data-open-ref]').forEach(el => {
+      el.addEventListener('click', () => openRef(el.dataset.id || el.dataset.openRef));
+      el.addEventListener('keydown', e => { if (['Enter', ' '].includes(e.key)) { e.preventDefault(); openRef(el.dataset.id || el.dataset.openRef); } });
+    });
+    this.container.querySelectorAll('button[data-source-path]').forEach(el => el.addEventListener('click', () => this._openArtifact(el.dataset.sourcePath)));
+    this.container.querySelectorAll('.markdown-body a[href]').forEach(el => el.addEventListener('click', e => {
+      const href = el.getAttribute('href');
+      if (!href || href.startsWith('#') || /^[a-z]+:/i.test(href)) return;
+      const source = el.closest('[data-source-path]')?.dataset.sourcePath;
+      if (!source || (!this.token && !this.accountSession)) return;
+      e.preventDefault();
+      const base = source.slice(0, source.lastIndexOf('/') + 1);
+      this._openArtifact(base + href.split('#')[0]);
+    }));
+
+    this.container.querySelectorAll('[data-copy-command]').forEach(button => button.addEventListener('click', async () => {
+      await navigator.clipboard.writeText(button.dataset.copyCommand); button.textContent = 'Copied';
+    }));
+
     // Phase Sub-tabs
     this.container.querySelectorAll('[data-phase-tab]').forEach(btn => {
       btn.addEventListener('click', () => {
         this.phaseTab = btn.getAttribute('data-phase-tab');
-        this.render();
+        this._syncRoute(true); this.render();
       });
     });
 
@@ -1578,18 +911,9 @@ export class SDDWorkspaceApp {
     // Nav to Projects Dashboard
     const navProjectsDashboardBtn = document.getElementById('nav-projects-dashboard-btn');
     const footerProjectsBtn = document.getElementById('footer-projects-btn');
-    const onNavProjects = () => {
-      if (this.token) {
-        this.currentView = 'projects';
-        this.render();
-      } else {
-        const t = prompt('Enter your local workspace security token to view your account projects:');
-        if (t && t.trim()) {
-          this.token = t.trim();
-          sessionStorage.setItem('sdd_token', this.token);
-          this._loadProjects();
-        }
-      }
+    const onNavProjects = async () => {
+      if (this.token || this.accountSession) await this._loadProjects();
+      this.currentView = 'projects'; this.render();
     };
     if (navProjectsDashboardBtn) navProjectsDashboardBtn.addEventListener('click', onNavProjects);
     if (footerProjectsBtn) footerProjectsBtn.addEventListener('click', onNavProjects);
@@ -1616,6 +940,10 @@ export class SDDWorkspaceApp {
     if (navProfilesBtn) navProfilesBtn.addEventListener('click', onNavProfiles);
     if (footerProfilesBtn) footerProfilesBtn.addEventListener('click', onNavProfiles);
 
+    this.container.querySelectorAll('[data-demo-project]').forEach(button => button.addEventListener('click', () => {
+      this._loadStaticDemo(Number(button.dataset.demoProject));
+    }));
+
     // Launch Demo Buttons
     const launchDemoBtn = document.getElementById('launch-demo-btn');
     const launchDemoHeaderBtn = document.getElementById('launch-demo-header-btn');
@@ -1630,7 +958,8 @@ export class SDDWorkspaceApp {
     const connectWorkspaceHeaderBtn = document.getElementById('connect-workspace-header-btn');
     const dashConnectAnotherBtn = document.getElementById('dash-connect-another-btn');
     const onConnectWorkspace = () => {
-      const userToken = prompt('Enter your local SDD workspace security token:');
+      if (this.accountSession) { this._showConnectorDialog(); return; }
+      const userToken = prompt('Launch the CLI with --project for each project you want to connect. Enter the token for that local service:');
       if (userToken && userToken.trim()) {
         const clean = userToken.trim();
         sessionStorage.setItem('sdd_token', clean);
@@ -1644,6 +973,7 @@ export class SDDWorkspaceApp {
 
     // Project cards in Account Dashboard
     this.container.querySelectorAll('.project-dash-card[data-project-id]').forEach(card => {
+      card.addEventListener('keydown', event => { if (['Enter', ' '].includes(event.key)) { event.preventDefault(); card.click(); } });
       card.addEventListener('click', () => {
         const pId = card.getAttribute('data-project-id');
         this.selectProject(pId);
@@ -1782,7 +1112,7 @@ export class SDDWorkspaceApp {
 
       const doCopyInstall = (e) => {
         if (e) e.stopPropagation();
-        const cmd = 'curl -fsSL https://raw.githubusercontent.com/ThisIsPhila/Spec-Driven-Development-Framework/main/setup.sh | bash';
+        const cmd = INSTALL_COMMAND;
         navigator.clipboard.writeText(cmd).then(() => {
           if (copyStatusBubble) {
             copyStatusBubble.classList.add('show');
@@ -1791,7 +1121,7 @@ export class SDDWorkspaceApp {
         });
       };
 
-      if (copyCmdBox) copyCmdBox.addEventListener('click', doCopyInstall);
+      if (copyCmdBox) { copyCmdBox.addEventListener('click', doCopyInstall); copyCmdBox.addEventListener('keydown', e => { if (['Enter', ' '].includes(e.key)) { e.preventDefault(); doCopyInstall(e); } }); }
       if (copyCmdBtn) copyCmdBtn.addEventListener('click', doCopyInstall);
 
       // Search input filter in landing leaderboard

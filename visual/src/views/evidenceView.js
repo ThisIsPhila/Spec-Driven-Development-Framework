@@ -1,3 +1,5 @@
+import { escapeHtml } from '../sanitize.js';
+import { escapeDisplayModel } from '../sanitize.js';
 import { renderMarkdown } from '../markdown.js';
 import { ICONS } from '../icons.js';
 
@@ -71,7 +73,7 @@ function renderEvidenceCard(record, phase) {
 
       <details class="evidence-body-details">
         <summary>View Complete Evidence Report</summary>
-        <div class="markdown-body" style="margin-top: 1rem;">
+        <div class="markdown-body" data-source-path="${escapeHtml(record.path || '')}" style="margin-top: 1rem;">
           ${renderMarkdown(record.content)}
         </div>
       </details>

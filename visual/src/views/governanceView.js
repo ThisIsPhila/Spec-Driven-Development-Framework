@@ -1,3 +1,4 @@
+import { escapeDisplayModel } from '../sanitize.js';
 import { renderMarkdown } from '../markdown.js';
 import { ICONS } from '../icons.js';
 
@@ -7,6 +8,7 @@ import { ICONS } from '../icons.js';
  * framework rules engine, and governance exceptions.
  */
 export function renderGovernanceView(snapshot, activeSubTab = 'active-context') {
+  snapshot = escapeDisplayModel(snapshot);
   if (!snapshot) return `<div class="empty-state">No project loaded.</div>`;
 
   const memories = snapshot.memories || [];

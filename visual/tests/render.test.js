@@ -16,7 +16,7 @@ test('renderMarkdown converts markdown and wraps mermaid fences safely', () => {
   const md = `# Title\n\nSome text with [a link](https://example.com).\n\n\`\`\`mermaid\ngraph TD\n  A --> B\n\`\`\``;
   const rendered = renderMarkdown(md);
 
-  assert.ok(rendered.includes('<h1>Title</h1>'), 'Heading should be rendered');
+  assert.ok(rendered.includes('<h1 id="sdd-section-title">Title</h1>'), 'Heading should be rendered');
   assert.ok(rendered.includes('https://example.com'), 'Link should be rendered');
   assert.ok(rendered.includes('mermaid-container'), 'Mermaid block should have mermaid-container wrapper');
   assert.ok(rendered.includes('graph%20TD'), 'Mermaid source should be encoded in data-code');

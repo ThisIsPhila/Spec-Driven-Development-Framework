@@ -1,14 +1,18 @@
-import mermaid from 'mermaid';
+import { sanitizeUi } from './sanitize.js';
+let mermaid;
 
 let initialized = false;
 
-export function initMermaid() {
+export async function initMermaid() {
   if (initialized) return;
   try {
+    mermaid = (await import('mermaid')).default;
     mermaid.initialize({
       startOnLoad: false,
       theme: 'dark',
       securityLevel: 'strict',
+      secure: ['securityLevel', 'startOnLoad', 'secure', 'maxTextSize', 'maxEdges'],
+      maxTextSize: 50000, maxEdges: 500,
       themeVariables: {
         darkMode: true,
         background: '#111827',
@@ -32,7 +36,7 @@ export function initMermaid() {
  */
 export async function renderMermaidBlocks(rootElement) {
   if (!rootElement || typeof window === 'undefined') return;
-  initMermaid();
+  await initMermaid();
 
   const containers = rootElement.querySelectorAll('.mermaid-container');
   let counter = 0;
@@ -41,7 +45,8 @@ export async function renderMermaidBlocks(rootElement) {
     const rawCodeEncoded = container.getAttribute('data-code');
     if (!rawCodeEncoded) continue;
 
-    const rawCode = decodeURIComponent(rawCodeEncoded);
+    let rawCode;
+    try { rawCode = decodeURIComponent(rawCodeEncoded); } catch { rawCode = rawCodeEncoded; }
     const loadingEl = container.querySelector('.mermaid-loading');
     const svgEl = container.querySelector('.mermaid-svg');
     const fallbackEl = container.querySelector('.mermaid-fallback');
@@ -51,7 +56,7 @@ export async function renderMermaidBlocks(rootElement) {
     try {
       const { svg } = await mermaid.render(id, rawCode);
       if (svgEl) {
-        svgEl.innerHTML = svg;
+        svgEl.innerHTML = sanitizeUi(svg);
       }
       if (loadingEl) loadingEl.style.display = 'none';
       if (fallbackEl) fallbackEl.style.display = 'none';

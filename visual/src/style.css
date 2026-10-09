@@ -3631,3 +3631,32 @@ a {
 .node-execution .node-type-dot {
   background: #f59e0b;
 }
+
+/* Keep overflow inside intentional readers rather than the page. */
+.skills-layout, .page-container, .hero-section, .hero-content, .domain-view-container,
+.phase-workspace-main, .phase-subtab-content-area, .header-left, .header-right,
+.insights-side-by-side-grid > *, .domain-two-col-layout > * { min-width: 0; }
+.page-container { max-width: 100%; }
+.cmd-run-text, .phase-main-title, .script-cmd-pill code { overflow-wrap: anywhere; white-space: normal; }
+.install-cmd-box { max-width: 100%; min-width: 0; }
+.skills-header { height: auto; min-height: 56px; flex-wrap: wrap; }
+.header-tabs { overflow-x: auto; max-width: 100%; }
+@media (max-width: 768px) {
+  .skills-header { gap: 0.5rem; padding: 0.75rem 1rem; }
+  .header-left, .header-right { max-width: 100%; flex-wrap: wrap; }
+  .hero-title { font-size: clamp(2rem, 9vw, 3rem); overflow-wrap: anywhere; }
+  .hero-actions, .hero-buttons { flex-wrap: wrap; }
+  .phase-explorer-container, .domain-two-col-layout, .insights-side-by-side-grid { grid-template-columns: minmax(0, 1fr); }
+  .phase-nav-sidebar { width: 100%; max-height: 300px; }
+  .phase-workspace-header { flex-wrap: wrap; }
+}
+.source-dialog { color: var(--foreground, #ededed); background: #111; border: 1px solid #444; width: min(90vw, 1000px); max-height: 85vh; }
+.source-dialog pre { white-space: pre-wrap; overflow-wrap: anywhere; }
+.skills-hero-grid { grid-template-columns: minmax(0, 1fr); }
+.skills-hero-grid > *, .hero-left-col, .hero-right-col, .hero-try-it-now, .command-code { min-width: 0; max-width: 100%; }
+.hero-kicker-mono { max-width: 100%; overflow-wrap: anywhere; }
+.command-code { white-space: normal; overflow-wrap: anywhere; }
+.cli-command-box { min-width: 0; max-width: 100%; }
+.hero-action-buttons { max-width: 100%; }
+@media (min-width: 992px) { .skills-hero-grid { grid-template-columns: minmax(0, 390px) minmax(0, 1fr); } }
+@media (max-width: 768px) { .hero-action-buttons { width: 100%; } .hero-action-buttons .btn { max-width: 100%; white-space: normal; } }

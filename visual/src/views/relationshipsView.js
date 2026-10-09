@@ -1,3 +1,4 @@
+import { escapeDisplayModel } from '../sanitize.js';
 import { generateTraceabilitySvg, generateTraceabilityList } from '../traceability.js';
 
 /**
@@ -5,6 +6,7 @@ import { generateTraceabilitySvg, generateTraceabilityList } from '../traceabili
  */
 
 export function renderRelationshipsView(phase, mode = 'svg') {
+  phase = escapeDisplayModel(phase);
   if (!phase) return `<div class="empty-state">No phase loaded.</div>`;
 
   const svgContent = generateTraceabilitySvg(phase);

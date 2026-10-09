@@ -23,9 +23,19 @@ renderer.code = function ({ text, lang }) {
   return `<pre><code class="language-${escapeHtml(language)}">${escapeHtml(text)}</code></pre>`;
 };
 
+renderer.heading = function ({ text, depth, tokens }) {
+  const id = text.toLowerCase().replace(/[^a-z0-9.-]+/g, '-').replace(/^-|-$/g, '');
+  return `<h${depth} id="sdd-section-${escapeHtml(id)}">${this.parser.parseInline(tokens)}</h${depth}>`;
+};
+
+renderer.image = function ({href, text}) {
+  if (!href || /^[a-z]+:/i.test(href) || href.startsWith('//')) return `<span>External image omitted: ${escapeHtml(text)}</span>`;
+  return `<a href="${escapeHtml(href)}" data-media-path="${escapeHtml(href)}">View image: ${escapeHtml(text || href)}</a>`;
+};
+
 // Safe link renderer
 renderer.link = function ({ href, title, text }) {
-  const safeHref = href || '#';
+  const safeHref = href?.startsWith('#') && href.length > 1 ? '#sdd-section-' + href.slice(1) : href || '#';
   const isExternal = /^https?:\/\//i.test(safeHref);
   const relAttr = isExternal ? ' rel="noopener noreferrer" target="_blank"' : '';
   const titleAttr = title ? ` title="${escapeHtml(title)}"` : '';

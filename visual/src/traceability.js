@@ -1,8 +1,10 @@
+import { escapeDisplayModel } from './sanitize.js';
 /**
  * Traceability Graph and Accessible List Generator
  */
 
 export function buildTraceabilityModel(phase) {
+  phase = escapeDisplayModel(phase);
   if (!phase) return { requirements: [], tasks: [], evidence: [], edges: [] };
 
   const requirements = (phase.requirements || []).map(r => ({

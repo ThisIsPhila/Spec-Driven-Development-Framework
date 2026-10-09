@@ -8,22 +8,26 @@ export class LocalProjectService {
   constructor(options = {}) {
     this.port = options.port !== undefined ? options.port : 3456;
     this.host = options.host || '127.0.0.1';
+    if (!['127.0.0.1', 'localhost', '::1'].includes(this.host)) throw new Error('Local workspace service must bind to loopback');
     this.token = options.token || crypto.randomBytes(16).toString('hex');
     this.projects = new Map(); // id -> { root, lastSnapshot, sseClients: Set }
     this.watchers = new Map(); // id -> fs.FSWatcher
     this.staticDir = options.staticDir || null;
     this.server = null;
+    this.refreshTimer = null;
   }
 
   registerProject(projectPath) {
-    const resolvedRoot = path.resolve(projectPath);
+    const resolvedRoot = fs.realpathSync(projectPath);
     const sddDir = path.join(resolvedRoot, '.sdd');
 
     if (!fs.existsSync(sddDir)) {
       throw new Error(`Cannot register project: .sdd directory not found in ${resolvedRoot}`);
     }
 
-    const projectId = path.basename(resolvedRoot);
+    const existing = [...this.projects.values()].find(p => p.root === resolvedRoot);
+    if (existing) return existing;
+    const projectId = path.basename(resolvedRoot) + '-' + crypto.createHash('sha256').update(resolvedRoot).digest('hex').slice(0, 10);
     const initialSnapshot = extractProject(resolvedRoot);
 
     const projectData = {
@@ -52,6 +56,10 @@ export class LocalProjectService {
           this._refreshProject(projectId);
         }, 150);
       });
+      watcher.on('error', err => {
+        watcher.close();
+        project.lastSnapshot.diagnostics.push({ type: 'warning', message: `Watcher unavailable; polling refresh active: ${err.code || 'error'}` });
+      });
       this.watchers.set(projectId, watcher);
     } catch {
       // Fallback if recursive watch not supported
@@ -69,12 +77,15 @@ export class LocalProjectService {
         this._notifyClients(projectId, newSnapshot);
       }
     } catch (err) {
-      // Keep last valid snapshot, annotate transient diagnostic
-      project.lastSnapshot.diagnostics.push({
-        type: 'warning',
-        message: `Transient read warning during file change: ${err.message}`,
-        timestamp: new Date().toISOString(),
-      });
+      // Preserve source data and expose a stable stale revision without growing logs.
+      const message = `Read failed; displaying last valid snapshot: ${err.message}`;
+      if (project.lastSnapshot.readError !== message) {
+        project.lastSnapshot = { ...project.lastSnapshot, readStatus: 'stale', readError: message,
+          contentRevision: crypto.createHash('sha256').update(project.lastSnapshot.contentRevision + message).digest('hex').slice(0,16),
+          diagnostics: [...project.lastSnapshot.diagnostics.slice(-63), {type:'warning',message,timestamp:new Date().toISOString()}],
+        };
+        this._notifyClients(projectId, project.lastSnapshot);
+      }
     }
   }
 
@@ -90,12 +101,16 @@ export class LocalProjectService {
 
   start() {
     return new Promise((resolve, reject) => {
+      this.refreshTimer = setInterval(() => {
+        for (const id of this.projects.keys()) this._refreshProject(id);
+      }, 2000);
+      this.refreshTimer.unref();
       this.server = http.createServer((req, res) => this._handleRequest(req, res));
       this.server.listen(this.port, this.host, () => {
         resolve({
           port: this.server.address().port,
           token: this.token,
-          url: `http://${this.host}:${this.server.address().port}/?token=${this.token}`,
+          url: `http://${this.host}:${this.server.address().port}/#token=${this.token}`,
         });
       });
       this.server.on('error', reject);
@@ -104,6 +119,7 @@ export class LocalProjectService {
 
   stop() {
     return new Promise((resolve) => {
+      clearInterval(this.refreshTimer);
       for (const watcher of this.watchers.values()) {
         try { watcher.close(); } catch {}
       }
@@ -124,19 +140,19 @@ export class LocalProjectService {
   }
 
   _handleRequest(req, res) {
-    // Basic CORS and Security Headers
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Authorization, Content-Type');
-
-    if (req.method === 'OPTIONS') {
-      res.writeHead(204);
-      res.end();
-      return;
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('Referrer-Policy', 'no-referrer');
+    res.setHeader('Cache-Control', 'no-store');
+    const authority = `${this.host}:${this.server?.address()?.port || this.port}`;
+    const allowedHosts = new Set([authority, `localhost:${this.server?.address()?.port || this.port}`]);
+    if (!allowedHosts.has(req.headers.host) || (req.headers.origin && !['http://' + authority, 'http://localhost:' + (this.server?.address()?.port || this.port)].includes(req.headers.origin))) {
+      res.writeHead(403); res.end('Untrusted host or origin'); return;
     }
-
-    const parsedUrl = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
+    if (req.method !== 'GET') { res.writeHead(405, { Allow: 'GET' }); res.end('Method not allowed'); return; }
+    const parsedUrl = new URL(req.url, `http://${authority}`);
     const pathname = parsedUrl.pathname;
+
+    if (pathname.startsWith('/api/account/')) { res.writeHead(404, {'Content-Type':'application/json'}); res.end(JSON.stringify({error:'Accounts are provided by the optional account service'})); return; }
 
     // Token check for API routes
     if (pathname.startsWith('/api/')) {
@@ -160,6 +176,8 @@ export class LocalProjectService {
         profile: p.lastSnapshot.profile,
         activePhaseId: p.lastSnapshot.activePhaseId,
         contentRevision: p.lastSnapshot.contentRevision,
+        metrics: p.lastSnapshot.metrics,
+        phasesCount: p.lastSnapshot.phases.length,
       }));
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify(list));
@@ -175,7 +193,10 @@ export class LocalProjectService {
         res.end(JSON.stringify({ error: `Project not found: ${projectId}` }));
         return;
       }
-      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.setHeader('Content-Type', 'application/json');
+      this._refreshProject(projectId);
+      res.setHeader('ETag', project.lastSnapshot.contentRevision);
+      if (req.headers['if-none-match'] === project.lastSnapshot.contentRevision) { res.writeHead(304); res.end(); return; }
       res.end(JSON.stringify(project.lastSnapshot));
       return;
     }
@@ -222,16 +243,24 @@ export class LocalProjectService {
         return;
       }
 
-      const safePath = path.resolve(project.root, filePathParam);
-      if (!safePath.startsWith(project.root) || !fs.existsSync(safePath) || !fs.statSync(safePath).isFile()) {
+      try {
+        const requested = path.resolve(project.root, filePathParam);
+        const safePath = fs.realpathSync(requested);
+        const relative = path.relative(project.root, safePath);
+        const contained = relative && !relative.startsWith('..' + path.sep) && relative !== '..' && !path.isAbsolute(relative);
+        const allowed = /^(?:\.sdd|docs|scripts|skills|\.sdd-framework)[\/\\]/.test(relative);
+        const mime = { '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.webp': 'image/webp', '.gif': 'image/gif' };
+        const ext = path.extname(safePath).toLowerCase();
+        const supported = mime[ext] || ['.md', '.json', '.sh', '.js', '.cjs', '.txt'].includes(ext);
+        const stat = fs.statSync(safePath);
+        if (!contained || !allowed || !supported || !stat.isFile() || stat.size > 4 * 1024 * 1024) throw new Error('Artifact is outside permitted scope');
+        const content = fs.readFileSync(safePath);
+        res.writeHead(200, { 'Content-Type': mime[ext] || 'text/plain; charset=utf-8' });
+        res.end(content);
+      } catch {
         res.writeHead(403, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ error: 'Forbidden: path traversal blocked or file not found' }));
-        return;
+        res.end(JSON.stringify({ error: 'Artifact unavailable or outside permitted scope' }));
       }
-
-      const content = fs.readFileSync(safePath, 'utf8');
-      res.writeHead(200, { 'Content-Type': 'text/markdown; charset=utf-8' });
-      res.end(content);
       return;
     }
 

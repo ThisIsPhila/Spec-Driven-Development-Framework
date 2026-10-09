@@ -37,7 +37,7 @@ test('synthetic demo dataset is valid and free of sensitive private paths', () =
 test('landing view renders hero, install command, and profiles catalog', () => {
   const html = renderLandingView();
   assert.ok(html.includes('Spec-Driven Development'), 'Hero title should be present');
-  assert.ok(html.includes('curl -fsSL https://raw.githubusercontent.com/'), 'Setup command should be present');
+  assert.ok(html.includes('git clone https://github.com/'), 'Setup command should be present');
   assert.ok(html.includes('Launch Interactive Demo'), 'Demo CTA should be present');
   assert.ok(html.includes('devsecops'), 'Profiles catalog should include devsecops');
   assert.ok(html.includes('mlops'), 'Profiles catalog should include mlops');

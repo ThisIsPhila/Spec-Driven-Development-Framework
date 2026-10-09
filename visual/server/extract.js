@@ -1,10 +1,15 @@
-import fs from 'node:fs';
+import { fs, extractionScope } from './read-boundary.js';
 import path from 'node:path';
 import crypto from 'node:crypto';
-import { execSync } from 'node:child_process';
+import { execSync, execFileSync } from 'node:child_process';
 import { createProjectSnapshot, createPhaseModel } from './model.js';
 
 export function extractProject(projectRoot) {
+  const root = fs.realpathSync(projectRoot);
+  return extractionScope.run({ root, bytes: 0, files: 0 }, () => extractSnapshot(root));
+}
+
+function extractSnapshot(projectRoot) {
   const resolvedRoot = path.resolve(projectRoot);
   const sddDir = path.join(resolvedRoot, '.sdd');
 
@@ -18,7 +23,7 @@ export function extractProject(projectRoot) {
 
   // Extract Git / Account Information safely
   snapshot.account = extractGitMetadata(resolvedRoot);
-  hash.update(snapshot.account.headCommit || '');
+  hash.update(JSON.stringify(snapshot.account));
 
   // Read Profile
   const profileFile = path.join(sddDir, '.profile');
@@ -40,6 +45,13 @@ export function extractProject(projectRoot) {
         snapshot.activePhaseId = pName;
       }
     }
+  }
+
+  const statePath = path.join(sddDir, 'state');
+  if (fs.existsSync(statePath)) {
+    const state = fs.readFileSync(statePath, 'utf8');
+    hash.update(state);
+    snapshot.activePhaseId = state.match(/^active_phase=(.+)$/m)?.[1]?.trim() || null;
   }
 
   // Scan specs across scopes
@@ -72,9 +84,14 @@ export function extractProject(projectRoot) {
   snapshot.docs = extractDocs(resolvedRoot, hash);
   snapshot.graphify = extractGraphify(resolvedRoot, snapshot);
 
+  snapshot.skills = extractInstalledSkills(resolvedRoot, hash);
+  snapshot.artifactIndex = discoverArtifacts(sddDir, hash, collectSourcePaths(snapshot));
+  snapshot.coverage = { markdown: 'Supported: recursive artifact index', state: 'Supported', phaseJson: 'Parsed metadata; no inferred approvals', media: 'Local raster attachments; cloud media not published', legacyTasks: 'Partial; diagnostics when unrecognized', graphify: snapshot.graphify.source };
   // Compute Project-level Aggregated Metrics
   computeProjectMetrics(snapshot);
 
+  hash.update(JSON.stringify(snapshot.hooks));
+  hash.update(JSON.stringify(snapshot.graphify));
   snapshot.contentRevision = hash.digest('hex').slice(0, 16);
   return snapshot;
 }
@@ -123,7 +140,7 @@ function extractPhase(phaseDir, phaseId, category, sddDir, hash, gitHeadCommit) 
     };
     phase.requirements = parseRequirements(content);
     const titleMatch = content.match(/^#\s+([^\n\r]+)/);
-    if (titleMatch) phase.name = titleMatch[1].trim();
+    if (titleMatch) phase.name = titleMatch[1].trim().replace(/\s*[—–-]\s*Requirements$/i, '');
   } else {
     phase.warnings.push(`requirements.md missing in ${phaseId}`);
   }
@@ -158,6 +175,15 @@ function extractPhase(phaseDir, phaseId, category, sddDir, hash, gitHeadCommit) 
     phase.warnings.push(`tasks.md missing in ${phaseId}`);
   }
 
+  const phaseMetadata = path.join(phaseDir, 'phase.json');
+  if (fs.existsSync(phaseMetadata)) {
+    const raw = fs.readFileSync(phaseMetadata, 'utf8'); hash.update(raw);
+    try { phase.metadata = JSON.parse(raw); } catch { phase.warnings.push('Invalid phase.json'); }
+  }
+  if (phase.artifacts.tasks && !phase.tasks.length) phase.warnings.push('No recognized top-level tasks; progress is unassessed');
+  const duplicateIds = phase.tasks.map(t => t.id).filter((id, i, ids) => ids.indexOf(id) !== i);
+  if (duplicateIds.length) phase.warnings.push(`Duplicate task IDs: ${duplicateIds.join(', ')}`);
+
   // Evidence
   const cleanNum = phaseId.match(/phase-[0-9]+/i)?.[0];
   const candidateDirs = [
@@ -169,7 +195,7 @@ function extractPhase(phaseDir, phaseId, category, sddDir, hash, gitHeadCommit) 
   for (const dir of candidateDirs) {
     if (searched.has(dir) || !fs.existsSync(dir)) continue;
     searched.add(dir);
-    const files = fs.readdirSync(dir);
+    const files = recursiveFiles(dir);
     for (const file of files) {
       if (!file.endsWith('.md')) continue;
       const evPath = path.join(dir, file);
@@ -206,7 +232,7 @@ function extractPhase(phaseDir, phaseId, category, sddDir, hash, gitHeadCommit) 
   if (category === 'archive') {
     phase.status = 'ARCHIVED';
   } else if (total > 0 && completed === total) {
-    phase.status = 'READY_TO_ARCHIVE';
+    phase.status = 'TASKS_RECORDED_COMPLETE';
   } else if (inProgress > 0) {
     phase.status = 'IN_PROGRESS';
   } else if (phase.artifacts.tasks && /ready to start|approved/i.test(phase.artifacts.tasks.status)) {
@@ -242,7 +268,7 @@ function extractPhase(phaseDir, phaseId, category, sddDir, hash, gitHeadCommit) 
         fromId: ev.filename,
         toType: 'task',
         toId: tRef,
-        label: 'verifies',
+        label: 'references',
       });
     }
     for (const rRef of ev.reqRefs) {
@@ -252,7 +278,7 @@ function extractPhase(phaseDir, phaseId, category, sddDir, hash, gitHeadCommit) 
           fromId: ev.filename,
           toType: 'requirement',
           toId: rRef,
-          label: 'verifies',
+          label: 'references',
         });
       }
     }
@@ -279,11 +305,11 @@ function parseEvidenceMetadata(content) {
   const limitMatch = content.match(/##\s+Limitations\s*([\s\S]*?)(?=\n##|\n---|$)/i);
 
   return {
-    result: (resultMatch ? resultMatch[1].trim() : 'PASS'),
+    result: (resultMatch ? resultMatch[1].trim() : 'UNKNOWN'),
     assessedTree: (treeMatch ? treeMatch[1].trim() : ''),
     environment: (envMatch ? envMatch[1].trim() : ''),
     timestamp: (timeMatch ? timeMatch[1].trim() : ''),
-    limitations: (limitMatch ? limitMatch[1].trim() : 'None'),
+    limitations: (limitMatch ? limitMatch[1].trim() : 'Not recorded'),
   };
 }
 
@@ -344,11 +370,7 @@ function computePhaseMetrics(phase, gitHeadCommit) {
       unmappedReqs.push(rId);
     }
 
-    if (entry.evidence.size > 0) {
-      verifiedCount++;
-    } else {
-      unverifiedReqs.push(rId);
-    }
+    unverifiedReqs.push(rId); // A reference is not independently assessed fulfillment.
   }
 
   const totalReqs = reqs.length;
@@ -363,10 +385,10 @@ function computePhaseMetrics(phase, gitHeadCommit) {
   let lastAssessedTree = '';
 
   for (const ev of evidence) {
-    const res = ev.parsed?.result || 'PASS';
+    const res = ev.parsed?.result || 'UNKNOWN';
     if (/fail|error/i.test(res)) {
       failCount++;
-    } else {
+    } else if (/^pass(?:ed)?(?:\b|$)/i.test(res)) {
       passCount++;
     }
 
@@ -383,15 +405,15 @@ function computePhaseMetrics(phase, gitHeadCommit) {
   let staleDetails = '';
   if (anyCommitRecorded) {
     if (matchesHead) {
-      freshness = 'FRESH';
-      staleDetails = `Verified at current Git HEAD (${gitHeadCommit})`;
+      freshness = 'HEAD_MATCH_ONLY';
+      staleDetails = `Evidence declares current Git HEAD; working tree not verified (${gitHeadCommit})`;
     } else {
       freshness = 'STALE';
       staleDetails = `Assessed at ${lastAssessedTree} vs active HEAD ${gitHeadCommit || 'local'}`;
     }
   }
 
-  const passRate = evidence.length > 0 ? Math.round((passCount / evidence.length) * 100) : 100;
+  const passRate = evidence.length > 0 ? Math.round((passCount / evidence.length) * 100) : null;
 
   // 3. Health Pillars (Max 25 pts each = 100 max)
   // Pillar 1: Specification Definition (25 pts)
@@ -402,9 +424,9 @@ function computePhaseMetrics(phase, gitHeadCommit) {
 
   // Pillar 2: Governance & Approvals (25 pts)
   let pGovernance = 0;
-  if (/approved/i.test(phase.artifacts.requirements?.status || '')) pGovernance += 10;
-  if (/approved/i.test(phase.artifacts.design?.status || '')) pGovernance += 10;
-  if (/ready|approved/i.test(phase.artifacts.tasks?.status || '')) pGovernance += 5;
+  if (/^approved\b/i.test(phase.artifacts.requirements?.status || '')) pGovernance += 10;
+  if (/^approved\b/i.test(phase.artifacts.design?.status || '')) pGovernance += 10;
+  if (/^(?:ready|approved)\b/i.test(phase.artifacts.tasks?.status || '')) pGovernance += 5;
 
   // Pillar 3: Execution Progress (25 pts)
   const taskTotal = phase.taskCounts.total;
@@ -426,7 +448,7 @@ function computePhaseMetrics(phase, gitHeadCommit) {
 
   return {
     healthScore,
-    healthGrade,
+    healthGrade: 'COMPLETENESS_HEURISTIC',
     pillars: {
       definition: pDefinition,
       governance: pGovernance,
@@ -449,8 +471,8 @@ function computePhaseMetrics(phase, gitHeadCommit) {
         const mappedTaskList = Array.from(item?.tasks || []);
         const verifiedEvList = Array.from(item?.evidence || []);
         let status = 'UNMAPPED';
-        if (verifiedEvList.length > 0) status = 'VERIFIED';
-        else if (mappedTaskList.length > 0) status = 'IMPLEMENTED';
+        if (verifiedEvList.length > 0) status = 'EVIDENCE_REFERENCED';
+        else if (mappedTaskList.length > 0) status = 'TASKS_MAPPED';
         return {
           id: r.id,
           title: r.title,
@@ -504,7 +526,7 @@ function computeProjectMetrics(snapshot) {
 
   snapshot.metrics = {
     overallHealthScore: overallHealth,
-    overallHealthGrade: overallGrade,
+    overallHealthGrade: 'COMPLETENESS_HEURISTIC',
     totalRequirements: totalReqsAll,
     totalTasks: totalTasksAll,
     completedTasks: completedTasksAll,
@@ -528,7 +550,7 @@ function computeProjectMetrics(snapshot) {
 
 function parseStatus(content) {
   const match = content.match(/\*\*Status:\*\*\s*([^\n\r]+)/i) || content.match(/Status:\s*([^\n\r]+)/i);
-  return match ? match[1].trim() : 'DRAFT';
+  return match ? match[1].trim() : 'UNKNOWN';
 }
 
 function parseTitle(content) {
@@ -538,7 +560,7 @@ function parseTitle(content) {
 
 function parseRequirements(content) {
   const reqs = [];
-  const reqHeaderRegex = /###\s+(REQ-[0-9.]+):?\s*([^\n\r]*)/gi;
+  const reqHeaderRegex = /#{2,4}\s+(REQ-[0-9.]+):?\s*([^\n\r]*)/gi;
   let match;
   while ((match = reqHeaderRegex.exec(content)) !== null) {
     reqs.push({
@@ -587,6 +609,7 @@ function parseTasks(content) {
       tasks.push(currentTask);
     } else if (currentTask && line.match(/^\s+-\s+/)) {
       // Nested task metadata lines (e.g. - **Objective and requirements:** ...; REQ-005.1)
+      currentTask.contract = (currentTask.contract || '') + line.trim() + '\n';
       const nestedReqs = extractReqRefs(line);
       for (const r of nestedReqs) {
         if (!currentTask.reqRefs.includes(r)) {
@@ -602,6 +625,7 @@ function parseTasks(content) {
 }
 
 function extractReqRefs(text) {
+  text = text.replace(/REQ-(\d+)\.(\d+)\s*[–—-]\s*(?:REQ-\1\.)?(\d+)/gi, (all, phase, start, end) => Number(end) >= Number(start) && Number(end) - Number(start) < 100 ? Array.from({length:Number(end)-Number(start)+1}, (_,i) => `REQ-${phase}.${Number(start)+i}`).join(' ') : all);
   const matches = text.match(/\bREQ-[0-9.]+\b/gi) || [];
   return [...new Set(matches.map(m => m.toUpperCase()))];
 }
@@ -629,7 +653,7 @@ function parseAcceptanceCriteria(phase) {
   let currentReq = '';
 
   for (const line of lines) {
-    const reqHeader = line.match(/###\s+(REQ-[0-9.]+):?\s*([^\n\r]*)/i);
+    const reqHeader = line.match(/#{2,4}\s+(REQ-[0-9.]+):?\s*([^\n\r]*)/i);
     if (reqHeader) {
       currentReq = reqHeader[1].toUpperCase();
       inCriteria = false;
@@ -646,7 +670,7 @@ function parseAcceptanceCriteria(phase) {
       const checkMatch = line.match(/^-\s*\[([ xX])\]\s+(.+)$/);
       const bulletMatch = line.match(/^-\s+(.+)$/);
       if (checkMatch) {
-        criteria.push({ reqId: currentReq, text: checkMatch[2].trim(), done: checkMatch[1].toLowerCase() === 'x' });
+        criteria.push({ reqId: currentReq, text: checkMatch[2].trim(), done: false, declaredDone: checkMatch[1].toLowerCase() === 'x', assessment: 'UNASSESSED' });
       } else if (numMatch) {
         criteria.push({ reqId: currentReq, text: numMatch[1].trim(), done: false });
       } else if (bulletMatch) {
@@ -667,7 +691,7 @@ function parseAcceptanceCriteria(phase) {
       break;
     }
     if (inTaskCriteria && line.trim()) {
-      criteria.push({ reqId: 'PHASE-COMPLETION', text: line.trim(), done: true });
+      criteria.push({ reqId: 'PHASE-COMPLETION', text: line.trim(), done: false, assessment: 'UNASSESSED' });
     }
   }
 
@@ -837,7 +861,7 @@ function extractRules(sddDir, hash) {
       filename: file,
       title: parseTitle(content) || id,
       trigger,
-      enforcement: 'Enforced by Git pre-commit hooks & SDD Doctor',
+      enforcement: 'Declared rule; enforcement not measured',
       content,
       path: fullPath,
     });
@@ -892,14 +916,15 @@ function extractScripts(projectRoot, sddDir, hash) {
 
   const scriptMeta = {
     'doctor.sh': { desc: 'Comprehensive health check, spec validator, and invariant diagnostics', usage: 'bash scripts/doctor.sh' },
-    'phase.sh': { desc: 'Active phase sprint lifecycle, task transition, and context synchronization', usage: 'bash scripts/phase.sh [start|task|close]' },
+    'skill-pack.cjs': { desc: 'Validated community skill composition packages', usage: 'bash .sdd/scripts/skills.sh pack validate <pack-folder>' },
+    'phase.sh': { desc: 'Active phase sprint lifecycle, task transition, and context synchronization', usage: 'bash .sdd/scripts/phase.sh help' },
     'setup.sh': { desc: 'Framework initialization, base profiles, and git pre-commit quality gate installer', usage: 'bash scripts/setup.sh' },
     'skills.sh': { desc: 'Discovers and validates agent skills adhering to the AGY skill schema', usage: 'bash scripts/skills.sh validate' },
-    'state.sh': { desc: 'State machine managing phase approvals, transitions, and milestone records', usage: 'bash scripts/state.sh' },
+    'state.sh': { desc: 'State machine managing phase approvals, transitions, and milestone records', usage: 'Helper module: sourced by phase.sh (no standalone command)' },
     'validate-profiles.sh': { desc: 'Validates profile definitions and profile overlays for compliance', usage: 'bash scripts/validate-profiles.sh' },
     'scan-strays.sh': { desc: 'Scans the entire repository tree for orphaned or misplaced spec files', usage: 'bash scripts/scan-strays.sh' },
     'audit-monorepo.sh': { desc: 'Scans multi-package repositories for SDD adherence and compliance', usage: 'bash scripts/audit-monorepo.sh' },
-    'validate-spec.cjs': { desc: 'Profile-aware AST linting engine for requirements and design specifications', usage: 'node scripts/validate-spec.cjs' },
+    'validate-spec.cjs': { desc: 'Profile-aware AST linting engine for requirements and design specifications', usage: 'node .sdd/scripts/validate-spec.cjs --help' },
   };
 
   const scripts = [];
@@ -917,7 +942,7 @@ function extractScripts(projectRoot, sddDir, hash) {
 
     const content = fs.readFileSync(fullPath, 'utf8');
     hash.update(content);
-    const meta = scriptMeta[file] || { desc: 'Framework automation script', usage: `bash scripts/${file}` };
+    const meta = scriptMeta[file] || { desc: 'Framework automation script', usage: `bash .sdd/scripts/${file}` };
 
     scripts.push({
       name: file,
@@ -969,39 +994,35 @@ function extractTemplates(sddDir, hash) {
   return templates;
 }
 
-function extractHooks(projectRoot, sddDir, gitHeadCommit) {
-  const hookFile = path.join(projectRoot, '.git', 'hooks', 'pre-commit');
-  const isInstalled = fs.existsSync(hookFile);
-  let hookContent = '';
-  if (isInstalled) {
-    try {
-      hookContent = fs.readFileSync(hookFile, 'utf8');
-    } catch {}
+function extractHooks(projectRoot) {
+  let hookFile = path.join(projectRoot, '.git', 'hooks', 'pre-commit');
+  try {
+    hookFile = path.resolve(projectRoot, execFileSync('git', ['rev-parse', '--git-path', 'hooks/pre-commit'], { cwd: projectRoot, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trim());
+  } catch {}
+  let content = '', executable = false;
+  try {
+    content = fs.readFileSync(hookFile, 'utf8');
+    fs.accessSync(hookFile, fs.constants.X_OK);
+    executable = true;
+  } catch {}
+  const logPath = path.join(projectRoot, '.sdd', 'evidence', 'hooks', 'runs.tsv');
+  let records = [];
+  if (fs.existsSync(logPath)) {
+    records = fs.readFileSync(logPath, 'utf8').split('\n').filter(Boolean).slice(-1000).map(line => {
+      const [runId, timestamp, tree, command, exitCode, result, actor, environment] = line.split('\t');
+      return { runId, timestamp, tree, command, exitCode: Number(exitCode), result, actor: actor || 'Not recorded', environment: environment || 'Not recorded' };
+    }).filter(r => r.runId && !Number.isNaN(Date.parse(r.timestamp)) && /^[a-f0-9]{40,64}$/.test(r.tree || '') && ['PASS', 'FAIL', 'SKIPPED'].includes(r.result));
   }
-
-  const gatesList = [
-    { name: 'Core Structure & Memory Integrity', command: 'bash scripts/doctor.sh', status: 'PASS', frequency: 'Every commit', enforced: true },
-    { name: 'Spec Lifecycle Approval Invariants (APPROVED)', command: 'scripts/doctor.sh (gate check)', status: 'PASS', frequency: 'Every commit', enforced: true },
-    { name: 'Profile-Aware AST Spec Linting', command: 'node scripts/validate-spec.cjs', status: 'PASS', frequency: 'Every commit', enforced: true },
-    { name: 'Agent Skills Schema Validator', command: 'bash scripts/skills.sh validate', status: 'PASS', frequency: 'Every commit', enforced: true },
-    { name: 'Stray Spec Interception Guard', command: 'bash scripts/scan-strays.sh', status: 'PASS', frequency: 'Every commit', enforced: true }
-  ];
-
-  return {
-    installed: isInstalled,
-    path: hookFile,
-    gates: ['doctor.sh', 'skills.sh validate', 'validate-spec.cjs'],
-    content: hookContent,
-    telemetry: {
-      activeHooksCount: isInstalled ? 1 : 0,
-      totalGatesRun: gatesList.length,
-      lastRunTimestamp: new Date().toISOString(),
-      lastCommitChecked: gitHeadCommit || 'HEAD',
-      enforcementLevel: 'BLOCKING (Intercepts and blocks commits on quality regression)',
-      passRate: '100%',
-      gatesList,
-    },
-  };
+  const last = records.at(-1);
+  const installed = Boolean(content);
+  const gatesList = ['doctor.sh', 'skills.sh'].filter(name => content.includes(name) || content.includes('hook-run.sh')).map(name => ({
+    name, command: name, status: records.filter(record => record.command === name.replace('.sh', '')).at(-1)?.result || 'UNRECORDED', frequency: 'Declared in hook source', enforced: false,
+  }));
+  return { installed, executable, path: hookFile, content, gates: gatesList.map(g => g.name), telemetry: {
+    activeHooksCount: executable ? 1 : 0, totalGatesRun: records.length, lastRunTimestamp: last?.timestamp || '', lastCommitChecked: last?.tree || '',
+    enforcementLevel: executable ? 'Configured local hook; bypass possible' : 'No executable hook detected',
+    passRate: records.length ? `${Math.round(records.filter(r => r.result === 'PASS').length / records.length * 100)}%` : null, gatesList, records, historyStatus: records.length ? 'Recorded local executions; indexed trees, not commit attestations' : 'Execution history not recorded',
+  }};
 }
 
 function extractDocs(projectRoot, hash) {
@@ -1009,7 +1030,7 @@ function extractDocs(projectRoot, hash) {
   if (!fs.existsSync(docsDir)) return [];
 
   const docs = [];
-  const files = fs.readdirSync(docsDir);
+  const files = recursiveFiles(docsDir);
   for (const file of files) {
     if (!file.endsWith('.md')) continue;
     const fullPath = path.join(docsDir, file);
@@ -1028,6 +1049,18 @@ function extractDocs(projectRoot, hash) {
 }
 
 function extractGraphify(projectRoot, snapshot) {
+  const graphPath = [path.join(projectRoot, 'graphify-out/graph.json'), path.join(projectRoot, '.sdd/graphify/graph.json')].find(file => fs.existsSync(file));
+  if (graphPath) {
+    try {
+      const graph = JSON.parse(fs.readFileSync(graphPath, 'utf8'));
+      if (!Array.isArray(graph.nodes) || !Array.isArray(graph.edges || graph.links)) throw new Error('Unsupported graph schema');
+      if (graph.nodes.length > 3000 || (graph.edges || graph.links).length > 10000) snapshot.diagnostics.push({type:'warning',message:'Graphify display limited to 3,000 nodes / 10,000 edges'});
+      const nodes = graph.nodes.slice(0, 3000).map(node => ({ id: String(node.id), label: String(node.label || node.name || node.id), type: String(node.type || 'external'), source: node.source || '' }));
+      const ids = new Set(nodes.map(node => node.id));
+      const edges = (graph.edges || graph.links).slice(0, 10000).map(edge => ({ from: String(edge.from || edge.source), to: String(edge.to || edge.target), label: String(edge.label || edge.type || 'related'), provenance: edge.provenance || edge.evidence_type || 'UNSPECIFIED', confidence: edge.confidence ?? null })).filter(edge => ids.has(edge.from) && ids.has(edge.to));
+      return { source: 'graphify-export', path: graphPath, nodes, edges, totalNodes: nodes.length, totalEdges: edges.length, summary: 'Imported Graphify output. Inferred or unspecified edges do not establish implementation or verification.' };
+    } catch (error) { snapshot.diagnostics.push({type:'warning',message:`Graphify import failed: ${error.message}`}); }
+  }
   const nodes = [];
   const edges = [];
 
@@ -1052,19 +1085,67 @@ function extractGraphify(projectRoot, snapshot) {
     // 4. Evidence in phase
     for (const ev of p.artifacts?.evidence || []) {
       nodes.push({ id: `${p.id}-${ev.filename}`, label: ev.filename, type: 'evidence' });
-      edges.push({ from: `${p.id}-${ev.filename}`, to: p.id, label: 'verifies' });
+      edges.push({ from: `${p.id}-${ev.filename}`, to: p.id, label: 'references' });
     }
   }
 
   // 5. Hooks node
   nodes.push({ id: 'pre-commit-hook', label: 'Git Pre-Commit Hook', type: 'hook' });
-  edges.push({ from: 'pre-commit-hook', to: 'constitution', label: 'enforces' });
+  // Hook presence is not an enforcement relationship.
 
   return {
     nodes,
-    edges,
+    edges: edges.map(edge => ({ ...edge, provenance: 'DERIVED_ORGANIZATION' })),
+    source: 'artifact-map',
     totalNodes: nodes.length,
     totalEdges: edges.length,
-    summary: `SDD Knowledge Graph connecting ${nodes.length} entities and ${edges.length} contractual relationships.`,
+    summary: `SDD Knowledge Graph connecting ${nodes.length} entities and ${edges.length} derived organizational links. This is an artifact map, not Graphify output.`,
   };
+}
+
+function recursiveFiles(root, prefix = '', depth = 0) {
+  if (depth > 8) return [];
+  const files = [];
+  for (const item of fs.readdirSync(path.join(root, prefix), {withFileTypes:true})) {
+    if (item.name.startsWith('.') && item.name !== '.profile') continue;
+    const relative = path.join(prefix, item.name);
+    if (item.isDirectory()) files.push(...recursiveFiles(root, relative, depth + 1));
+    else if (item.isFile() || item.isSymbolicLink()) files.push(relative);
+    if (files.length > 3000) throw new Error('Artifact discovery limit exceeded');
+  }
+  return files;
+}
+function discoverArtifacts(sddDir, hash, represented) {
+  return recursiveFiles(sddDir).filter(file => /\.(md|json|txt|png|jpg|jpeg|webp|gif)$/i.test(file)).map(file => {
+    const full = path.join(sddDir,file);
+    const content = fs.readFileSync(full);
+    hash.update(file); hash.update(content);
+    const media = /\.(png|jpg|jpeg|webp|gif)$/i.test(file);
+    return {path:full,relativePath:'.sdd/' + file.split(path.sep).join('/'),kind:media?'media':'document',bytes:content.length,...(media || represented.has(full) ? {} : {content:content.toString('utf8')})};
+  });
+}
+function extractInstalledSkills(root, hash) {
+  const skills = [], seen = new Set();
+  for (const folder of ['skills', '.agents/skills']) {
+    const directory = path.join(root, folder);
+    if (!fs.existsSync(directory)) continue;
+    for (const entry of fs.readdirSync(directory, {withFileTypes:true})) {
+      if (!entry.isDirectory() && !entry.isSymbolicLink()) continue;
+      const source = path.join(directory,entry.name,'SKILL.md');
+      if (!fs.existsSync(source)) continue;
+      try {
+        const content = fs.readFileSync(source,'utf8'); hash.update(content);
+        const name = content.match(/^name:\s*(.+)$/m)?.[1]?.trim() || entry.name;
+        skills.push({id:entry.name,name,description:content.match(/^description:\s*(.+)$/m)?.[1]?.trim() || 'Description not recorded',path:source,content,duplicate:seen.has(name)}); seen.add(name);
+      } catch (error) { skills.push({id:entry.name,name:entry.name,description:'External or unsupported linked skill',diagnostic:error.message}); }
+    }
+  }
+  return skills;
+}
+
+function collectSourcePaths(value, found = new Set()) {
+  if (!value || typeof value !== 'object') return found;
+  if (typeof value.path === 'string' && typeof value.content === 'string') found.add(value.path);
+  for (const child of Object.values(value)) collectSourcePaths(child, found);
+  return found;
 }

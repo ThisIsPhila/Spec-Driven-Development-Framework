@@ -1,3 +1,5 @@
+import { escapeDisplayModel } from '../sanitize.js';
+import { escapeHtml } from '../sanitize.js';
 import { renderMarkdown } from '../markdown.js';
 import { ICONS } from '../icons.js';
 
@@ -6,6 +8,7 @@ import { ICONS } from '../icons.js';
  */
 
 export function renderSpecView(phase, type, filter = 'all') {
+  phase = escapeDisplayModel(phase);
   if (!phase) return `<div class="empty-state">No phase loaded.</div>`;
 
   const artifact = phase.artifacts?.[type];
@@ -34,7 +37,8 @@ export function renderSpecView(phase, type, filter = 'all') {
           <span class="spec-status-badge status-${artifact.status?.toLowerCase()}">${artifact.status || 'UNKNOWN'}</span>
         </div>
       </div>
-      <div class="markdown-body">
+      <button class="btn btn-secondary" data-source-path="${escapeHtml(artifact.path || '')}">Open source: ${escapeHtml(artifact.path || type + '.md')}</button>
+      <div class="markdown-body" data-source-path="${escapeHtml(artifact.path || '')}">
         ${renderedContent}
       </div>
     </div>
@@ -94,11 +98,11 @@ function renderTaskCard(task, phase) {
 
   // Find requirements mapped to this task
   const mappedReqs = (phase.relationships || [])
-    .filter(r => r.from === task.id && r.type === 'implements')
-    .map(r => r.to);
+    .filter(r => (r.fromId || r.from) === task.id && (r.label || r.type) === 'implements')
+    .map(r => r.toId || r.to);
 
   return `
-    <div class="task-card ${statusClass}" role="listitem" tabindex="0">
+    <div id="task-${escapeHtml(task.id)}" class="task-card ${statusClass}" role="listitem" tabindex="0">
       <div class="task-card-header">
         <div class="task-card-left">
           <span class="task-icon">${statusIcon}</span>
@@ -114,7 +118,7 @@ function renderTaskCard(task, phase) {
           ? `
           <div class="task-card-reqs">
             <span class="tag-label">Implements:</span>
-            ${mappedReqs.map(req => `<span class="badge badge-req">${req}</span>`).join(' ')}
+            ${mappedReqs.map(req => `<button class="badge badge-req" data-open-ref="${escapeHtml(req)}">${escapeHtml(req)}</button>`).join(' ')}
           </div>
         `
           : ''
@@ -123,7 +127,7 @@ function renderTaskCard(task, phase) {
         task.contract
           ? `
           <div class="task-contract-preview">
-            <pre><code>${task.contract}</code></pre>
+            <pre><code>${escapeHtml(task.contract)}</code></pre>
           </div>
         `
           : ''
