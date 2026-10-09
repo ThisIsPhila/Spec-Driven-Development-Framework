@@ -14,6 +14,8 @@ test.beforeAll(async () => {
     fs.writeFileSync(path.join(folder,'tasks.md'),`# Tasks\n- [x] **[T${id}.1]** Completed task\n  - **Objective:** REQ-${id}.1\n- [ ] **[T${id}.2]** Pending task\n  - **Objective:** REQ-${id}.1\n`);
   }
   fs.mkdirSync(path.join(root,'graphify-out'));
+  fs.mkdirSync(path.join(root,'.sdd/evidence/phase-001-example'),{recursive:true});
+  fs.writeFileSync(path.join(root,'.sdd/evidence/phase-001-example/reference-note.md'),'# Reference note\nREQ-001.1 T001.1\nNo recorded verification outcome.\n');
   fs.writeFileSync(path.join(root,'.sdd/specs/active/phase-001-example/design.md'),'# Design\n```mermaid\nflowchart LR\n Files[Markdown files] --> Extractor --> Viewer[Visual workspace]\n```\n');
   fs.writeFileSync(path.join(root,'graphify-out/graph.json'),JSON.stringify({nodes:[{id:'source',label:'Source file',type:'file'},{id:'parser',label:'Task parser',type:'function'}],edges:[{from:'source',to:'parser',label:'calls',provenance:'EXTRACTED'}]}));
   service = new LocalProjectService({port:0,staticDir:path.resolve('dist')}); service.registerProject(root); info=await service.start();
@@ -61,6 +63,8 @@ test('real 60-phase workspace filters tasks and follows requirement/source links
   await expect(page.locator('.phase-nav-sidebar [data-phase-select]')).toHaveCount(60);
   const phaseButton=page.locator('.phase-nav-sidebar [data-phase-select]').first();
   await phaseButton.click();
+  await page.locator('.phase-subtabs-bar [data-phase-tab="traceability"]').click();
+  await expect(page.locator('.traceability-list')).toContainText('reference-note.md');
   await page.locator('[data-phase-tab="design"]').click();
   await expect(page.locator('.mermaid-svg svg')).toBeVisible();
   await expect(page.locator('.mermaid-svg')).toContainText('Markdown files');

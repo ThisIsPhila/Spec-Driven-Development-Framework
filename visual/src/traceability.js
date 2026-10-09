@@ -202,13 +202,13 @@ export function generateTraceabilityList(phase) {
 
     // Find evidence verifying this req directly
     const verifyingEv = edges
-      .filter(e => e.to === req.id && e.type === 'verifies')
+      .filter(e => e.to === req.id && ['verifies', 'references'].includes(e.type))
       .map(e => e.from);
 
     // Also include evidence verifying implementing tasks
     implementingTasks.forEach(tId => {
       edges
-        .filter(e => e.to === tId && e.type === 'verifies')
+        .filter(e => e.to === tId && ['verifies', 'references'].includes(e.type))
         .forEach(e => {
           if (!verifyingEv.includes(e.from)) verifyingEv.push(e.from);
         });
