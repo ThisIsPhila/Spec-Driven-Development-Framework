@@ -10,6 +10,7 @@ const fs = require("fs");
 const path = require("path");
 
 const specPath = process.argv[2];
+if (specPath === "--help") { console.log("Usage: node .sdd/scripts/validate-spec.cjs path/to/spec.md"); process.exit(0); }
 
 if (!specPath) {
   console.error("❌ Missing spec file path. Usage: node scripts/validate-spec.cjs path/to/spec.md");

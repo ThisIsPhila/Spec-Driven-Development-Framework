@@ -45,3 +45,9 @@ graphify-out/
 # in-flight phase, and differs per checkout. Regenerated on `phase.sh start`,
 # or migrated from active-context.md on first use.
 .sdd/state
+
+# Private optional runtime/account state (never publish).
+.sdd/local/
+
+# Observed hook executions are private runtime records.
+.sdd/evidence/hooks/

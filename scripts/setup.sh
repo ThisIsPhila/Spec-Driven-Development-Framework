@@ -277,8 +277,9 @@ install_agent_entrypoints() {
 
 # Install git pre-commit hook for automated quality gates
 install_git_hooks() {
-    local hook_file=".git/hooks/pre-commit"
-    if [[ -d ".git" ]]; then
+    local hook_file
+    hook_file=$(git rev-parse --git-path hooks/pre-commit 2>/dev/null) || return 0
+    if git rev-parse --git-dir >/dev/null 2>&1; then
         if [[ -f "$hook_file" ]]; then
             echo "🛡️  KEEP existing pre-commit hook unchanged."
             echo "   Optional SDD gate: $TARGET_DIR/hooks/pre-commit"
@@ -286,7 +287,7 @@ install_git_hooks() {
             return
         fi
         echo "⚓ Installing git pre-commit hook..."
-        mkdir -p ".git/hooks"
+        mkdir -p "$(dirname "$hook_file")"
         write_sdd_precommit "$hook_file"
     fi
 }
@@ -294,39 +295,17 @@ install_git_hooks() {
 write_sdd_precommit() {
     local hook_file="$1"
     cat > "$hook_file" <<'EOF'
-#!/bin/bash
-# SDD Pre-commit Quality Gate
-
-echo "🔍 Running SDD validation checks..."
-
-# Resolve script path (check local scripts, .sdd-framework/scripts, or .sdd/scripts)
-SCRIPT_PATH=""
-if [[ -f "scripts/doctor.sh" ]]; then
-    SCRIPT_PATH="scripts"
-elif [[ -f ".sdd-framework/scripts/doctor.sh" ]]; then
-    SCRIPT_PATH=".sdd-framework/scripts"
-elif [[ -f ".sdd/scripts/doctor.sh" ]]; then
-    SCRIPT_PATH=".sdd/scripts"
-fi
-
-if [[ -n "$SCRIPT_PATH" ]]; then
-    if ! bash "$SCRIPT_PATH/doctor.sh"; then
-        echo "❌ SDD validation failed. Commit aborted."
-        exit 1
+#!/usr/bin/env bash
+# SDD Pre-commit Quality Gate (observed execution records)
+ROOT=$(git rev-parse --show-toplevel) || exit 1
+cd "$ROOT" || exit 1
+for scripts in .sdd/scripts scripts .sdd-framework/scripts; do
+    if [[ -f "$scripts/hook-run.sh" ]]; then
+        exec bash "$scripts/hook-run.sh"
     fi
-
-    if [[ -f "$SCRIPT_PATH/skills.sh" ]]; then
-        if ! bash "$SCRIPT_PATH/skills.sh" validate; then
-            echo "❌ Skills validation failed. Commit aborted."
-            exit 1
-        fi
-    fi
-else
-    echo "⚠️  Warning: SDD validation scripts (doctor.sh) not found. Skipping commit quality checks."
-fi
-
-echo "✅ All SDD validation checks passed."
-exit 0
+done
+printf '%s\n' 'SDD hook runner missing. Restore framework scripts before committing.' >&2
+exit 1
 EOF
     chmod +x "$hook_file"
 }
