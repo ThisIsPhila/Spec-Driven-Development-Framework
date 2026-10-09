@@ -75,27 +75,27 @@ jobs:
         with:
           node-version: "20"
 
-      # Specs under active/ are gitignored, so on a clean CI checkout there may
-      # be nothing to lint. That is expected and must not fail the job.
-      # validate-spec.js takes a single markdown FILE, not a spec directory.
-      - name: Lint specs
-        run: |
-          shopt -s nullglob
-          found=0
-          rc=0
-          for spec_file in \
-            .sdd/specs/active/*/requirements.md \
-            .sdd/specs/active/*/design.md \
-            .sdd/specs/archive/*/requirements.md \
-            .sdd/specs/archive/*/design.md
-          do
-            [ -f "$spec_file" ] || continue
-            found=1
-            if ! node scripts/validate-spec.js "$spec_file"; then
-              rc=1
-            fi
-          done
-          if [ "$found" -eq 0 ]; then
-            echo "No specs present in this checkout (active/ is gitignored) - nothing to lint."
-          fi
-          exit $rc
+      # Doctor applies the governed-phase threshold and invokes the actual .cjs linter.
+      - name: Profile-aware spec lint
+        run: bash scripts/doctor.sh
+
+  visual:
+    name: visual behavior and browser journeys
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: visual/package-lock.json
+      - name: Install optional visual dependencies
+        run: npm --prefix visual ci
+      - name: Unit and integration behavior
+        run: npm --prefix visual test
+      - name: Production bundle
+        run: npm --prefix visual run build
+      - name: Install Chromium
+        run: npx --prefix visual playwright install --with-deps chromium
+      - name: Browser journeys
+        run: npm --prefix visual run test:browser
