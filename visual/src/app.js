@@ -1663,20 +1663,43 @@ export class SDDWorkspaceApp {
 
       // Search input filter in landing leaderboard
       const leaderboardSearch = document.getElementById('leaderboard-search-input');
-      const rows = Array.from(this.container.querySelectorAll('.skills-row'));
+      const tableRowsContainer = document.getElementById('leaderboard-table-rows');
+      const rows = Array.from(this.container.querySelectorAll('.agent-row'));
 
       const filterLeaderboard = () => {
         const query = (leaderboardSearch?.value || '').toLowerCase().trim();
         const activeTab = this.container.querySelector('.leaderboard-tabs-bar .tab-btn.active')?.getAttribute('data-filter') || 'all';
 
-        rows.forEach(row => {
+        let currentRows = [...rows];
+
+        // Sorting based on active tab
+        if (activeTab === 'low-error') {
+          currentRows.sort((a, b) => {
+            const errA = parseFloat(a.getAttribute('data-error') || '0');
+            const errB = parseFloat(b.getAttribute('data-error') || '0');
+            return errA - errB;
+          });
+        } else if (activeTab === 'high-runs') {
+          currentRows.sort((a, b) => {
+            const runsA = parseInt(a.getAttribute('data-runs') || '0', 10);
+            const runsB = parseInt(b.getAttribute('data-runs') || '0', 10);
+            return runsB - runsA;
+          });
+        }
+
+        // Re-append in sorted order if container exists
+        if (tableRowsContainer) {
+          currentRows.forEach(r => tableRowsContainer.appendChild(r));
+        }
+
+        currentRows.forEach(row => {
           const name = (row.querySelector('.profile-name')?.innerText || '').toLowerCase();
           const repo = (row.querySelector('.profile-repo')?.innerText || '').toLowerCase();
-          const desc = (row.querySelector('.profile-desc-line')?.innerText || '').toLowerCase();
+          const tag = (row.querySelector('.agent-tag-line')?.innerText || '').toLowerCase();
           const cat = row.getAttribute('data-category');
 
-          const matchesQuery = !query || name.includes(query) || repo.includes(query) || desc.includes(query);
-          const matchesTab = activeTab === 'all' || cat === activeTab || (activeTab === 'trending' && (cat === 'trending' || cat === 'official'));
+          const matchesQuery = !query || name.includes(query) || repo.includes(query) || tag.includes(query);
+          const matchesTab = activeTab !== 'official' || cat === 'official';
 
           if (matchesQuery && matchesTab) {
             row.style.display = 'grid';
@@ -1699,19 +1722,41 @@ export class SDDWorkspaceApp {
         });
       });
 
-      // Quick-copy install profile on row click
+      // Quick-copy on agent row click
       rows.forEach(row => {
         row.addEventListener('click', () => {
-          const profId = row.getAttribute('data-profile-id');
-          const cmd = `bash scripts/setup.sh --profile ${profId}`;
+          const agentId = row.getAttribute('data-agent-id');
+          const cmd = `bash scripts/setup.sh`;
           navigator.clipboard.writeText(cmd).then(() => {
             const nameEl = row.querySelector('.profile-name');
             if (nameEl) {
               const orig = nameEl.innerText;
-              nameEl.innerText = `✓ Copied: ${cmd}`;
+              nameEl.innerText = `✓ SDD Ready`;
               setTimeout(() => { nameEl.innerText = orig; }, 1800);
             }
           });
+        });
+      });
+
+      // Quick-copy on composition overlap cards
+      this.container.querySelectorAll('.composition-card').forEach(card => {
+        card.addEventListener('click', () => {
+          const codeEl = card.querySelector('code');
+          if (codeEl) {
+            const cmd = codeEl.innerText.replace(/^\$\s*/, '');
+            navigator.clipboard.writeText(cmd).then(() => {
+              const hint = card.querySelector('.copy-hint');
+              if (hint) {
+                const orig = hint.innerText;
+                hint.innerText = 'COPIED!';
+                hint.style.color = '#10b981';
+                setTimeout(() => {
+                  hint.innerText = orig;
+                  hint.style.color = '';
+                }, 1800);
+              }
+            });
+          }
         });
       });
 

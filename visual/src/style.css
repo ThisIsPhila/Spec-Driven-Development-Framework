@@ -1835,6 +1835,14 @@ a {
   font-weight: 600;
 }
 
+.leaderboard-subtitle {
+  font-size: 0.775rem;
+  color: var(--ds-gray-500);
+  margin: 0.35rem 0 0;
+  max-width: 720px;
+  line-height: 1.4;
+}
+
 /* Skills Table */
 .skills-table-wrapper {
   border: 1px solid var(--border);
@@ -1855,6 +1863,10 @@ a {
   color: var(--ds-gray-500);
 }
 
+.agent-table-header {
+  grid-template-columns: 48px 1fr 110px 170px 140px 100px;
+}
+
 .skills-table-rows {
   display: flex;
   flex-direction: column;
@@ -1868,6 +1880,10 @@ a {
   align-items: center;
   transition: background 0.15s ease;
   cursor: pointer;
+}
+
+.agent-row {
+  grid-template-columns: 48px 1fr 110px 170px 140px 100px;
 }
 
 .skills-row:last-child {
@@ -1900,6 +1916,16 @@ a {
   color: var(--ds-gray-500);
 }
 
+.agent-tag-line {
+  font-size: 0.725rem;
+  color: var(--ds-gray-500);
+  margin-top: 0.15rem;
+}
+
+.text-accent {
+  color: #ededed;
+}
+
 .verified-badge {
   font-size: 0.65rem;
   background: rgba(16, 185, 129, 0.1);
@@ -1908,6 +1934,46 @@ a {
   border-radius: 3px;
   padding: 0.1rem 0.35rem;
   font-family: var(--font-mono);
+}
+
+.error-rate-pill {
+  display: inline-block;
+  padding: 0.2rem 0.55rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.error-low {
+  background: rgba(16, 185, 129, 0.12);
+  color: #10b981;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.error-med {
+  background: rgba(6, 182, 212, 0.12);
+  color: #06b6d4;
+  border: 1px solid rgba(6, 182, 212, 0.3);
+}
+
+.error-high {
+  background: rgba(245, 158, 11, 0.12);
+  color: #f59e0b;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.guardrails-val {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.guardrails-sub {
+  display: block;
+  font-size: 0.65rem;
+  color: var(--ds-gray-500);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 .profile-desc-line {
@@ -1928,19 +1994,208 @@ a {
   color: #ededed;
 }
 
+@media (max-width: 900px) {
+  .agent-table-header {
+    grid-template-columns: 36px 1fr 90px 110px 80px;
+  }
+  .agent-table-header .col-activity {
+    display: none;
+  }
+  .agent-row {
+    grid-template-columns: 36px 1fr 90px 110px 80px;
+  }
+  .agent-row .col-activity {
+    display: none;
+  }
+}
+
 @media (max-width: 640px) {
-  .skills-table-header {
-    grid-template-columns: 36px 1fr 80px;
+  .agent-table-header {
+    grid-template-columns: 32px 1fr 75px 75px;
   }
-  .skills-table-header .col-activity {
+  .agent-table-header .col-guardrails,
+  .agent-table-header .col-activity {
     display: none;
   }
-  .skills-row {
-    grid-template-columns: 36px 1fr 80px;
+  .agent-row {
+    grid-template-columns: 32px 1fr 75px 75px;
   }
-  .skills-row .col-activity {
+  .agent-row .col-guardrails,
+  .agent-row .col-activity {
     display: none;
   }
+}
+
+/* ==========================================================================
+   PROFILES ECOSYSTEM INSIGHTS (Distribution Bar & Overlap Matrix)
+   ========================================================================== */
+
+.profile-insights-section {
+  margin: 4rem 0 2rem;
+  border-top: 1px solid var(--border);
+  padding-top: 2.5rem;
+}
+
+.insights-desc {
+  font-size: 0.775rem;
+  color: var(--ds-gray-500);
+  margin: 0.35rem 0 0;
+  max-width: 720px;
+  line-height: 1.4;
+}
+
+.distribution-card {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 1.25rem;
+  margin: 1.5rem 0;
+}
+
+.distribution-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.75rem;
+  color: var(--ds-gray-500);
+  margin-bottom: 0.85rem;
+}
+
+.distribution-stacked-bar {
+  display: flex;
+  height: 14px;
+  border-radius: 4px;
+  overflow: hidden;
+  width: 100%;
+  gap: 2px;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.bar-segment {
+  height: 100%;
+  transition: opacity 0.15s ease;
+  cursor: pointer;
+}
+
+.bar-segment:hover {
+  opacity: 0.8;
+}
+
+.distribution-legend-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 0.75rem;
+  margin-top: 1rem;
+  padding-top: 0.85rem;
+  border-top: 1px solid var(--border-subtle);
+  font-size: 0.725rem;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  white-space: nowrap;
+}
+
+.legend-color-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+.legend-name {
+  color: #ededed;
+}
+
+.legend-pct {
+  color: #ffffff;
+  font-weight: 700;
+}
+
+.legend-runs {
+  font-size: 0.675rem;
+}
+
+/* Overlap & Modifier Composition Grid */
+.overlap-composition-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.composition-card {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 1.15rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.composition-card:hover {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+.composition-top-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.4rem;
+}
+
+.composition-combo {
+  font-size: 0.85rem;
+  color: #ffffff;
+}
+
+.composition-overlap-tag {
+  font-size: 0.675rem;
+  color: #10b981;
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  border-radius: 3px;
+  padding: 0.1rem 0.35rem;
+}
+
+.composition-desc {
+  font-size: 0.75rem;
+  line-height: 1.4;
+  margin: 0 0 0.85rem;
+  color: var(--ds-gray-600);
+}
+
+.composition-cmd-box {
+  background: rgba(0, 0, 0, 0.5);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 0.45rem 0.65rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.composition-cmd-box code {
+  color: #ededed;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.copy-hint {
+  color: var(--ds-gray-500);
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-left: 0.5rem;
+  flex-shrink: 0;
 }
 
 /* Framework Foundations & Gates */
