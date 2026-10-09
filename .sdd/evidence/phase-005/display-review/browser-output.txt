@@ -1,0 +1,17 @@
+
+> @sdd/visual@0.1.0 test:browser
+> playwright test
+
+(node:2354) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 3 tests using 1 worker
+
+(node:2366) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:2366) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+  ✓  1 tests/browser/workspace.spec.js:25:1 › public page stays contained at mobile, tablet and desktop widths (1.8s)
+  ✓  2 tests/browser/workspace.spec.js:55:1 › real 60-phase workspace filters tasks and follows requirement/source links (4.2s)
+  ✓  3 tests/browser/workspace.spec.js:100:1 › account sign-up is functional and an empty account has no invented projects (1.3s)
+
+  3 passed (8.3s)

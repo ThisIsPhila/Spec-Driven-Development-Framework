@@ -19,3 +19,7 @@ Optional accounts use persisted SQLite, scrypt passwords, private owner-scoped s
 ## Verification and remaining boundaries
 
 Source 3db34d0 is locally and independently verified by green GitHub CI run 37981710676 (Linux/macOS): 28 unit/integration tests, 3 Chromium journeys, 9 core Bash files and production build pass. Exact tree, raw outputs and limits are recorded in .sdd/evidence/phase-005/corrective/verification-manifest.md. No owner acceptance is inferred. Hosted deployment/domain configuration and the owner's chosen login remain user steps. Cloud raster upload, native Windows lifecycle and password recovery are outside this implemented iteration and remain explicit limitations. Confessions was not located in the supplied coding folders; the local preview uses this framework, Smart Trader and Vanguard without changing their source files.
+
+## Owner display follow-up
+
+Reproduced and corrected undefined profile icons, catalog overlap and stripped Mermaid labels; exposed derived graph topology and repaired demo reload/reference lists. Local source 7b58c26 passes 28 unit/integration tests, 3 expanded browser journeys and build. Live synthetic update/reset and diagram inspected. Owner review fixture and 11 manual cases are available in docs/visual-review-walkthrough.md; detailed evidence is in reports/phase-005/display-review.md. Owner acceptance remains pending.
