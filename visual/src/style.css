@@ -3676,5 +3676,7 @@ a {
   .task-card-header { flex-wrap:wrap; }
   .task-title, .kpi-chip-val, .phase-header-meta { white-space:normal; overflow-wrap:anywhere; }
   .header-breadcrumb { min-width:0; max-width:100%; flex-wrap:wrap; }
-  .header-project-name { overflow-wrap:anywhere; }
+  .header-brand { min-width:0; max-width:100%; flex-wrap:wrap; white-space:normal; }
+  .header-left { max-width:100%; flex-shrink:1; }
+  .header-project-name { min-width:0; white-space:normal; overflow-wrap:anywhere; }
 }

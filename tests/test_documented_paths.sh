@@ -105,4 +105,13 @@ if [[ -f "$sandbox/.sdd/scripts/phase.sh" ]]; then
     fi
 fi
 
+start_test "profile validator completes every template under the current Bash"
+profile_output=$(bash "$FRAMEWORK_ROOT/scripts/validate-profiles.sh" 2>&1)
+profile_rc=$?
+if [[ "$profile_rc" -eq 0 ]] && [[ "$profile_output" == *"Validation passed!"* ]]; then
+    _pass "profile validator reaches its final success result"
+else
+    _fail "profile validator reaches its final success result" "expected: exit 0 and final result" "actual exit: $profile_rc"
+fi
+
 finish_test_file

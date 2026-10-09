@@ -21,7 +21,7 @@ for profile_dir in "$PROFILES_DIR/base"/*; do
     
     # Check README.md exists
     if ! check_file "$profile_dir/README.md" "$profile_name/README.md"; then
-        ((ERRORS++))
+        ERRORS=$((ERRORS + 1))
         continue
     fi
     
@@ -33,13 +33,13 @@ for profile_dir in "$PROFILES_DIR/base"/*; do
     
     if [[ -z "$name" ]] || [[ -z "$type" ]] || [[ -z "$description" ]]; then
         echo "    ✗ $profile_name: Missing frontmatter fields"
-        ((ERRORS++))
+        ERRORS=$((ERRORS + 1))
     fi
     
     # Check type is 'base'
     if [[ "$type" != "base" ]]; then
         echo "    ✗ $profile_name: Type must be 'base', got '$type'"
-        ((ERRORS++))
+        ERRORS=$((ERRORS + 1))
     fi
 done
 
@@ -52,7 +52,7 @@ for modifier_dir in "$PROFILES_DIR/modifiers"/*; do
     
     # Check README.md exists
     if ! check_file "$modifier_dir/README.md" "$modifier_name/README.md"; then
-        ((ERRORS++))
+        ERRORS=$((ERRORS + 1))
         continue
     fi
     
@@ -63,13 +63,13 @@ for modifier_dir in "$PROFILES_DIR/modifiers"/*; do
     
     if [[ -z "$name" ]] || [[ -z "$type" ]]; then
         echo "    ✗ $modifier_name: Missing frontmatter fields"
-        ((ERRORS++))
+        ERRORS=$((ERRORS + 1))
     fi
     
     # Check type is 'modifier'
     if [[ "$type" != "modifier" ]]; then
         echo "    ✗ $modifier_name: Type must be 'modifier', got '$type'"
-        ((ERRORS++))
+        ERRORS=$((ERRORS + 1))
     fi
     
     # Check for constitutional amendment (recommended)
@@ -89,11 +89,11 @@ for profile_dir in "$PROFILES_DIR"/base/* "$PROFILES_DIR"/modifiers/*; do
     if [[ -d "$profile_dir/templates" ]]; then
         for template in "$profile_dir/templates"/*.md; do
             if [[ -f "$template" ]]; then
-                ((template_count++))
+                template_count=$((template_count + 1))
                 if ! grep -q "Approval Checkpoint" "$template"; then
                     echo "  ✗ $(basename "$template"): Missing approval checkpoint"
-                    ((missing_checkpoints++))
-                    ((ERRORS++))
+                    missing_checkpoints=$((missing_checkpoints + 1))
+                    ERRORS=$((ERRORS + 1))
                 fi
             fi
         done
@@ -128,12 +128,12 @@ MONOREPO_FILES=(
 for file in "${MONOREPO_FILES[@]}"; do
     rel_path="${file#$MONOREPO_DIR/}"
     if ! check_file "$file" "monorepo/$rel_path"; then
-        ((ERRORS++))
+        ERRORS=$((ERRORS + 1))
     fi
 done
 
 if ! check_file "$REPO_ROOT/scripts/audit-monorepo.sh" "scripts/audit-monorepo.sh"; then
-    ((ERRORS++))
+    ERRORS=$((ERRORS + 1))
 fi
 
 echo ""
