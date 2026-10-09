@@ -132,6 +132,11 @@ export class SDDWorkspaceApp {
     this.currentProjectId = example.id;
     this.snapshot = structuredClone(demoSnapshot);
     this.snapshot.projectId = example.name; this.snapshot.profile = example.profile;
+    this.activePhaseId = this.snapshot.activePhaseId;
+    for (const phase of this.snapshot.phases) {
+      for (const [type, artifact] of Object.entries(phase.artifacts || {})) if (artifact && typeof artifact.content === 'string') artifact.path ||= `.sdd/specs/${phase.category || 'active'}/${phase.id}/${type}.md`;
+      for (const record of phase.artifacts?.evidence || []) record.path ||= `.sdd/evidence/${phase.id}/${record.filename}`;
+    }
     this.connectionStatus = 'demo'; this.currentView = 'project'; this.render();
   }
 
@@ -306,8 +311,20 @@ npm --prefix visual run workspace -- --project /path/to/project --project /path/
   }
 
   async _openArtifact(sourcePath) {
-    if (!this.token && !this.accountSession) return;
-    const response = await fetch(`/api/project/${this.currentProjectId}/artifact?path=${encodeURIComponent(sourcePath)}`, this._requestOptions());
+    let response;
+    if (this.connectionStatus === 'demo') {
+      const find = value => {
+        if (!value || typeof value !== 'object') return null;
+        if (value.path === sourcePath && typeof value.content === 'string') return value.content;
+        for (const child of Object.values(value)) { const result = find(child); if (result !== null) return result; }
+        return null;
+      };
+      const content = find(this.snapshot);
+      response = new Response(content || '', {status:content === null ? 404 : 200});
+    } else {
+      if (!this.token && !this.accountSession) return;
+      response = await fetch(`/api/project/${this.currentProjectId}/artifact?path=${encodeURIComponent(sourcePath)}`, this._requestOptions());
+    }
     const dialog = document.createElement('dialog');
     dialog.className = 'source-dialog';
     if (!response.ok) { dialog.textContent = 'Source unavailable or outside permitted scope.'; }
@@ -828,7 +845,7 @@ npm --prefix visual run workspace -- --project /path/to/project --project /path/
       const href = el.getAttribute('href');
       if (!href || href.startsWith('#') || /^[a-z]+:/i.test(href)) return;
       const source = el.closest('[data-source-path]')?.dataset.sourcePath;
-      if (!source || (!this.token && !this.accountSession)) return;
+      if (!source || (this.connectionStatus !== 'demo' && !this.token && !this.accountSession)) return;
       e.preventDefault();
       const base = source.slice(0, source.lastIndexOf('/') + 1);
       this._openArtifact(base + href.split('#')[0]);

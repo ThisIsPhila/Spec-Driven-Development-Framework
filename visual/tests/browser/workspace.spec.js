@@ -23,9 +23,13 @@ test('public page stays contained at mobile, tablet and desktop widths',async ({
   for (const width of [320,390,768,1024,1440]) {
     await page.setViewportSize({width,height:844}); await page.goto(`http://127.0.0.1:${info.port}/`);
     await expect(page.getByText('Explore fictional projects')).toBeVisible();
-    const overflow=await page.evaluate(()=>({document:document.documentElement.scrollWidth,viewport:innerWidth}));
+    const overflow=await page.evaluate(()=>({document:document.documentElement.scrollWidth,viewport:innerWidth,offenders:[...document.querySelectorAll('*')].filter(el=>el.getBoundingClientRect().right>innerWidth+0.5 && el.getBoundingClientRect().width<innerWidth*2).slice(0,8).map(el=>({tag:el.tagName,class:String(el.className),right:el.getBoundingClientRect().right}))}));
     expect(overflow.document,`page-wide overflow at ${width}`).toBeLessThanOrEqual(overflow.viewport);
   }
+  await page.locator('#launch-demo-btn').click();
+  await page.locator('[data-phase-tab="requirements"]').click();
+  await page.locator('button[data-source-path]').first().click();
+  await expect(page.locator('dialog pre')).toContainText('REQ-');
 });
 test('real 60-phase workspace filters tasks and follows requirement/source links',async ({page})=>{
   await page.goto(info.url);
@@ -57,7 +61,7 @@ test('real 60-phase workspace filters tasks and follows requirement/source links
   const deepLink=page.url(); await page.goto(deepLink);
   await expect(page.locator('[data-phase-tab="tasks"]')).toHaveClass(/active/);
   await expect(page.locator('.task-card')).toHaveCount(2);
-  for (const width of [320,390,768,1024,1440]) { await page.setViewportSize({width,height:844}); const sizes=await page.evaluate(()=>({document:document.documentElement.scrollWidth,viewport:innerWidth})); expect(sizes.document, `workspace overflow at ${width}`).toBeLessThanOrEqual(sizes.viewport); }
+  for (const width of [320,390,768,1024,1440]) { await page.setViewportSize({width,height:844}); const sizes=await page.evaluate(()=>({document:document.documentElement.scrollWidth,viewport:innerWidth,offenders:[...document.querySelectorAll('*')].filter(el=>el.getBoundingClientRect().right>innerWidth+0.5 && el.getBoundingClientRect().width<innerWidth*2).slice(0,8).map(el=>({tag:el.tagName,class:String(el.className),right:el.getBoundingClientRect().right}))})); expect(sizes.document, `workspace overflow at ${width}: ${JSON.stringify(sizes.offenders)}`).toBeLessThanOrEqual(sizes.viewport); }
   await page.locator('[data-domain="knowledge"]').click(); await page.locator('[data-know-section="graphify"]').click();
   await expect(page.getByRole('img',{name:'Imported Graphify topology'})).toBeVisible();
   await expect(page.locator('.imported-graph rect')).toHaveCount(2);

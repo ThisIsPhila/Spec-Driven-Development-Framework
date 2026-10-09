@@ -3669,3 +3669,12 @@ a {
 
 .imported-graph-scroller { max-width:100%; overflow:auto; max-height:65vh; }
 .imported-graph { display:block; min-width:1100px; width:100%; }
+/* Long status labels and task contracts must shrink with narrow workspaces. */
+.phase-workspace-container, .phase-header-kpi-bar, .kpi-chip, .task-card,
+.task-card-header, .task-card-left, .task-title { min-width:0; max-width:100%; }
+@media (max-width: 768px) {
+  .task-card-header { flex-wrap:wrap; }
+  .task-title, .kpi-chip-val, .phase-header-meta { white-space:normal; overflow-wrap:anywhere; }
+  .header-breadcrumb { min-width:0; max-width:100%; flex-wrap:wrap; }
+  .header-project-name { overflow-wrap:anywhere; }
+}
