@@ -339,15 +339,14 @@ export class SDDWorkspaceApp {
   }
 
   _updateStatusBar() {
-    const el = document.querySelector('.header-right');
-    if (el) el.innerHTML = `
-      <div class="sync-status-pill">
-        <span class="sync-dot ${this.connectionStatus === 'live' ? 'live' : 'standalone'}"></span>
-        <span class="sync-text">${this.connectionStatus.toUpperCase()}</span>
-      </div>
-      <a class="nav-link-subtle" id="nav-projects-dashboard-btn">Projects</a>
-      <a class="nav-link-subtle" id="nav-landing-page-btn">Landing</a>
-    `;
+    const pill = document.querySelector('.sync-status-pill');
+    if (pill) {
+      const isSynced = this.connectionStatus === 'live';
+      pill.innerHTML = `
+        <span class="sync-dot ${isSynced ? 'live' : 'standalone'}"></span>
+        <span class="sync-text">${isSynced ? 'SYNCED' : this.connectionStatus.toUpperCase()}</span>
+      `;
+    }
   }
 
   _renderCurrentView() {
