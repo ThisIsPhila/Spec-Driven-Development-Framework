@@ -1500,5 +1500,547 @@ a {
 .sparkline-svg {
   display: block;
   overflow: visible;
+  width: 100%;
+  height: 100%;
 }
+
+/* ==========================================================================
+   AUTHENTIC SKILLS.SH DIRECTORY & LEADERBOARD STYLING
+   ========================================================================== */
+
+.skills-page-wrapper {
+  max-width: 1152px;
+  margin: 0 auto;
+  padding: 1rem 1.5rem 5rem;
+}
+
+.skills-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+/* Hero Section */
+.skills-hero-container {
+  margin: 1.5rem auto 3rem;
+}
+
+.skills-hero-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 1.75rem;
+}
+
+.hero-left-col {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.ascii-wrapper {
+  overflow-x: auto;
+  max-width: 100%;
+}
+
+.ascii-logo {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  line-height: 1.15;
+  letter-spacing: -0.05em;
+  color: #ffffff;
+  margin: 0;
+  user-select: none;
+  text-shadow: 0 0 20px rgba(255, 255, 255, 0.2);
+}
+
+@media (min-width: 768px) {
+  .ascii-logo {
+    font-size: 15px;
+  }
+}
+
+.hero-kicker-mono {
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #ededed;
+  margin: 0.75rem 0 0;
+}
+
+.hero-lead-text {
+  font-size: 1.35rem;
+  line-height: 1.45;
+  color: var(--ds-gray-600);
+  margin: 0;
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  max-width: 860px;
+}
+
+@media (min-width: 768px) {
+  .hero-lead-text {
+    font-size: 1.6rem;
+  }
+}
+
+.try-kicker {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--ds-gray-500);
+  font-weight: 600;
+  margin: 0 0 0.5rem;
+}
+
+/* CLI Install Box */
+.cli-command-box {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.65rem 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  max-width: 700px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.cli-command-box:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+.command-code {
+  display: flex;
+  align-items: center;
+  font-family: var(--font-mono);
+  font-size: 0.825rem;
+  color: #ededed;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.prompt-symbol {
+  color: var(--ds-gray-500);
+  margin-right: 0.75rem;
+  user-select: none;
+}
+
+.copy-trigger-btn {
+  background: none;
+  border: none;
+  color: var(--ds-gray-500);
+  cursor: pointer;
+  padding: 0.35rem;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  position: relative;
+  transition: color 0.15s ease;
+  flex-shrink: 0;
+}
+
+.copy-trigger-btn:hover {
+  color: #ffffff;
+}
+
+.copy-status-bubble {
+  position: absolute;
+  right: 2.25rem;
+  top: 50%;
+  transform: translateY(-50%);
+  font-family: var(--font-mono);
+  font-size: 0.675rem;
+  background: #ffffff;
+  color: #000000;
+  padding: 0.15rem 0.45rem;
+  border-radius: 3px;
+  font-weight: 600;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s ease;
+  white-space: nowrap;
+}
+
+.copy-status-bubble.show {
+  opacity: 1;
+}
+
+.hero-action-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+/* Agent Marquee Strip */
+.hero-agents-container {
+  margin-top: 0.5rem;
+}
+
+.agents-scroll-wrapper {
+  overflow-x: auto;
+  padding-bottom: 0.5rem;
+  -webkit-overflow-scrolling: touch;
+}
+
+.agents-track {
+  display: flex;
+  gap: 0.5rem;
+  width: max-content;
+}
+
+.agent-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.35rem 0.75rem;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--ds-gray-600);
+  transition: all 0.2s ease;
+  cursor: default;
+}
+
+.agent-chip:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.25);
+  color: #ffffff;
+}
+
+/* Leaderboard Directory */
+.skills-leaderboard-container {
+  margin: 3.5rem 0 2.5rem;
+}
+
+.leaderboard-meta-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.leaderboard-title-kicker {
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 600;
+  color: #ededed;
+  margin: 0;
+}
+
+.leaderboard-count-tag {
+  font-size: 0.725rem;
+  color: var(--ds-gray-500);
+  background: rgba(255, 255, 255, 0.04);
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+}
+
+.directory-search-bar {
+  margin-bottom: 1.25rem;
+}
+
+.search-input-container {
+  position: relative;
+  width: 100%;
+  display: flex;
+  align-items: center;
+}
+
+.search-glyph {
+  position: absolute;
+  left: 0.85rem;
+  color: var(--ds-gray-500);
+  pointer-events: none;
+}
+
+.search-field {
+  width: 100%;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--border);
+  padding: 0.85rem 2.5rem 0.85rem 2.65rem;
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  color: #ffffff;
+  outline: none;
+  transition: border-color 0.15s ease;
+}
+
+.search-field:focus {
+  border-bottom-color: #ededed;
+}
+
+.search-field::placeholder {
+  color: var(--ds-gray-500);
+}
+
+.kbd-pill {
+  position: absolute;
+  right: 0.85rem;
+  font-size: 0.7rem;
+  color: var(--ds-gray-500);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  padding: 0.1rem 0.4rem;
+  background: rgba(255, 255, 255, 0.04);
+  pointer-events: none;
+}
+
+.leaderboard-tabs-bar {
+  display: flex;
+  gap: 1.25rem;
+  border-bottom: 1px solid var(--border-subtle);
+  margin-bottom: 1.25rem;
+  overflow-x: auto;
+}
+
+.tab-btn {
+  background: none;
+  border: none;
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  color: var(--ds-gray-500);
+  padding: 0.5rem 0;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.tab-btn:hover {
+  color: #ffffff;
+}
+
+.tab-btn.active {
+  color: #ffffff;
+  border-bottom-color: #ffffff;
+  font-weight: 600;
+}
+
+/* Skills Table */
+.skills-table-wrapper {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.skills-table-header {
+  display: grid;
+  grid-template-columns: 48px 1fr 140px 100px;
+  padding: 0.75rem 1rem;
+  background: rgba(255, 255, 255, 0.02);
+  border-bottom: 1px solid var(--border);
+  font-size: 0.725rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--ds-gray-500);
+}
+
+.skills-table-rows {
+  display: flex;
+  flex-direction: column;
+}
+
+.skills-row {
+  display: grid;
+  grid-template-columns: 48px 1fr 140px 100px;
+  padding: 0.85rem 1rem;
+  border-bottom: 1px solid var(--border-subtle);
+  align-items: center;
+  transition: background 0.15s ease;
+  cursor: pointer;
+}
+
+.skills-row:last-child {
+  border-bottom: none;
+}
+
+.skills-row:hover {
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.col-rank {
+  font-size: 0.85rem;
+  color: var(--ds-gray-500);
+}
+
+.profile-title-line {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.25rem;
+}
+
+.profile-name {
+  font-size: 0.9rem;
+  color: #ffffff;
+}
+
+.profile-repo {
+  font-size: 0.75rem;
+  color: var(--ds-gray-500);
+}
+
+.verified-badge {
+  font-size: 0.65rem;
+  background: rgba(16, 185, 129, 0.1);
+  color: #10b981;
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  border-radius: 3px;
+  padding: 0.1rem 0.35rem;
+  font-family: var(--font-mono);
+}
+
+.profile-desc-line {
+  font-size: 0.775rem;
+  line-height: 1.35;
+  color: var(--ds-gray-600);
+}
+
+.sparkline-wrapper {
+  width: 140px;
+  height: 24px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.runs-value {
+  font-size: 0.85rem;
+  color: #ededed;
+}
+
+@media (max-width: 640px) {
+  .skills-table-header {
+    grid-template-columns: 36px 1fr 80px;
+  }
+  .skills-table-header .col-activity {
+    display: none;
+  }
+  .skills-row {
+    grid-template-columns: 36px 1fr 80px;
+  }
+  .skills-row .col-activity {
+    display: none;
+  }
+}
+
+/* Framework Foundations & Gates */
+.skills-foundations-section,
+.skills-commands-section {
+  margin: 4rem 0 2rem;
+  border-top: 1px solid var(--border);
+  padding-top: 2.5rem;
+}
+
+.foundations-heading {
+  margin-bottom: 1.5rem;
+}
+
+.foundations-main-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #ffffff;
+  margin: 0.25rem 0 0;
+}
+
+.foundations-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1rem;
+}
+
+.foundation-block {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 1.25rem;
+  transition: border-color 0.15s ease;
+}
+
+.foundation-block:hover {
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.gate-kicker {
+  font-size: 0.7rem;
+  color: var(--ds-gray-500);
+  font-weight: 600;
+  letter-spacing: 0.05em;
+}
+
+.gate-headline {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #ffffff;
+  margin: 0.35rem 0 0.5rem;
+}
+
+.gate-body {
+  font-size: 0.775rem;
+  line-height: 1.45;
+  color: var(--ds-gray-600);
+  margin: 0;
+}
+
+/* Commands Matrix */
+.commands-table-container {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.commands-matrix {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8rem;
+}
+
+.commands-matrix th {
+  background: rgba(255, 255, 255, 0.02);
+  padding: 0.75rem 1rem;
+  text-align: left;
+  font-size: 0.725rem;
+  text-transform: uppercase;
+  color: var(--ds-gray-500);
+  border-bottom: 1px solid var(--border);
+}
+
+.commands-matrix td {
+  padding: 0.85rem 1rem;
+  border-bottom: 1px solid var(--border-subtle);
+  color: var(--ds-gray-600);
+}
+
+.commands-matrix tr:last-child td {
+  border-bottom: none;
+}
+
+.commands-matrix td code {
+  color: #ededed;
+  background: rgba(255, 255, 255, 0.04);
+  padding: 0.2rem 0.45rem;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+}
+
 

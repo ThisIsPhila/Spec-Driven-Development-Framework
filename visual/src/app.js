@@ -1640,5 +1640,92 @@ export class SDDWorkspaceApp {
         });
       });
     }
+
+    // Authentic skills.sh Landing Page Events
+    if (this.currentView === 'landing') {
+      const copyCmdBox = document.getElementById('install-cmd-box');
+      const copyCmdBtn = document.getElementById('copy-cmd-btn');
+      const copyStatusBubble = document.getElementById('copy-status-bubble');
+
+      const doCopyInstall = (e) => {
+        if (e) e.stopPropagation();
+        const cmd = 'curl -fsSL https://raw.githubusercontent.com/ThisIsPhila/Spec-Driven-Development-Framework/main/setup.sh | bash';
+        navigator.clipboard.writeText(cmd).then(() => {
+          if (copyStatusBubble) {
+            copyStatusBubble.classList.add('show');
+            setTimeout(() => { copyStatusBubble.classList.remove('show'); }, 2000);
+          }
+        });
+      };
+
+      if (copyCmdBox) copyCmdBox.addEventListener('click', doCopyInstall);
+      if (copyCmdBtn) copyCmdBtn.addEventListener('click', doCopyInstall);
+
+      // Search input filter in landing leaderboard
+      const leaderboardSearch = document.getElementById('leaderboard-search-input');
+      const rows = Array.from(this.container.querySelectorAll('.skills-row'));
+
+      const filterLeaderboard = () => {
+        const query = (leaderboardSearch?.value || '').toLowerCase().trim();
+        const activeTab = this.container.querySelector('.leaderboard-tabs-bar .tab-btn.active')?.getAttribute('data-filter') || 'all';
+
+        rows.forEach(row => {
+          const name = (row.querySelector('.profile-name')?.innerText || '').toLowerCase();
+          const repo = (row.querySelector('.profile-repo')?.innerText || '').toLowerCase();
+          const desc = (row.querySelector('.profile-desc-line')?.innerText || '').toLowerCase();
+          const cat = row.getAttribute('data-category');
+
+          const matchesQuery = !query || name.includes(query) || repo.includes(query) || desc.includes(query);
+          const matchesTab = activeTab === 'all' || cat === activeTab || (activeTab === 'trending' && (cat === 'trending' || cat === 'official'));
+
+          if (matchesQuery && matchesTab) {
+            row.style.display = 'grid';
+          } else {
+            row.style.display = 'none';
+          }
+        });
+      };
+
+      if (leaderboardSearch) {
+        leaderboardSearch.addEventListener('input', filterLeaderboard);
+      }
+
+      // Filter tabs in landing leaderboard
+      this.container.querySelectorAll('.leaderboard-tabs-bar .tab-btn').forEach(tab => {
+        tab.addEventListener('click', () => {
+          this.container.querySelectorAll('.leaderboard-tabs-bar .tab-btn').forEach(t => t.classList.remove('active'));
+          tab.classList.add('active');
+          filterLeaderboard();
+        });
+      });
+
+      // Quick-copy install profile on row click
+      rows.forEach(row => {
+        row.addEventListener('click', () => {
+          const profId = row.getAttribute('data-profile-id');
+          const cmd = `bash scripts/setup.sh --profile ${profId}`;
+          navigator.clipboard.writeText(cmd).then(() => {
+            const nameEl = row.querySelector('.profile-name');
+            if (nameEl) {
+              const orig = nameEl.innerText;
+              nameEl.innerText = `✓ Copied: ${cmd}`;
+              setTimeout(() => { nameEl.innerText = orig; }, 1800);
+            }
+          });
+        });
+      });
+
+      // Keyboard shortcut '/' to focus search
+      const onKeyDown = (e) => {
+        if (e.key === '/' && document.activeElement !== leaderboardSearch && document.activeElement?.tagName !== 'INPUT') {
+          e.preventDefault();
+          if (leaderboardSearch) {
+            leaderboardSearch.focus();
+            leaderboardSearch.select();
+          }
+        }
+      };
+      window.addEventListener('keydown', onKeyDown, { once: true });
+    }
   }
 }
