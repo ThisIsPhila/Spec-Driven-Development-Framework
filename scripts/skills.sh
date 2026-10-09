@@ -15,6 +15,7 @@ usage() {
     echo "  sync                  Sync local skills to agent directories"
     echo "  create <name>         Scaffold a new skill directory under skills/"
     echo "  validate              Validate structure and frontmatter of local skills"
+    echo "  pack <validate|install> <folder> [--update]   Manage an SDD community skill pack (optional Node)"
     echo "  add <source>          Download and add a skill from a remote repository"
     echo ""
     echo "Options for sync:"
@@ -208,7 +209,7 @@ cmd_validate() {
 }
 
 cmd_add() {
-    local source="$1"
+    local source="${1:-}"
     shift
     local target_skill=""
 
@@ -229,6 +230,8 @@ cmd_add() {
         echo "❌ Usage: $0 add <owner/repo> [--skill <name>]"
         exit 1
     fi
+
+    if [[ -n "$target_skill" && ! "$target_skill" =~ ^[a-z0-9-]+$ ]]; then echo "Invalid skill name"; exit 1; fi
 
     local repo_url="$source"
     if [[ ! "$source" =~ ^(http|https|git@) ]]; then
@@ -296,6 +299,7 @@ case "$COMMAND" in
     create) cmd_create "$@" ;;
     validate) cmd_validate ;;
     add) cmd_add "$@" ;;
+    pack) command -v node >/dev/null 2>&1 || { echo "Skill packs require optional Node.js"; exit 1; }; node "$(dirname "${BASH_SOURCE[0]}")/skill-pack.cjs" "$@" ;;
     help|-h|--help) usage ;;
     *)
         echo "❌ Unknown command: $COMMAND"
