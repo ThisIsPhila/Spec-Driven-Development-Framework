@@ -27,12 +27,12 @@ try {
   const info = await service.start();
 
   console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-  console.log('⚡ SDD Visual Workspace Server Running');
-  console.log(`📁 Project: ${project.id} (${project.root})`);
-  console.log(`🔗 URL:     ${info.url}`);
+  console.log('[SDD] Visual Workspace Server Running');
+  console.log(`[SDD] Project: ${project.id} (${project.root})`);
+  console.log(`[SDD] URL:     ${info.url}`);
   console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
   console.log('Press Ctrl+C to stop.');
 } catch (err) {
-  console.error('❌ Failed to start visual workspace:', err.message);
+  console.error('[SDD Error] Failed to start visual workspace:', err.message);
   process.exit(1);
 }

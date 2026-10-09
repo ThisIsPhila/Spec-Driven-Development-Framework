@@ -1,4 +1,5 @@
 import { renderMarkdown } from '../markdown.js';
+import { ICONS } from '../icons.js';
 
 /**
  * Evidence Records Reader Component
@@ -40,7 +41,7 @@ function renderEvidenceCard(record, phase) {
     <article class="evidence-card" aria-label="Evidence record: ${record.filename}">
       <header class="evidence-card-header">
         <div class="evidence-title-group">
-          <span class="file-icon">🛡️</span>
+          <span class="file-icon">${ICONS.shieldCheck}</span>
           <h3 class="evidence-filename">${record.filename}</h3>
         </div>
         <div class="evidence-outcome-badge ${resultClass}">

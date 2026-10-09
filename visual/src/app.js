@@ -2,6 +2,7 @@ import { renderMarkdown } from './markdown.js';
 import { renderMermaidBlocks } from './diagrams.js';
 import { generateTraceabilitySvg, generateTraceabilityList } from './traceability.js';
 import { renderLandingView } from './views/landingView.js';
+import { ICONS } from './icons.js';
 import demoSnapshot from '../demo/demo-project.json';
 
 export class SDDWorkspaceApp {
@@ -321,7 +322,8 @@ export class SDDWorkspaceApp {
           `;
         }).join('')}
         <button class="phase-header-btn ${this.activeTab === 'metrics' && this.activePhaseId === null ? 'active' : ''}" id="header-metrics-btn">
-          📊 Metrics
+          ${ICONS.chart}
+          <span>Metrics</span>
         </button>
       </nav>
 
@@ -388,7 +390,7 @@ export class SDDWorkspaceApp {
         <!-- Account Hero Bar -->
         <div class="account-hero-bar">
           <div class="account-identity">
-            <div class="account-avatar-large">👤</div>
+            <div class="account-avatar-large">${ICONS.user}</div>
             <div>
               <h1 class="account-title">${account.name}</h1>
               <p class="account-sub">${account.email || 'Local Developer'} • ${account.branch} (${(account.headCommit || '').slice(0, 7)})</p>
@@ -815,7 +817,7 @@ export class SDDWorkspaceApp {
                 evidence/ (${evCount})
               </button>
               <button class="detail-tab-btn ${this.activeTab === 'metrics' ? 'active' : ''}" data-detail-tab="metrics">
-                📊 Metrics & Health
+                ${ICONS.chart} Metrics & Health
               </button>
               <button class="detail-tab-btn ${this.activeTab === 'traceability' ? 'active' : ''}" data-detail-tab="traceability">
                 Traceability Graph
@@ -937,7 +939,7 @@ export class SDDWorkspaceApp {
             return `
               <div class="task-clean-row">
                 <span class="task-check-icon ${isDone ? 'task-check-done' : isDoing ? 'task-check-doing' : ''}">
-                  ${isDone ? '[✓]' : isDoing ? '[/]' : '[ ]'}
+                  ${isDone ? ICONS.checkCircle : isDoing ? ICONS.clock : ICONS.circle}
                 </span>
                 <div class="task-clean-body">
                   <div class="task-clean-title">
@@ -1039,7 +1041,7 @@ export class SDDWorkspaceApp {
         <!-- Evidence Freshness & Commit Drift Banner -->
         ${isFresh ? `
           <div class="freshness-banner freshness-banner-fresh">
-            <span style="font-size:1.25rem;">✨</span>
+            <span class="banner-icon-slot">${ICONS.sparkles}</span>
             <div>
               <div class="banner-title">FRESH ASSURANCE: Evidence matches active Git HEAD</div>
               <p class="banner-desc">All verification runs in this phase were executed against current repository commit state. Zero drift detected.</p>
@@ -1047,7 +1049,7 @@ export class SDDWorkspaceApp {
           </div>
         ` : isStale ? `
           <div class="freshness-banner freshness-banner-stale">
-            <span style="font-size:1.25rem;">⚠️</span>
+            <span class="banner-icon-slot">${ICONS.alertTriangle}</span>
             <div>
               <div class="banner-title">DRIFT WARNING: Verification Evidence is Stale</div>
               <p class="banner-desc">${metrics.verificationAssurance.staleDetails}. Code has changed since tests were run. Re-run verification tests before closing this phase.</p>
@@ -1055,7 +1057,7 @@ export class SDDWorkspaceApp {
           </div>
         ` : `
           <div class="freshness-banner freshness-banner-fresh" style="border-color:var(--border);">
-            <span style="font-size:1.25rem;">ℹ️</span>
+            <span class="banner-icon-slot">${ICONS.shieldCheck}</span>
             <div>
               <div class="banner-title">Local Verification Baseline</div>
               <p class="banner-desc">Verification records captured in evidence files provide auditable proof for all completed tasks.</p>
@@ -1098,7 +1100,7 @@ export class SDDWorkspaceApp {
         <!-- Warnings if any gaps exist -->
         ${metrics.traceability.unmappedRequirements.length > 0 ? `
           <div class="freshness-banner freshness-banner-stale" style="margin-bottom:1rem;">
-            <span>⚠️</span>
+            <span class="banner-icon-slot">${ICONS.alertTriangle}</span>
             <div>
               <div class="banner-title">Unmapped Requirements Detected (${metrics.traceability.unmappedRequirements.length})</div>
               <p class="banner-desc">The following requirements have NO implementing tasks: <code>${metrics.traceability.unmappedRequirements.join(', ')}</code></p>
@@ -1108,7 +1110,7 @@ export class SDDWorkspaceApp {
 
         ${metrics.traceability.orphanTasks.length > 0 ? `
           <div class="freshness-banner freshness-banner-stale" style="margin-bottom:1rem;">
-            <span>⚠️</span>
+            <span class="banner-icon-slot">${ICONS.alertTriangle}</span>
             <div>
               <div class="banner-title">Orphan Tasks Detected (${metrics.traceability.orphanTasks.length})</div>
               <p class="banner-desc">Tasks lacking requirement references (potential scope creep): <code>${metrics.traceability.orphanTasks.join(', ')}</code></p>
@@ -1144,7 +1146,7 @@ export class SDDWorkspaceApp {
                   </td>
                   <td>
                     <span class="matrix-status-badge ${row.status === 'VERIFIED' ? 'status-badge-verified' : row.status === 'IMPLEMENTED' ? 'status-badge-implemented' : 'status-badge-gap'}">
-                      ${row.status === 'VERIFIED' ? '✅ VERIFIED' : row.status === 'IMPLEMENTED' ? '⚡ IMPLEMENTED' : '❌ GAP'}
+                      ${row.status === 'VERIFIED' ? `${ICONS.checkCircle} VERIFIED` : row.status === 'IMPLEMENTED' ? `${ICONS.clock} IMPLEMENTED` : `${ICONS.alertTriangle} GAP`}
                     </span>
                   </td>
                 </tr>
@@ -1635,7 +1637,7 @@ export class SDDWorkspaceApp {
         const text = pill.querySelector('code')?.innerText || '';
         navigator.clipboard.writeText(text.replace(/^\$\s*/, '')).then(() => {
           const btn = pill.querySelector('.copy-icon-btn');
-          if (btn) btn.innerHTML = '✓';
+          if (btn) btn.innerHTML = ICONS.check;
           setTimeout(() => { this.render(); }, 1500);
         });
       });
@@ -1731,7 +1733,7 @@ export class SDDWorkspaceApp {
             const nameEl = row.querySelector('.profile-name');
             if (nameEl) {
               const orig = nameEl.innerText;
-              nameEl.innerText = `✓ SDD Ready`;
+              nameEl.innerText = `Setup Copied`;
               setTimeout(() => { nameEl.innerText = orig; }, 1800);
             }
           });

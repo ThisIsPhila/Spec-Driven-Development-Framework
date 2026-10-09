@@ -1,11 +1,10 @@
 /**
  * Public Landing Page View (skills.sh authentic directory design)
- * Side-by-side responsive grid:
- * 1. Hero: Left Column (ASCII Logo, subkicker, action CTAs) + Right Column (Lead description, Try-it-now, Agent marquee)
- * 2. Leaderboard: Tabs + Search bar side-by-side
- * 3. Profile Ecosystem: Distribution Graph (Left) + Overlap Matrix (Right) side-by-side
- * 4. Foundations: 4 Gates side-by-side
+ * Zero emojis - 100% Lucide & Platform SVG icons.
+ * Full mobile/tablet/desktop responsive layouts.
  */
+
+import { ICONS, PLATFORM_LOGOS } from '../icons.js';
 
 export const AGENT_LEADERBOARD = [
   {
@@ -187,21 +186,21 @@ export const LANDING_PROFILES = PROFILE_INSIGHTS.distribution;
 
 export function renderLandingView() {
   const agents = [
-    { name: 'Claude Code' },
-    { name: 'Antigravity' },
-    { name: 'Cursor' },
-    { name: 'Windsurf' },
-    { name: 'Cline' },
-    { name: 'GitHub Copilot' },
-    { name: 'Roo Code' },
-    { name: 'Codex' },
-    { name: 'OpenClaw' },
-    { name: 'Zed' }
+    { id: 'claude-code', name: 'Claude Code' },
+    { id: 'antigravity', name: 'Antigravity' },
+    { id: 'cursor', name: 'Cursor' },
+    { id: 'windsurf', name: 'Windsurf' },
+    { id: 'cline', name: 'Cline' },
+    { id: 'github-copilot', name: 'GitHub Copilot' },
+    { id: 'roo-code', name: 'Roo Code' },
+    { id: 'codex', name: 'Codex' },
+    { id: 'openclaw', name: 'OpenClaw' },
+    { id: 'zed', name: 'Zed' }
   ];
 
   return `
     <div class="skills-page-wrapper">
-      <!-- Hero Grid Section (Exact skills.sh Side-by-Side 2-Column Grid) -->
+      <!-- Hero Grid Section (Exact skills.sh Responsive 2-Column Grid) -->
       <section class="skills-hero-container">
         <div class="skills-hero-grid">
           <!-- LEFT COLUMN: ASCII Logo, Kicker, and Action CTAs -->
@@ -216,16 +215,20 @@ export function renderLandingView() {
             </div>
             <p class="hero-kicker-mono">The Open Spec-Driven Development Ecosystem</p>
 
-            <!-- Hero Action CTAs -->
+            <!-- Hero Action CTAs (Zero Emojis - Lucide Icons) -->
             <div class="hero-action-buttons">
-              <button id="launch-demo-btn" class="btn btn-primary">
-                🚀 Launch Interactive Demo
+              <button id="launch-demo-btn" class="btn btn-primary btn-with-icon">
+                ${ICONS.play}
+                <span>Launch Interactive Demo</span>
               </button>
-              <button id="connect-workspace-btn" class="btn btn-secondary">
-                🔑 Connect Local Workspace
+              <button id="connect-workspace-btn" class="btn btn-secondary btn-with-icon">
+                ${ICONS.key}
+                <span>Connect Local Workspace</span>
               </button>
-              <a href="https://github.com/ThisIsPhila/Spec-Driven-Development-Framework" target="_blank" rel="noopener noreferrer" class="btn btn-secondary">
-                View on GitHub ↗
+              <a href="https://github.com/ThisIsPhila/Spec-Driven-Development-Framework" target="_blank" rel="noopener noreferrer" class="btn btn-secondary btn-with-icon">
+                ${ICONS.github}
+                <span>View on GitHub</span>
+                ${ICONS.external}
               </a>
             </div>
           </div>
@@ -246,22 +249,20 @@ export function renderLandingView() {
                   <span class="cmd-run-text">curl -fsSL https://raw.githubusercontent.com/ThisIsPhila/Spec-Driven-Development-Framework/main/setup.sh | bash</span>
                 </code>
                 <button class="copy-trigger-btn" id="copy-cmd-btn" aria-label="Copy to clipboard" title="Copy to clipboard">
-                  <svg viewBox="0 0 16 16" height="16" width="16" fill="currentColor">
-                    <path fill-rule="evenodd" d="M2.75.5C1.78.5 1 1.28 1 2.25v7.5c0 .97.78 1.75 1.75 1.75H4.5V10H2.75a.25.25 0 0 1-.25-.25v-7.5c0-.14.11-.25.25-.25h5.5c.14 0 .25.11.25.25V3H10v-.75C10 1.28 9.22.5 8.25.5zm5 4C6.78 4.5 6 5.28 6 6.25v7.5c0 .97.78 1.75 1.75 1.75h5.5c.97 0 1.75-.78 1.75-1.75v-7.5c0-.97-.78-1.75-1.75-1.75zM7.5 6.25c0-.14.11-.25.25-.25h5.5c.14 0 .25.11.25.25v7.5q-.02.23-.25.25h-5.5a.25.25 0 0 1-.25-.25z" clip-rule="evenodd"/>
-                  </svg>
+                  ${ICONS.copy}
                   <span class="copy-status-bubble" id="copy-status-bubble">Copied</span>
                 </button>
               </div>
             </div>
 
-            <!-- Agents strip -->
+            <!-- Agents strip with Official Platform SVG Logos -->
             <div class="hero-agents-container">
               <h2 class="try-kicker">Verified Agent Runtimes</h2>
               <div class="agents-scroll-wrapper">
                 <div class="agents-track">
                   ${agents.map(a => `
                     <div class="agent-chip" title="Compatible with ${a.name}">
-                      <span class="agent-chip-icon">🤖</span>
+                      <span class="agent-chip-icon">${PLATFORM_LOGOS[a.id] || ICONS.terminal}</span>
                       <span class="agent-chip-title">${a.name}</span>
                     </div>
                   `).join('')}
@@ -295,76 +296,77 @@ export function renderLandingView() {
 
           <div class="directory-search-bar">
             <div class="search-input-container">
-              <svg class="search-glyph" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="m21 21-4.34-4.34"></path><circle cx="11" cy="11" r="8"></circle>
-              </svg>
+              <span class="search-glyph">${ICONS.search}</span>
               <input type="text" id="leaderboard-search-input" placeholder="Search agents, models..." class="search-field font-mono" autocomplete="off" spellcheck="false" />
               <kbd class="kbd-pill font-mono">/</kbd>
             </div>
           </div>
         </div>
 
-        <!-- Leaderboard Table -->
-        <div class="skills-table-wrapper">
-          <div class="skills-table-header agent-table-header">
-            <div class="col-rank font-mono">#</div>
-            <div class="col-agent font-mono">Agent / Harness</div>
-            <div class="col-error font-mono text-center">Error Rate</div>
-            <div class="col-guardrails font-mono text-right">Guardrail Interceptions</div>
-            <div class="col-activity font-mono text-right">8W Activity</div>
-            <div class="col-runs font-mono text-right">Spec Runs</div>
-          </div>
+        <!-- Leaderboard Table (Responsive Horizontal Scroll Container) -->
+        <div class="skills-table-responsive-wrapper">
+          <div class="skills-table-wrapper">
+            <div class="skills-table-header agent-table-header">
+              <div class="col-rank font-mono">#</div>
+              <div class="col-agent font-mono">Agent / Harness</div>
+              <div class="col-error font-mono text-center">Error Rate</div>
+              <div class="col-guardrails font-mono text-right">Guardrails Prevented</div>
+              <div class="col-activity font-mono text-right">8W Activity</div>
+              <div class="col-runs font-mono text-right">Spec Runs</div>
+            </div>
 
-          <div class="skills-table-rows" id="leaderboard-table-rows">
-            ${AGENT_LEADERBOARD.map(a => `
-              <div class="skills-row agent-row group" data-agent-id="${a.id}" data-category="${a.category}" data-error="${parseFloat(a.errorRate)}" data-runs="${parseInt(a.runs)}" role="button" tabindex="0" title="Click to view ${a.name} SDD profile usage & instructions">
-                <div class="col-rank font-mono">${a.rank}</div>
-                <div class="col-agent">
-                  <div class="profile-title-line">
-                    <span class="profile-name font-mono font-bold">${a.name}</span>
-                    <span class="profile-repo font-mono">${a.vendor} • ${a.model}</span>
-                    ${a.category === 'official' ? '<span class="verified-badge" title="Official Integration">✓ Verified</span>' : ''}
+            <div class="skills-table-rows" id="leaderboard-table-rows">
+              ${AGENT_LEADERBOARD.map(a => `
+                <div class="skills-row agent-row group" data-agent-id="${a.id}" data-category="${a.category}" data-error="${parseFloat(a.errorRate)}" data-runs="${parseInt(a.runs)}" role="button" tabindex="0" title="Click to copy setup snippet for ${a.name}">
+                  <div class="col-rank font-mono">${a.rank}</div>
+                  <div class="col-agent">
+                    <div class="profile-title-line">
+                      <span class="agent-brand-icon">${PLATFORM_LOGOS[a.id] || ICONS.terminal}</span>
+                      <span class="profile-name font-mono font-bold">${a.name}</span>
+                      <span class="profile-repo font-mono">${a.vendor} • ${a.model}</span>
+                      ${a.category === 'official' ? `<span class="verified-badge" title="Official Integration">${ICONS.check} Verified</span>` : ''}
+                    </div>
+                    <div class="agent-tag-line font-mono text-muted-foreground">
+                      Spec Compliance: <strong class="text-foreground">${a.specCompliance}</strong> • Top Profiles: <span class="text-accent">${a.topProfiles.join(', ')}</span>
+                    </div>
                   </div>
-                  <div class="agent-tag-line font-mono text-muted-foreground">
-                    Spec Compliance: <strong class="text-foreground">${a.specCompliance}</strong> • Top Profiles: <span class="text-accent">${a.topProfiles.join(', ')}</span>
+                  <div class="col-error font-mono text-center">
+                    <span class="error-rate-pill ${parseFloat(a.errorRate) <= 0.6 ? 'error-low' : parseFloat(a.errorRate) <= 1.0 ? 'error-med' : 'error-high'}">
+                      ${a.errorRate}
+                    </span>
+                  </div>
+                  <div class="col-guardrails font-mono text-right">
+                    <span class="guardrails-val">${a.guardrailHits}</span>
+                    <span class="guardrails-sub">caught</span>
+                  </div>
+                  <div class="col-activity">
+                    <div class="sparkline-wrapper">
+                      <svg viewBox="0 0 140 24" class="sparkline-svg" aria-label="Activity trend">
+                        <defs>
+                          <linearGradient id="grad-${a.id}" x1="0" y1="0" x2="0" y2="24" gradientUnits="userSpaceOnUse">
+                            <stop offset="0%" stop-color="#ededed" stop-opacity="0.3"></stop>
+                            <stop offset="100%" stop-color="#ededed" stop-opacity="0"></stop>
+                          </linearGradient>
+                        </defs>
+                        <path d="${a.sparkArea}" fill="url(#grad-${a.id})"></path>
+                        <path d="${a.sparkline}" fill="none" stroke="#ededed" stroke-width="1.25" stroke-linecap="round"></path>
+                      </svg>
+                    </div>
+                  </div>
+                  <div class="col-runs font-mono text-right">
+                    <span class="runs-value">${a.runs}</span>
                   </div>
                 </div>
-                <div class="col-error font-mono text-center">
-                  <span class="error-rate-pill ${parseFloat(a.errorRate) <= 0.6 ? 'error-low' : parseFloat(a.errorRate) <= 1.0 ? 'error-med' : 'error-high'}">
-                    ${a.errorRate}
-                  </span>
-                </div>
-                <div class="col-guardrails font-mono text-right">
-                  <span class="guardrails-val">${a.guardrailHits}</span>
-                  <span class="guardrails-sub">caught</span>
-                </div>
-                <div class="col-activity">
-                  <div class="sparkline-wrapper">
-                    <svg viewBox="0 0 140 24" class="sparkline-svg" aria-label="Activity trend">
-                      <defs>
-                        <linearGradient id="grad-${a.id}" x1="0" y1="0" x2="0" y2="24" gradientUnits="userSpaceOnUse">
-                          <stop offset="0%" stop-color="#ededed" stop-opacity="0.3"></stop>
-                          <stop offset="100%" stop-color="#ededed" stop-opacity="0.3"></stop>
-                        </linearGradient>
-                      </defs>
-                      <path d="${a.sparkArea}" fill="url(#grad-${a.id})"></path>
-                      <path d="${a.sparkline}" fill="none" stroke="#ededed" stroke-width="1.25" stroke-linecap="round"></path>
-                    </svg>
-                  </div>
-                </div>
-                <div class="col-runs font-mono text-right">
-                  <span class="runs-value">${a.runs}</span>
-                </div>
-              </div>
-            `).join('')}
+              `).join('')}
+            </div>
           </div>
         </div>
       </main>
 
-      <!-- Profiles Ecosystem Insight (Side-by-Side: Distribution Graph on Left + Overlap Matrix on Right) -->
+      <!-- Profiles Ecosystem Insight (Side-by-Side: Distribution on Left, Overlaps on Right) -->
       <section class="profile-insights-section" id="profiles">
         <div class="foundations-heading">
-          <div class="flex items-center justify-between">
+          <div class="insights-title-row">
             <div>
               <h2 class="try-kicker">Profile Ecosystem Insights</h2>
               <h3 class="foundations-main-title">Profile Distribution & Composition Overlap</h3>

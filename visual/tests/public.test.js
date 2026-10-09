@@ -75,3 +75,25 @@ test('demo phase integrates with workspace views without errors', () => {
   const listHtml = generateTraceabilityList(activePhase);
   assert.ok(listHtml.includes('role="list"'));
 });
+
+test('rendered views are completely free of emojis and contain vector SVG icons', () => {
+  const emojiRegex = /[\u{1F300}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{1FA00}-\u{1FAFF}]/u;
+  const raw = fs.readFileSync(demoJsonPath, 'utf8');
+  const demoData = JSON.parse(raw);
+  const activePhase = demoData.phases.find(p => p.id === demoData.activePhaseId);
+
+  const landingHtml = renderLandingView();
+  assert.equal(emojiRegex.test(landingHtml), false, 'Landing view must have 0 emojis');
+  assert.ok(landingHtml.includes('agent-brand-icon'), 'Landing view must include agent brand icons');
+  assert.ok(landingHtml.includes('skills-table-responsive-wrapper'), 'Landing view must include responsive table wrapper');
+
+  const overviewHtml = renderOverviewView(activePhase);
+  assert.equal(emojiRegex.test(overviewHtml), false, 'Overview view must have 0 emojis');
+
+  const specHtml = renderSpecView(activePhase, 'tasks', 'all');
+  assert.equal(emojiRegex.test(specHtml), false, 'Spec tasks view must have 0 emojis');
+
+  const evidenceHtml = renderEvidenceView(activePhase);
+  assert.equal(emojiRegex.test(evidenceHtml), false, 'Evidence view must have 0 emojis');
+});
+

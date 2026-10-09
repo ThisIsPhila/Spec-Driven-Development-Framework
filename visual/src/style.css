@@ -2371,4 +2371,149 @@ a {
   border: 1px solid var(--border);
 }
 
+/* ==========================================================================
+   ENHANCED VECTOR ICONS & MULTI-DEVICE RESPONSIVE UTILITIES
+   ========================================================================== */
+
+.btn-with-icon {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.btn-with-icon svg {
+  flex-shrink: 0;
+}
+
+.agent-brand-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  color: var(--foreground);
+}
+
+.agent-brand-icon svg {
+  width: 16px;
+  height: 16px;
+  display: block;
+}
+
+.skills-table-responsive-wrapper {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border-radius: 6px;
+}
+
+.banner-icon-slot {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+}
+
+.banner-icon-slot svg {
+  width: 18px;
+  height: 18px;
+}
+
+.matrix-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.matrix-status-badge svg {
+  width: 12px;
+  height: 12px;
+  flex-shrink: 0;
+}
+
+.task-clean-row .task-check-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.task-clean-row .task-check-icon svg {
+  width: 15px;
+  height: 15px;
+}
+
+.account-avatar-large {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.account-avatar-large svg {
+  width: 28px;
+  height: 28px;
+  color: var(--ds-gray-500);
+}
+
+/* Responsive polish for narrow devices */
+@media (max-width: 768px) {
+  .skills-table-responsive-wrapper .skills-table-wrapper {
+    min-width: 620px;
+  }
+}
+
+@media (max-width: 640px) {
+  .skills-header {
+    padding: 0 0.85rem;
+  }
+
+  .header-brand {
+    font-size: 0.875rem;
+    gap: 0.4rem;
+  }
+
+  .header-phase-nav {
+    max-width: calc(100vw - 160px);
+    padding: 0 0.25rem;
+  }
+
+  .skills-page-wrapper {
+    padding: 1rem 0.85rem 4rem;
+  }
+
+  .hero-action-buttons {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .hero-action-buttons .btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .cli-command-box {
+    width: 100%;
+  }
+
+  .insights-title-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .leaderboard-meta-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+}
+
+@media (max-width: 380px) {
+  .ascii-logo {
+    font-size: 10.5px;
+  }
+}
+
 

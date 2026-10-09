@@ -1,4 +1,5 @@
 import { renderMarkdown } from '../markdown.js';
+import { ICONS } from '../icons.js';
 
 /**
  * Spec Document and Tasks Reader Component
@@ -88,7 +89,7 @@ function renderTasksContainer(phase, artifact, currentFilter) {
 }
 
 function renderTaskCard(task, phase) {
-  const statusIcon = task.status === 'done' ? '✅' : task.status === 'doing' ? '⚡' : '⚪';
+  const statusIcon = task.status === 'done' ? ICONS.checkCircle : task.status === 'doing' ? ICONS.clock : ICONS.circle;
   const statusClass = `task-status-${task.status}`;
 
   // Find requirements mapped to this task

@@ -15,7 +15,7 @@ renderer.code = function ({ text, lang }) {
       <div class="mermaid-loading">Rendering diagram...</div>
       <div class="mermaid-svg"></div>
       <div class="mermaid-fallback" style="display:none;">
-        <div class="diagram-error-badge">⚠️ Diagram syntax error — showing source:</div>
+        <div class="diagram-error-badge">Diagram syntax error — showing source:</div>
         <pre><code class="language-mermaid">${escapeHtml(text)}</code></pre>
       </div>
     </div>`;

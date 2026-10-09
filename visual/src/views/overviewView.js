@@ -1,3 +1,5 @@
+import { ICONS } from '../icons.js';
+
 /**
  * Overview View Component
  */
@@ -138,7 +140,7 @@ export function renderOverviewView(phase) {
           ? `
           <section class="warnings-card" role="alert">
             <div class="warnings-header">
-              <span class="warning-icon">⚠️</span>
+              <span class="warning-icon">${ICONS.alertTriangle}</span>
               <h4>Diagnostics & Unresolved References (${warnings.length})</h4>
             </div>
             <ul class="warnings-list">

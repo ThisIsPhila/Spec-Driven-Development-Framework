@@ -63,7 +63,7 @@ export async function renderMermaidBlocks(rootElement) {
         fallbackEl.style.display = 'block';
         const errorBadge = fallbackEl.querySelector('.diagram-error-badge');
         if (errorBadge) {
-          errorBadge.textContent = `⚠️ Diagram render error (${err.message || 'Syntax error'}) — showing source:`;
+          errorBadge.textContent = `Diagram render error (${err.message || 'Syntax error'}) — showing source:`;
         }
       }
       // Remove any broken temporary mermaid element that might have been inserted into the body
