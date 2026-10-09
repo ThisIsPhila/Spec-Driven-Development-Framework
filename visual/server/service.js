@@ -6,7 +6,7 @@ import { extractProject } from './extract.js';
 
 export class LocalProjectService {
   constructor(options = {}) {
-    this.port = options.port || 3456;
+    this.port = options.port !== undefined ? options.port : 3456;
     this.host = options.host || '127.0.0.1';
     this.token = options.token || crypto.randomBytes(16).toString('hex');
     this.projects = new Map(); // id -> { root, lastSnapshot, sseClients: Set }
@@ -113,6 +113,9 @@ export class LocalProjectService {
         }
       }
       if (this.server) {
+        if (typeof this.server.closeAllConnections === 'function') {
+          this.server.closeAllConnections();
+        }
         this.server.close(() => resolve());
       } else {
         resolve();

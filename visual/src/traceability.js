@@ -25,10 +25,10 @@ export function buildTraceabilityModel(phase) {
   }));
 
   const edges = (phase.relationships || []).map(rel => ({
-    from: rel.from,
-    to: rel.to,
-    type: rel.type, // 'implements' | 'verifies'
-    source: rel.source,
+    from: rel.from || rel.fromId,
+    to: rel.to || rel.toId,
+    type: rel.type || rel.label || 'relates',
+    source: rel.source || '',
   }));
 
   return { requirements, tasks, evidence, edges };
@@ -198,10 +198,19 @@ export function generateTraceabilityList(phase) {
       .filter(e => e.to === req.id && e.type === 'implements')
       .map(e => e.from);
 
-    // Find evidence verifying this req
+    // Find evidence verifying this req directly
     const verifyingEv = edges
       .filter(e => e.to === req.id && e.type === 'verifies')
       .map(e => e.from);
+
+    // Also include evidence verifying implementing tasks
+    implementingTasks.forEach(tId => {
+      edges
+        .filter(e => e.to === tId && e.type === 'verifies')
+        .forEach(e => {
+          if (!verifyingEv.includes(e.from)) verifyingEv.push(e.from);
+        });
+    });
 
     html += `
       <div class="trace-list-item" role="listitem">

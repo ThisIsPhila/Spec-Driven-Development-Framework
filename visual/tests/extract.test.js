@@ -1,9 +1,11 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { extractProject } from '../server/extract.js';
 
-const FIXTURES_DIR = path.resolve('tests/fixtures');
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const FIXTURES_DIR = path.resolve(__dirname, 'fixtures');
 
 test('extracts canonical project accurately', () => {
   const canonicalPath = path.join(FIXTURES_DIR, 'canonical-project');

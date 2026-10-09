@@ -32,6 +32,9 @@ export function renderLandingView() {
           <button id="launch-demo-btn" class="btn btn-primary">
             🚀 Launch Interactive Demo
           </button>
+          <button id="connect-workspace-btn" class="btn btn-secondary">
+            🔑 Connect Local Workspace
+          </button>
           <a href="https://github.com/ThisIsPhila/Spec-Driven-Development-Framework" target="_blank" rel="noopener noreferrer" class="btn btn-secondary">
             View on GitHub
           </a>

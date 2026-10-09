@@ -1,9 +1,11 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { LocalProjectService } from '../server/service.js';
 
-const FIXTURES_DIR = path.resolve('tests/fixtures');
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const FIXTURES_DIR = path.resolve(__dirname, 'fixtures');
 const canonicalPath = path.join(FIXTURES_DIR, 'canonical-project');
 
 test('server handles auth, snapshots, and security bounds', async () => {
@@ -46,6 +48,7 @@ test('server handles auth, snapshots, and security bounds', async () => {
     const sseRes = await fetch(`${baseUrl}/api/project/canonical-project/events?token=${info.token}`);
     assert.equal(sseRes.status, 200);
     assert.equal(sseRes.headers.get('content-type'), 'text/event-stream');
+    if (sseRes.body) await sseRes.body.cancel();
 
   } finally {
     await service.stop();
