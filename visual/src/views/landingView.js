@@ -9,7 +9,7 @@ import { ICONS, PLATFORM_LOGOS } from '../icons.js';
 import { PROFILES, INSTALL_COMMAND } from '../catalog.js';
 export const LANDING_PROFILES = PROFILES;
 
-export function renderLandingView() {
+export function renderLandingView(workspace = '') {
   const agents = [
     { id: 'claude-code', name: 'Claude Code' },
     { id: 'antigravity', name: 'Antigravity' },
@@ -97,6 +97,8 @@ export function renderLandingView() {
           </div>
         </div>
       </section>
+
+      ${workspace}
 
       <!-- Central Leaderboard: AI Agents on SDD (skills.sh Pattern) -->
       <main class="skills-leaderboard-container" id="leaderboard">

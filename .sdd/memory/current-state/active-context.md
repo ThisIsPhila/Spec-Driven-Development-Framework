@@ -35,3 +35,7 @@ Owner rejected a Markdown-preview-first experience and confusing navigation. Glo
 ## Scoped phase insights follow-up
 
 Actual owner tab was running stale assets; reload confirmed shared main navigation and Projects list. Phase Overview now embeds task distribution and explicit relationship SVG/list; dedicated metrics navigation removed and project location displayed. Header consistency and inline phase visuals covered by browser assertions. See reports/phase-005/phase-insights-flow.md.
+
+## Owner layout direction
+
+Project navigation is now a horizontal icon tab bar below the shared header. Logo always opens About/home; signed-in workspace sits after hero and before profiles. Profile catalog is compact; details stack vertically. Build and five browser journeys pass; owner visual acceptance remains pending. See reports/phase-005/subheader-layout.md.

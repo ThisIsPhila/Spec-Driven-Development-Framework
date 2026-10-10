@@ -161,6 +161,8 @@ test('signed-in navigation separates projects, examples, account settings and pr
     await page.getByRole('button',{name:'About',exact:true}).click();
     await expect(page.locator('.skills-header [data-domain]')).toHaveCount(0);
     const globalHeader = await page.locator('.skills-header').innerText();
+    expect(await page.locator('.skills-hero-container').evaluate(el=>el.getBoundingClientRect().bottom)).toBeLessThanOrEqual(await page.locator('.account-shortcuts').evaluate(el=>el.getBoundingClientRect().top));
+    expect(await page.locator('.account-shortcuts').evaluate(el=>el.getBoundingClientRect().bottom)).toBeLessThanOrEqual(await page.locator('#leaderboard').evaluate(el=>el.getBoundingClientRect().top));
     await expect(page.getByRole('button',{name:'Connect machine',exact:true})).toHaveCount(0);
     await page.getByRole('button',{name:'Projects',exact:true}).click();
     await expect(page.locator('dialog')).toHaveCount(0);
@@ -183,6 +185,8 @@ test('signed-in navigation separates projects, examples, account settings and pr
     await page.locator('.phase-list-card').first().click();
     await expect(page.getByRole('heading',{name:'Task distribution',exact:true})).toBeVisible();
     await expect(page.locator('.phase-overview-graph svg')).toBeVisible();
+    await expect(page.locator('.project-section-rail button svg')).toHaveCount(6);
+    expect(await page.locator('.project-section-rail').evaluate(el=>el.getBoundingClientRect().bottom)).toBeLessThanOrEqual(await page.locator('.project-content').evaluate(el=>el.getBoundingClientRect().top));
     expect(await page.locator('.skills-header').innerText()).toBe(globalHeader);
     if(process.env.SDD_REVIEW_SCREENSHOTS) await page.screenshot({path:path.join(os.tmpdir(),'sdd-phase-insights.png')});
     for (const width of [320,390,768,1024,1440]) {
@@ -195,6 +199,12 @@ test('signed-in navigation separates projects, examples, account settings and pr
     await expect(page.getByRole('heading',{name:'What this provides',exact:true})).toBeVisible();
     await expect(page.locator('.profile-detail')).toContainText('accessibility-checklist.md');
     await expect(page.locator('.profile-detail')).toContainText('--profile web');
+    const panels=await page.locator('.profile-reading-stack > section').evaluateAll(els=>els.map(el=>({top:el.getBoundingClientRect().top,bottom:el.getBoundingClientRect().bottom})));
+    expect(panels[1].top).toBeGreaterThan(panels[0].bottom);
+    await page.getByRole('button',{name:'SDD home',exact:true}).click();
+    await expect(page.locator('.skills-hero-container')).toBeVisible();
+    await page.getByRole('button',{name:'Skills & Profiles',exact:true}).click();
+    await page.locator('[data-profile-id="web"]').click();
     await page.reload();
     await expect(page.locator('.profile-detail')).toContainText('accessibility-checklist.md');
     await page.getByRole('button',{name:'Account',exact:true}).click();

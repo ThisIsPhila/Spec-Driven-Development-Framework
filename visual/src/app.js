@@ -395,7 +395,7 @@ npm --prefix visual run workspace -- --project /path/to/project --project /path/
   }
 
   _renderHeaderContent() {
-    return `<div class="header-brand" id="brand-home-btn"><span class="font-mono font-bold">▲ / SDD</span></div>
+    return `<button class="header-brand" id="brand-home-btn" aria-label="SDD home"><span class="font-mono font-bold">▲ / SDD</span></button>
       <nav class="global-nav" aria-label="Main navigation">
         ${this.token || this.accountSession ? `<button class="nav-link ${this.currentView==='projects'?'active':''}" id="nav-projects-dashboard-btn">Projects</button>` : `<button class="nav-link" id="connect-workspace-header-btn">Open local project</button>`}
         <button class="nav-link ${this.currentView==='profiles'?'active':''}" id="nav-profiles-btn">Skills & Profiles</button>
@@ -404,8 +404,8 @@ npm --prefix visual run workspace -- --project /path/to/project --project /path/
   }
 
   _renderProjectRail() {
-    const sections=[['overview','Project overview'],['phases','Phases'],['governance','Decisions & context'],['reports','Reviews'],['automation','Checks & automation'],['knowledge','Resources & graphs']];
-    return `<nav class="project-section-rail" aria-label="Project sections"><p class="eyebrow">${escapeHtml(this.snapshot?.projectId || 'Project')}</p>${sections.map(([id,label])=>`<button class="nav-domain-btn ${this.projectSection===id?'active':''}" data-domain="${id}">${label}</button>`).join('')}<p class="rail-status">${this.connectionStatus==='demo'?'Synthetic demo':this.accountSession?'Private account project':'Connected locally'}</p></nav>`;
+    const sections=[['overview','Project overview','chart'],['phases','Phases','layers'],['governance','Decisions & context','bookOpen'],['reports','Reviews','shieldCheck'],['automation','Checks & automation','terminal'],['knowledge','Resources & graphs','fileText']];
+    return `<nav class="project-section-rail" aria-label="Project sections"><p class="eyebrow">${escapeHtml(this.snapshot?.projectId || 'Project')}</p>${sections.map(([id,label,icon])=>`<button class="nav-domain-btn ${this.projectSection===id?'active':''}" data-domain="${id}">${ICONS[icon] || ICONS.circle}<span>${label}</span></button>`).join('')}<p class="rail-status">${this.connectionStatus==='demo'?'Synthetic demo':this.accountSession?'Private account project':'Connected locally'}</p></nav>`;
   }
 
   _updateStatusBar() {
@@ -421,7 +421,8 @@ npm --prefix visual run workspace -- --project /path/to/project --project /path/
 
   _renderCurrentView() {
     if (this.currentView === 'landing') {
-      return `${this.accountSession?`<section class="account-shortcuts"><h2>Your workspace</h2><p>${this.projects.filter(p=>!p.id.startsWith('demo-')).length} connected projects · <button class="nav-link" id="landing-your-projects">View all projects</button></p><div>${this.projects.filter(p=>!p.id.startsWith('demo-')).map(p=>`<button class="btn btn-secondary" data-account-project="${escapeHtml(p.id)}">${escapeHtml(p.name || p.id)}</button>`).join('')}</div></section>`:''}${renderLandingView()}`;
+      const workspace = `${this.accountSession?`<section class="account-shortcuts"><h2>Your workspace</h2><p>${this.projects.filter(p=>!p.id.startsWith('demo-')).length} connected projects · <button class="nav-link" id="landing-your-projects">View all projects</button></p><div>${this.projects.filter(p=>!p.id.startsWith('demo-')).map(p=>`<button class="btn btn-secondary" data-account-project="${escapeHtml(p.id)}">${escapeHtml(p.name || p.id)}</button>`).join('')}</div></section>`:''}`;
+      return renderLandingView(workspace);
     }
     if (this.currentView === 'projects') {
       return this._renderAccountProjectsView();
@@ -674,11 +675,8 @@ npm --prefix visual run workspace -- --project /path/to/project --project /path/
     const brandBtn = document.getElementById('brand-home-btn');
     if (brandBtn) {
       brandBtn.addEventListener('click', () => {
-        if (this.token || this.accountSession) {
-          this.currentView = 'projects';
-        } else {
-          this.currentView = 'landing';
-        }
+        this.currentView = 'landing';
+        this._syncRoute(true);
         this.render();
       });
     }
