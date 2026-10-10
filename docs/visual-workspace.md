@@ -100,3 +100,13 @@ See [community skill packs](community-skill-packs.md) and [accounts and synchron
 Core Bash compatibility is tested on this macOS environment. Windows core use requires Git Bash plus its Unix utilities; no native PowerShell lifecycle implementation or Windows runtime certification is claimed. The optional visual/account services require Node; account SQLite requires Node 22.13+. Current browser coverage uses Chromium.
 
 Imported Graphify topology draws a bounded subset (150 nodes / 500 internal edges); full imported node and provenance lists remain available. Display limits are visible. Public Connect local accepts the complete loopback launch URL and opens that service; it does not send a local token to a hosted account API.
+
+## Project experience
+
+Signed-in users start at **Projects**, with their real connected projects. **About** is the public product page; when signed in it includes a private **Your workspace** shortcut section. **Account** owns identity, sign-out and machine connection. Opening Projects never issues a machine credential or opens a connection dialog.
+
+A project opens at **Project overview**. The on-screen section rail contains Phases, Decisions & context, Reviews, Checks & automation, Resources & graphs, and Detailed metrics. Project sections do not occupy the global header.
+
+Overview derives recognized task completion, phase progress, requirement mappings, recorded evidence outcomes, missing active-phase inputs and extraction warnings. Pending work and attention items link to the relevant phase. Decision excerpts link to their source record. Unsupported task formats remain unassessed; charts are current recorded progress, not invented historical performance or acceptance.
+
+The Skills & Profiles directory and public catalog entries open real bundled profile documentation, included files, composition guidance and copyable setup commands. Profiles remain framework configurations; standard SKILL.md packages are reusable instructions, and composition packs interoperate with them. A profile is not advertised as a downloadable third-party skill that does not exist.

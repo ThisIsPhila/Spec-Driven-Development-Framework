@@ -1,7 +1,7 @@
 # Active Context
 
 **Current Phase:** Phase 005 corrective implementation and authorized product extensions
-**Current Task:** C6 complete — private owner preview ready; hosted configuration pending
+**Current Task:** U1–U5 implemented — owner product UX review pending; hosted configuration pending
 **Branch:** feat/phase-005-visual-framework-workspace
 
 ## Authority and scope
@@ -27,3 +27,7 @@ Reproduced and corrected undefined profile icons, catalog overlap and stripped M
 ## Account access feedback correction
 
 Owner reported signup/login failures without useful feedback. Live account database still had zero users; no credentials were inspected or entered. Added explicit client validation, loading/retry/error/success feedback, show-password control and separate duplicate/signup/login API errors. Local verification: 28 unit/integration tests, 4 Chromium journeys and production build pass. Restarted the private local service against the same database and project roots; its unclaimed bootstrap link rotated. Owner enters credentials through the fresh link. No owner acceptance inferred.
+
+## Insights-first UX correction
+
+Owner rejected a Markdown-preview-first experience and confusing navigation. Global navigation now separates Projects, Skills & Profiles, About and Account. Project overview derives progress, attention, next tasks and sourced decisions; project sections live in an on-screen rail. Profiles expose real content and installation rather than inert names. Canonical phase IDs are numerically ordered. Authenticated browser journeys cover private project entry, public-page workspace shortcuts, demo-to-real selection isolation, profile details/reload and account settings separation. No consumer source files or owner credentials were changed. See reports/phase-005/insights-ux-plan.md and docs/visual-workspace.md.

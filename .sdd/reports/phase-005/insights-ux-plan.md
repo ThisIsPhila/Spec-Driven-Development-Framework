@@ -1,0 +1,7 @@
+# Owner-directed product experience correction
+
+Current gap: authenticated navigation is conflated with connecting machines; domains overcrowd the header; project selection inherits demo phase IDs; profiles are inert names; documentation browsing dominates the product. Owner explicitly requests progress, insights, decisions and useful actions as the primary experience while preserving existing visual direction.
+
+Design: one understated global header (Projects, Skills & Profiles, About, Account). Account is a separate settings view with machine connection as a secondary action. A project has an on-screen section rail, defaulting to Project overview. Overview derives recorded progress, evidence outcomes, missing artifacts/mapping gaps, next recorded tasks and sourced decision excerpts. These are declared observations, not fabricated agent analysis or performance history. Documents remain accessible through phase/domain views. Order phases numerically and display canonical full IDs. Profile cards/rows open real bundled profile documentation, included artifact lists, setup command and community-pack instructions.
+
+Tasks: U1 navigation/routing/account separation; U2 derived overview/decision/attention/action views; U3 interactive profile detail content; U4 phase order/identity/demo consistency; U5 authenticated browser journeys, responsive visual inspection and evidence. This plan continues the owner's authorized Phase 005 corrections. No deployment, release or acceptance is implied.

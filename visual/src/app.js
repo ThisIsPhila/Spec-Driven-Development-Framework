@@ -1,3 +1,5 @@
+import { renderProjectOverview, renderDecisionOverview } from './views/projectOverviewView.js';
+import { renderProfiles } from './views/profilesView.js';
 import { PROFILES, INSTALL_COMMAND } from './catalog.js';
 import { sanitizeUi, escapeHtml, escapeDisplayModel } from './sanitize.js';
 import { renderMarkdown } from './markdown.js';
@@ -34,25 +36,26 @@ export class SDDWorkspaceApp {
     // 'automation' -> Scripts & Hooks (Framework scripts, Git hook status & telemetry)
     // 'knowledge'  -> Docs & Templates & Graphify (Templates, Docs library, Graphify network)
     // 'metrics'    -> Project Engineering Metrics & Assurance Matrix
-    this.projectSection = 'phases';
+    this.projectSection = 'overview';
 
     this.activePhaseId = null; // null = All Sprints Overview, string = specific phase ID
     this.phaseTab = 'overview'; // 'overview' | 'requirements' | 'design' | 'tasks' | 'evidence' | 'remediations' | 'traceability'
     this.phaseScopeFilter = 'all'; // 'all' | 'active' | 'backlog' | 'archive'
     this.phaseSearchQuery = '';
 
-    this.activeGovTab = 'active-context';
+    this.activeGovTab = 'summary';
     this.activeReportId = null;
     this.activeScriptName = 'doctor.sh';
     this.activeKnowledgeSection = 'templates';
     this.selectedKnowledgeItemId = null;
 
     const route = new URLSearchParams(location.search);
+    this.selectedProfileId = route.get('profile');
     this.activePhaseId = route.get('phase') || this.activePhaseId;
     this.phaseTab = route.get('tab') || this.phaseTab;
     this.projectSection = route.get('domain') || this.projectSection;
     this.taskFilter = route.get('filter') || 'all';
-    window.addEventListener('popstate', () => { const route = new URLSearchParams(location.search); this.activePhaseId = route.get('phase'); this.phaseTab = route.get('tab') || 'overview'; this.projectSection = route.get('domain') || 'phases'; this.taskFilter = route.get('filter') || 'all'; this.render(); });
+    window.addEventListener('popstate', () => { const route = new URLSearchParams(location.search); this.activePhaseId = route.get('phase'); this.phaseTab = route.get('tab') || 'overview'; this.projectSection = route.get('domain') || 'overview'; this.currentView = route.get('view') || (route.get('project') ? 'project' : 'landing'); this.selectedProfileId = route.get('profile'); this.taskFilter = route.get('filter') || 'all'; this.render(); });
 
     this.connectionStatus = this.token ? 'connecting' : 'public';
     this.sseSource = null;
@@ -86,7 +89,7 @@ export class SDDWorkspaceApp {
     try {
       const response = await fetch('/api/account/me');
       this.accountsAvailable = response.status === 200 || response.status === 401;
-      if (response.ok) { this.accountSession = await response.json(); this.connectionStatus = 'account'; await this._loadProjects(); return; }
+      if (response.ok) { this.accountSession = await response.json(); this.connectionStatus = 'account'; this._setupGlobalKeyboardShortcuts(); const demoIndex=['demo-orbit-notes','demo-harbor-api','demo-meadow-mobile'].indexOf(new URLSearchParams(location.search).get('project')); if (demoIndex>=0) this._loadStaticDemo(demoIndex); else await this._loadProjects(); this._setupVisibilityListener(); return; }
     } catch {}
     this._setupGlobalKeyboardShortcuts();
     if (this.token) {
@@ -94,6 +97,7 @@ export class SDDWorkspaceApp {
     } else {
       const demoIndex = ['demo-orbit-notes','demo-harbor-api','demo-meadow-mobile'].indexOf(new URLSearchParams(location.search).get('project'));
       if (demoIndex >= 0) this._loadStaticDemo(demoIndex);
+      else if (new URLSearchParams(location.search).get('view') === 'profiles') { this.currentView='profiles'; this.render(); }
       else this._loadPublicLanding();
     }
     this._setupVisibilityListener();
@@ -107,11 +111,13 @@ export class SDDWorkspaceApp {
   }
 
   async _loadProjects() {
+    this.projectListError='';
     if (this.token || this.accountSession) {
       try {
         const res = await fetch('/api/projects', this._requestOptions());
         if (res.ok) {
           this.projects = await res.json();
+          if (this.accountSession && !new URLSearchParams(location.search).get('project')) { this.currentView = ['landing','profiles','account'].includes(new URLSearchParams(location.search).get('view')) ? new URLSearchParams(location.search).get('view') : 'projects'; this.render(); return; }
           if (this.projects.length > 0) {
             await this.selectProject(this.projects.find(project => project.id === new URLSearchParams(location.search).get('project'))?.id || this.projects[0].id);
             return;
@@ -130,7 +136,7 @@ export class SDDWorkspaceApp {
   _loadStaticDemo(index = 0) {
     const examples = [{id:'demo-orbit-notes',name:'Orbit Notes',profile:'web'}, {id:'demo-harbor-api',name:'Harbor API',profile:'api'}, {id:'demo-meadow-mobile',name:'Meadow Mobile',profile:'mobile'}];
     const example = examples[index] || examples[0];
-    this.projects = examples.map(project => ({...project,phasesCount:demoSnapshot.phases.length,metrics:demoSnapshot.metrics}));
+    if (!this.accountSession) this.projects = examples.map(project => ({...project,phasesCount:demoSnapshot.phases.length,metrics:demoSnapshot.metrics}));
     this.currentProjectId = example.id;
     this.snapshot = structuredClone(demoSnapshot);
     this.snapshot.projectId = example.name; this.snapshot.profile = example.profile;
@@ -140,15 +146,36 @@ export class SDDWorkspaceApp {
       for (const [type, artifact] of Object.entries(phase.artifacts || {})) if (artifact && typeof artifact.content === 'string') artifact.path ||= `.sdd/specs/${phase.category || 'active'}/${phase.id}/${type}.md`;
       for (const record of phase.artifacts?.evidence || []) record.path ||= `.sdd/evidence/${phase.id}/${record.filename}`;
     }
+    if (route.get('project') !== example.id) this.projectSection = 'overview';
     this.connectionStatus = 'demo'; this.currentView = 'project'; this.render();
+  }
+
+  async _showProjects() {
+    this.projectListError = '';
+    if (this.token || this.accountSession) {
+      try {
+        const response=await fetch('/api/projects',this._requestOptions());
+        if (response.status===401 && this.accountSession) {this.accountSession=null;this.projects=[];this.snapshot=null;}
+        if (!response.ok) throw new Error(response.status===401?'Your session expired. Sign in again to view your projects.':'Projects could not be loaded. Try again.');
+        this.projects=await response.json();
+      } catch(error) { this.projectListError=error.message; }
+    }
+    this.currentView='projects'; this._syncRoute(true); this.render();
   }
 
   async selectProject(projectId) {
     if (projectId.startsWith('demo-')) { const index = ['demo-orbit-notes','demo-harbor-api','demo-meadow-mobile'].indexOf(projectId); this._loadStaticDemo(index); return; }
     this.connectionStatus = this.accountSession ? 'account' : 'connecting';
+    const changed = this.currentProjectId !== projectId;
     this.currentProjectId = projectId;
     this.currentView = 'project';
+    if (changed) { this.snapshot = null; this.activePhaseId = null; this.phaseTab = 'overview'; }
     await this._fetchSnapshot();
+    const route = new URLSearchParams(location.search);
+    if (route.get('project') !== projectId) this.projectSection = 'overview';
+    this.phaseTab = route.get('project') === projectId ? route.get('tab') || 'overview' : 'overview';
+    this.activePhaseId = this.snapshot?.phases?.some(p => p.id === route.get('phase')) && route.get('project') === projectId ? route.get('phase') : this.snapshot?.activePhaseId;
+    if (!this.snapshot?.phases?.some(p => p.id === this.activePhaseId)) this.activePhaseId = null;
     this._connectSSE();
     this._startPolling();
     this.render();
@@ -233,6 +260,9 @@ export class SDDWorkspaceApp {
   render() {
     if (!this.container) return;
     this._syncRoute();
+    const navigationKey = [this.currentView,this.currentProjectId,this.projectSection,this.activePhaseId,this.phaseTab,this.selectedProfileId].join(':');
+    const changedView = this.renderedNavigationKey !== navigationKey;
+    this.renderedNavigationKey = navigationKey;
 
     const previousFocus = document.activeElement?.id;
     const readingPositions = [...this.container.querySelectorAll('[class]')].filter(el => el.scrollTop || el.scrollLeft).map(el => ({ key: el.className, top: el.scrollTop, left: el.scrollLeft }));
@@ -247,21 +277,22 @@ export class SDDWorkspaceApp {
         <!-- Main Page Container -->
         <main class="page-container">
           ${this.snapshot?.readStatus === 'stale' ? `<div class="domain-content-card" role="status">${escapeHtml(this.snapshot.readError)}</div>` : ''}
-          ${this._renderCurrentView()}
-          ${this._renderFooter()}
+          ${this.currentView==='project'?`<div class="project-shell">${this._renderProjectRail()}<div class="project-content">${this._renderCurrentView()}</div></div>`:this._renderCurrentView()}
+          ${this.currentView==='landing'?this._renderFooter():''}
         </main>
       </div>
     `);
 
     const accountButton = document.createElement('button'); accountButton.className = 'btn btn-secondary';
-    accountButton.textContent = this.accountSession ? 'Connect machine' : 'Sign in';
-    if (this.accountsAvailable) { this.container.querySelector('.skills-header').append(accountButton); accountButton.addEventListener('click', () => this.accountSession ? this._showConnectorDialog() : this._showAccountDialog()); }
+    accountButton.textContent = 'Sign in';
+    if (this.accountsAvailable && !this.accountSession) { this.container.querySelector('.header-right').append(accountButton); accountButton.addEventListener('click', () => this._showAccountDialog()); }
     if (this.accountSession) {
       const logout = document.createElement('button'); logout.className = 'btn btn-secondary'; logout.textContent = 'Sign out';
       logout.onclick = async () => { await fetch('/api/account/logout', {method:'POST'}); this.accountSession = null; this.snapshot = null; this.projects = []; this._loadPublicLanding(); };
-      this.container.querySelector('.skills-header').append(logout);
+      this.container.querySelector('#account-settings-actions')?.append(logout);
     }
     this._bindEvents();
+    if (changedView) window.scrollTo(0,0);
     for (const position of readingPositions) {
       const el = [...this.container.querySelectorAll('[class]')].find(el => el.className === position.key);
       if (el) { el.scrollTop = position.top; el.scrollLeft = position.left; }
@@ -275,8 +306,10 @@ export class SDDWorkspaceApp {
   }
 
   _syncRoute(push = false) {
-    if (this.currentView !== 'project') return;
     const url = new URL(location.href);
+    url.searchParams.set('view',this.currentView);
+    if (this.currentView==='profiles' && this.selectedProfileId) url.searchParams.set('profile',this.selectedProfileId); else url.searchParams.delete('profile');
+    if (this.currentView !== 'project') { for (const key of ['project','phase','tab','domain','filter']) url.searchParams.delete(key); if (url.href !== location.href) history.replaceState(null,'',url); return; }
     for (const [key, value] of Object.entries({project:this.currentProjectId,phase:this.activePhaseId,tab:this.phaseTab,domain:this.projectSection,filter:this.taskFilter})) { if (value) url.searchParams.set(key,value); else url.searchParams.delete(key); }
     if (url.href !== location.href) history[push ? 'pushState' : 'replaceState'](null, '', url);
   }
@@ -302,7 +335,7 @@ export class SDDWorkspaceApp {
         const response = await fetch('/api/account/' + action, { method: 'POST', signal: AbortSignal.timeout(15000), headers: {'Content-Type':'application/json', ...(sessionStorage.getItem('sdd_bootstrap') ? {'X-SDD-Bootstrap':sessionStorage.getItem('sdd_bootstrap')} : {})}, body: JSON.stringify({ email, password }) });
         const result = await response.json().catch(() => ({}));
         if (!response.ok) { feedback.textContent = result.error || 'The account service could not complete the request. Try again.'; return; }
-        sessionStorage.removeItem('sdd_bootstrap'); this.accountSession = result; this.connectionStatus = 'account'; dialog.close(); await this._loadProjects();
+        sessionStorage.removeItem('sdd_bootstrap'); this.accountSession = result; this.connectionStatus = 'account'; dialog.close(); this.currentView='projects'; this._syncRoute(); await this._loadProjects();
         const notice = document.createElement('p'); notice.className = 'account-success'; notice.setAttribute('role','status'); notice.textContent = action === 'register' ? 'Account created. You are signed in.' : 'You are signed in.'; this.container.prepend(notice);
       } catch { feedback.textContent = 'Could not reach the account service. Your entries are preserved; check the connection and try again.'; }
       finally { busy = false; dialog.removeAttribute('aria-busy'); actionButtons.forEach(button => {button.disabled = false;}); }
@@ -362,119 +395,17 @@ npm --prefix visual run workspace -- --project /path/to/project --project /path/
   }
 
   _renderHeaderContent() {
-    const isLanding = this.currentView === 'landing';
-    const isProjectsList = this.currentView === 'projects';
-    const isProfiles = this.currentView === 'profiles';
+    return `<div class="header-brand" id="brand-home-btn"><span class="font-mono font-bold">▲ / SDD</span></div>
+      <nav class="global-nav" aria-label="Main navigation">
+        ${this.token || this.accountSession ? `<button class="nav-link ${this.currentView==='projects'?'active':''}" id="nav-projects-dashboard-btn">Projects</button>` : `<button class="nav-link" id="connect-workspace-header-btn">Open local project</button>`}
+        <button class="nav-link ${this.currentView==='profiles'?'active':''}" id="nav-profiles-btn">Skills & Profiles</button>
+        <button class="nav-link ${this.currentView==='landing'?'active':''}" id="nav-landing-page-btn">About</button>
+      </nav><div class="header-right">${this.connectionStatus==='demo'?'<span class="sync-text">Fictional example</span>':''}${this.accountSession?`<button class="nav-link" id="nav-account-btn">Account</button>`:''}</div>`;
+  }
 
-    // 1. Landing View Header (Minimal, Public)
-    if (isLanding) {
-      return `
-        <div class="header-left">
-          <div class="header-brand" id="brand-home-btn">
-            <svg data-testid="geist-icon" height="16" stroke-linejoin="round" viewBox="0 0 16 16" width="16" style="color:currentcolor">
-              <path fill-rule="evenodd" clip-rule="evenodd" d="M8 1L16 15H0L8 1Z" fill="currentColor"></path>
-            </svg>
-            <span class="header-slash">/</span>
-            <span class="font-mono font-bold">SDD</span>
-          </div>
-        </div>
-
-        <nav class="header-nav" aria-label="Primary navigation">
-          <a class="nav-link active" id="nav-landing-home-btn">Overview</a>
-          <a class="nav-link" id="nav-profiles-btn">Profiles</a>
-          <a class="nav-link" href="https://github.com/ThisIsPhila/Spec-Driven-Development-Framework" target="_blank" rel="noopener noreferrer">Docs ↗</a>
-        </nav>
-
-        <div class="header-right">
-          <button class="btn btn-secondary" id="launch-demo-header-btn" style="padding:0.25rem 0.65rem; font-size:0.75rem; font-family:var(--font-mono);">
-            Demo Sandbox
-          </button>
-          <button class="btn btn-primary" id="connect-workspace-header-btn" style="padding:0.25rem 0.65rem; font-size:0.75rem; font-family:var(--font-mono);">
-            ${this.token || this.accountSession ? 'My Projects' : 'Connect local'}
-          </button>
-        </div>
-      `;
-    }
-
-    // 2. Account Multi-Project Dashboard Header
-    if (isProjectsList || isProfiles) {
-      const accountName = this.snapshot?.account?.name || (this.token ? 'Account' : 'Demo');
-      return `
-        <div class="header-left">
-          <div class="header-brand" id="brand-home-btn">
-            <svg data-testid="geist-icon" height="16" stroke-linejoin="round" viewBox="0 0 16 16" width="16" style="color:currentcolor">
-              <path fill-rule="evenodd" clip-rule="evenodd" d="M8 1L16 15H0L8 1Z" fill="currentColor"></path>
-            </svg>
-            <span class="header-slash">/</span>
-            <span class="header-account-name">${accountName}</span>
-            <span class="header-slash">/</span>
-            <span class="header-project-name">${isProfiles ? 'Profiles' : 'Projects'}</span>
-          </div>
-        </div>
-
-        <nav class="header-nav">
-          <a class="nav-link ${isProjectsList ? 'active' : ''}" id="nav-projects-dashboard-btn">All Projects</a>
-          <a class="nav-link ${isProfiles ? 'active' : ''}" id="nav-profiles-btn">Profiles</a>
-          <a class="nav-link" href="https://github.com/ThisIsPhila/Spec-Driven-Development-Framework" target="_blank" rel="noopener noreferrer">Docs ↗</a>
-        </nav>
-
-        <div class="header-right">
-          <a class="nav-link-subtle" id="nav-landing-page-btn">Public Landing</a>
-        </div>
-      `;
-    }
-
-    // 3. Direct Project SDD Page Header (Clean breadcrumbs + DIRECT PHASE LINKS + live account sync indicator)
-    const account = this.snapshot?.account || { name: 'Local', branch: 'main', headCommit: '' };
-    const projectName = escapeHtml(this.snapshot?.projectId || 'Project');
-    const phases = this.snapshot?.phases || [];
-
-    return `
-      <div class="header-left">
-        <div class="header-brand" id="brand-home-btn" title="Go to all projects">
-          <svg data-testid="geist-icon" height="16" stroke-linejoin="round" viewBox="0 0 16 16" width="16" style="color:currentcolor">
-            <path fill-rule="evenodd" clip-rule="evenodd" d="M8 1L16 15H0L8 1Z" fill="currentColor"></path>
-          </svg>
-          <span class="header-slash">/</span>
-          <span class="header-account-name" id="nav-header-account-btn" title="View all projects in account">${escapeHtml(this.accountSession?.email || (this.connectionStatus === 'demo' ? 'Fictional example' : 'Local workspace'))}</span>
-          <span class="header-slash">/</span>
-          <span class="header-project-name" id="nav-header-project-btn" title="Project overview">${projectName}</span>
-        </div>
-      </div>
-
-      <!-- High-Level Domain Navigation (ZERO phases in header!) -->
-      <nav class="header-nav header-domain-nav" aria-label="Project Workspace Navigation">
-        <button class="nav-domain-btn ${this.projectSection === 'phases' ? 'active' : ''}" data-domain="phases">
-          ${ICONS.clock} <span>Phases & Specs</span>
-        </button>
-        <button class="nav-domain-btn ${this.projectSection === 'governance' ? 'active' : ''}" data-domain="governance">
-          ${ICONS.shieldCheck} <span>Memory & Rules</span>
-        </button>
-        <button class="nav-domain-btn ${this.projectSection === 'reports' ? 'active' : ''}" data-domain="reports">
-          ${ICONS.sparkles} <span>Reports & Audits</span>
-        </button>
-        <button class="nav-domain-btn ${this.projectSection === 'automation' ? 'active' : ''}" data-domain="automation">
-          ${ICONS.terminal} <span>Scripts & Hooks</span>
-        </button>
-        <button class="nav-domain-btn ${this.projectSection === 'knowledge' ? 'active' : ''}" data-domain="knowledge">
-          ${ICONS.activity} <span>Docs & Templates</span>
-        </button>
-        <button class="nav-domain-btn ${this.projectSection === 'metrics' ? 'active' : ''}" data-domain="metrics">
-          ${ICONS.chart} <span>Project Metrics</span>
-        </button>
-      </nav>
-
-      <div class="header-right">
-        <!-- Live Account Sync Indicator -->
-        <div class="sync-status-pill" title="${this.token ? `Reading local project files ${escapeHtml(this.accountSession?.email || (this.connectionStatus === 'demo' ? 'Fictional example' : 'Local workspace'))}` : 'Local standalone mode'}">
-          <span class="sync-dot ${this.token ? 'live' : 'standalone'}"></span>
-          <span class="sync-text">${this.accountSession ? 'ACCOUNT' : this.token ? 'LOCAL CONNECTED' : 'DEMO'}</span>
-        </div>
-
-        <a class="nav-link-subtle" id="nav-projects-dashboard-btn" title="View all projects in account">Projects</a>
-        <a class="nav-link-subtle" id="nav-landing-page-btn" title="Go to public landing">Landing</a>
-      </div>
-    `;
+  _renderProjectRail() {
+    const sections=[['overview','Project overview'],['phases','Phases'],['governance','Decisions & context'],['reports','Reviews'],['automation','Checks & automation'],['knowledge','Resources & graphs'],['metrics','Detailed metrics']];
+    return `<nav class="project-section-rail" aria-label="Project sections"><p class="eyebrow">${escapeHtml(this.snapshot?.projectId || 'Project')}</p>${sections.map(([id,label])=>`<button class="nav-domain-btn ${this.projectSection===id?'active':''}" data-domain="${id}">${label}</button>`).join('')}<p class="rail-status">${this.connectionStatus==='demo'?'Synthetic demo':this.accountSession?'Private account project':'Connected locally'}</p></nav>`;
   }
 
   _updateStatusBar() {
@@ -490,7 +421,7 @@ npm --prefix visual run workspace -- --project /path/to/project --project /path/
 
   _renderCurrentView() {
     if (this.currentView === 'landing') {
-      return renderLandingView();
+      return `${this.accountSession?`<section class="account-shortcuts"><h2>Your workspace</h2><p>${this.projects.filter(p=>!p.id.startsWith('demo-')).length} connected projects · <button class="nav-link" id="landing-your-projects">View all projects</button></p><div>${this.projects.filter(p=>!p.id.startsWith('demo-')).map(p=>`<button class="btn btn-secondary" data-account-project="${escapeHtml(p.id)}">${escapeHtml(p.name || p.id)}</button>`).join('')}</div></section>`:''}${renderLandingView()}`;
     }
     if (this.currentView === 'projects') {
       return this._renderAccountProjectsView();
@@ -499,9 +430,12 @@ npm --prefix visual run workspace -- --project /path/to/project --project /path/
       return this._renderProfilesView();
     }
 
+    if (this.currentView === 'account') return `<section class="insight-panel account-settings"><h1>Account & connections</h1><p>${escapeHtml(this.accountSession?.email || 'Local workspace')}</p><p>Projects are connected explicitly from your machines. Your email is your login identifier; it does not discover folders.</p><div id="account-settings-actions"><button class="btn btn-secondary" id="account-connect-machine">Connect another machine</button></div><p>Manage machine credentials here. To open an existing project, choose Projects in the navigation.</p></section>`;
+    if (this.projectSection === 'overview') return renderProjectOverview(this.snapshot);
     // Tier 3: Direct Project Views based on Domain Section:
     if (this.projectSection === 'governance') {
-      return renderGovernanceView(this.snapshot, this.activeGovTab);
+      if (this.activeGovTab === 'summary') return renderDecisionOverview(this.snapshot);
+      return `<button class="btn btn-secondary" data-gov-tab="summary">← Decision overview</button>${renderGovernanceView(this.snapshot, this.activeGovTab)}`;
     }
     if (this.projectSection === 'reports') {
       return renderReportsView(this.snapshot, this.activeReportId);
@@ -524,14 +458,15 @@ npm --prefix visual run workspace -- --project /path/to/project --project /path/
   // Tier 2: The Logged In State (Account Level / Multi-Project Dashboard)
   // ---------------------------------------------------------------------------
   _renderAccountProjectsView() {
+    if (this.projectListError) return `<section class="insight-panel" role="status"><h1>Projects unavailable</h1><p>${escapeHtml(this.projectListError)}</p><button class="btn btn-secondary" id="retry-projects">Try again</button></section>`;
     if (!this.projects.length) return `<section class="domain-content-card"><h1>No connected projects yet</h1><p>${this.accountSession ? 'Connect a machine to publish the projects you choose.' : 'Launch the local CLI with one or more --project paths. No account is required.'}</p><button class="btn btn-secondary" id="dash-connect-another-btn">Connect projects</button></section>`;
     return `<div class="projects-dashboard">
-      <div class="account-hero-bar"><div class="account-identity"><div class="account-avatar-large">${ICONS.user}</div><div><h1 class="account-title">${escapeHtml(this.accountSession?.email || (this.connectionStatus === 'demo' ? 'Fictional example' : 'Local workspace'))}</h1><p class="account-sub">${this.projects.length} connected projects · ${this.accountSession ? 'Private published snapshots' : 'Local read service'}</p></div></div><button class="btn btn-secondary" id="dash-connect-another-btn">Connect another project</button></div>
+      <div class="account-hero-bar"><div class="account-identity"><div class="account-avatar-large">${ICONS.user}</div><div><h1 class="account-title">Your projects</h1><p class="account-sub">${this.projects.length} connected projects · ${this.accountSession ? 'Private published snapshots' : 'Local read service'}</p></div></div><button class="btn btn-secondary" id="dash-connect-another-btn">${this.accountSession?'Manage connections':'Open another local project'}</button></div>
       <div class="project-card-grid">${this.projects.map(project => `<div class="project-dash-card" data-project-id="${escapeHtml(project.id)}" role="button" tabindex="0">
         <div class="project-dash-header"><h2 class="project-dash-title">${escapeHtml(project.name || project.id)}</h2><span class="profile-tag-pill mono">${escapeHtml(project.profile || 'general')}</span></div>
-        <p class="project-dash-path mono">${escapeHtml(project.root || 'Private account project')}</p>
-        <div class="project-dash-meta-box"><p>Active phase: ${escapeHtml(project.activePhaseId || 'No active sprint declared')}</p><p>${project.phasesCount ?? 'Unknown'} phases · ${project.metrics?.completedTasks ?? 'Unknown'}/${project.metrics?.totalTasks ?? 'Unknown'} tasks recorded complete</p><p>Read revision: ${escapeHtml(project.contentRevision || 'Not recorded')}</p><p>Updated: ${escapeHtml(project.updated || 'Local snapshot')}</p></div>
-        <div class="project-dash-footer"><button class="btn btn-primary">Open workspace</button></div>
+        <div class="project-dash-meta-box"><p>${project.phasesCount ?? 'Unknown'} phases</p><p><strong>${project.metrics?.overallProgressPct ?? '—'}%</strong> recorded progress</p><p>${project.metrics?.completedTasks ?? 'Unknown'} of ${project.metrics?.totalTasks ?? 'Unknown'} tasks marked complete</p><p>${project.activePhaseId ? 'Current phase: '+escapeHtml(project.activePhaseId) : 'No current phase declared'}</p></div>
+        <details class="project-source-details"><summary>Source details</summary><p>${escapeHtml(project.root || 'Private account snapshot')}</p><p>Revision: ${escapeHtml(project.contentRevision || 'Not recorded')}</p><p>Updated: ${escapeHtml(project.updated ? new Date(project.updated).toLocaleString() : 'Local snapshot')}</p></details>
+        <div class="project-dash-footer"><button class="btn btn-secondary">View project</button></div>
       </div>`).join('')}</div></div>`;
   }
 
@@ -676,29 +611,7 @@ npm --prefix visual run workspace -- --project /path/to/project --project /path/
   // ---------------------------------------------------------------------------
   // Profiles View
   // ---------------------------------------------------------------------------
-  _renderProfilesView() {
-    const profiles = PROFILES.map(p => ({ ...p, desc: p.description }));
-
-    return `
-      <section style="margin-top: 1.5rem;">
-        <h1 class="detail-title">Composable Profiles</h1>
-        <p style="color:var(--ds-gray-600); margin-bottom: 2rem; font-size: 1.05rem;">
-          Tailor validation rules, task checklists, and architectural standards to your project type.
-        </p>
-
-        <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem;">
-          ${profiles.map(p => `
-            <div class="card-box" style="margin-bottom:0;">
-              <div style="font-family:var(--font-mono); font-size:1rem; font-weight:700; color:var(--foreground); margin-bottom:0.5rem;">
-                ${p.id}
-              </div>
-              <p style="font-size:0.85rem; color:var(--ds-gray-600);">${p.desc}</p>
-            </div>
-          `).join('')}
-        </div>
-      </section>
-    `;
-  }
+  _renderProfilesView() { return renderProfiles(this.selectedProfileId); }
 
   _renderFooter() {
     return `
@@ -746,11 +659,21 @@ npm --prefix visual run workspace -- --project /path/to/project --project /path/
   }
 
   _bindEvents() {
+    this.container.querySelector('#landing-your-projects')?.addEventListener('click',()=>this._showProjects());
+    this.container.querySelector('#retry-projects')?.addEventListener('click',()=>this._showProjects());
+    this.container.querySelectorAll('[data-account-project]').forEach(button=>button.addEventListener('click',()=>this.selectProject(button.dataset.accountProject)));
+    this.container.querySelector('#nav-account-btn')?.addEventListener('click',()=>{this.currentView='account';this._syncRoute(true);this.render();});
+    this.container.querySelector('#account-connect-machine')?.addEventListener('click',()=>this._showConnectorDialog());
+    this.container.querySelectorAll('[data-profile-id]').forEach(button=>button.addEventListener('click',()=>{this.selectedProfileId=button.dataset.profileId;this.currentView='profiles';this._syncRoute(true);this.render();}));
+    this.container.querySelector('[data-profile-back]')?.addEventListener('click',()=>{this.selectedProfileId=null;this._syncRoute(true);this.render();});
+    this.container.querySelectorAll('[data-copy-command]').forEach(button=>button.addEventListener('click',async()=>{try {await navigator.clipboard.writeText(button.dataset.copyCommand);button.textContent='Copied';} catch {button.textContent='Select and copy the command above';}}));
+    this.container.querySelectorAll('[data-insight-phase]').forEach(button=>button.addEventListener('click',()=>{this.activePhaseId=button.dataset.insightPhase;this.phaseTab=button.dataset.insightTab || 'overview';this.projectSection='phases';this._syncRoute(true);this.render();}));
+
     // Brand click -> smart navigate
     const brandBtn = document.getElementById('brand-home-btn');
     if (brandBtn) {
       brandBtn.addEventListener('click', () => {
-        if (this.token) {
+        if (this.token || this.accountSession) {
           this.currentView = 'projects';
         } else {
           this.currentView = 'landing';
@@ -776,16 +699,18 @@ npm --prefix visual run workspace -- --project /path/to/project --project /path/
         this.activePhaseId = null;
         this.activeTab = 'overview';
         this.currentView = 'project';
-        this.render();
+        this._syncRoute(true); this.render();
       });
     }
 
     // High-Level Domain Navigation (ZERO phases in header!)
-    this.container.querySelectorAll('.nav-domain-btn[data-domain]').forEach(btn => {
+    this.container.querySelectorAll('[data-domain]').forEach(btn => {
       btn.addEventListener('click', () => {
         this.projectSection = btn.getAttribute('data-domain');
+        if (this.projectSection === 'knowledge') this.activeKnowledgeSection = 'graphify';
+        if (this.projectSection === 'governance') this.activeGovTab = 'summary';
         this.currentView = 'project';
-        this.render();
+        this._syncRoute(true); this.render();
       });
     });
 
@@ -794,8 +719,8 @@ npm --prefix visual run workspace -- --project /path/to/project --project /path/
       el.addEventListener('click', () => {
         const pId = el.getAttribute('data-phase-select');
         this.activePhaseId = pId;
-        this._syncRoute(true);
         this.phaseTab = 'overview';
+        this._syncRoute(true);
         this.render();
       });
     });
@@ -947,10 +872,7 @@ npm --prefix visual run workspace -- --project /path/to/project --project /path/
     // Nav to Projects Dashboard
     const navProjectsDashboardBtn = document.getElementById('nav-projects-dashboard-btn');
     const footerProjectsBtn = document.getElementById('footer-projects-btn');
-    const onNavProjects = async () => {
-      if (this.token || this.accountSession) await this._loadProjects();
-      this.currentView = 'projects'; this.render();
-    };
+    const onNavProjects = () => this._showProjects();
     if (navProjectsDashboardBtn) navProjectsDashboardBtn.addEventListener('click', onNavProjects);
     if (footerProjectsBtn) footerProjectsBtn.addEventListener('click', onNavProjects);
 
@@ -960,7 +882,7 @@ npm --prefix visual run workspace -- --project /path/to/project --project /path/
     const footerLandingBtn = document.getElementById('footer-landing-btn');
     const onNavLanding = () => {
       this.currentView = 'landing';
-      this.render();
+      this._syncRoute(true); this.render();
     };
     if (navLandingPageBtn) navLandingPageBtn.addEventListener('click', onNavLanding);
     if (navLandingHomeBtn) navLandingHomeBtn.addEventListener('click', onNavLanding);
@@ -970,8 +892,9 @@ npm --prefix visual run workspace -- --project /path/to/project --project /path/
     const navProfilesBtn = document.getElementById('nav-profiles-btn');
     const footerProfilesBtn = document.getElementById('footer-profiles-btn');
     const onNavProfiles = () => {
+      this.selectedProfileId = null;
       this.currentView = 'profiles';
-      this.render();
+      this._syncRoute(true); this.render();
     };
     if (navProfilesBtn) navProfilesBtn.addEventListener('click', onNavProfiles);
     if (footerProfilesBtn) footerProfilesBtn.addEventListener('click', onNavProfiles);
@@ -1005,12 +928,13 @@ npm --prefix visual run workspace -- --project /path/to/project --project /path/
     };
     if (connectWorkspaceBtn) connectWorkspaceBtn.addEventListener('click', onConnectWorkspace);
     if (connectWorkspaceHeaderBtn) connectWorkspaceHeaderBtn.addEventListener('click', onConnectWorkspace);
-    if (dashConnectAnotherBtn) dashConnectAnotherBtn.addEventListener('click', onConnectWorkspace);
+    if (dashConnectAnotherBtn) dashConnectAnotherBtn.addEventListener('click', () => {if (this.accountSession && this.projects.length) {this.currentView='account';this._syncRoute(true);this.render();} else onConnectWorkspace();});
 
     // Project cards in Account Dashboard
     this.container.querySelectorAll('.project-dash-card[data-project-id]').forEach(card => {
-      card.addEventListener('keydown', event => { if (['Enter', ' '].includes(event.key)) { event.preventDefault(); card.click(); } });
-      card.addEventListener('click', () => {
+      card.addEventListener('keydown', event => { if (event.target.closest('details')) return; if (['Enter', ' '].includes(event.key)) { event.preventDefault(); card.click(); } });
+      card.addEventListener('click', event => {
+        if (event.target.closest('details')) return;
         const pId = card.getAttribute('data-project-id');
         this.selectProject(pId);
       });
@@ -1033,7 +957,7 @@ npm --prefix visual run workspace -- --project /path/to/project --project /path/
         this.activePhaseId = row.getAttribute('data-phase-id');
         this.activeTab = 'overview';
         this.currentView = 'project';
-        this.render();
+        this._syncRoute(true); this.render();
       });
     });
 
@@ -1042,7 +966,7 @@ npm --prefix visual run workspace -- --project /path/to/project --project /path/
         this.activePhaseId = row.getAttribute('data-phase-id');
         this.activeTab = 'metrics';
         this.currentView = 'project';
-        this.render();
+        this._syncRoute(true); this.render();
       });
     });
 

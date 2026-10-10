@@ -1,3 +1,4 @@
+import { phaseOrder } from './projectOverviewView.js';
 import { escapeHtml } from '../sanitize.js';
 import { escapeDisplayModel } from '../sanitize.js';
 import { renderMarkdown } from '../markdown.js';
@@ -16,7 +17,7 @@ export function renderPhaseExplorerView(snapshot, state) {
   snapshot = escapeDisplayModel(snapshot);
   if (!snapshot) return `<div class="empty-state">No project loaded.</div>`;
 
-  const phases = snapshot.phases || [];
+  const phases = [...(snapshot.phases || [])].sort(phaseOrder);
   const activePhaseIdInSnapshot = snapshot.activePhaseId;
   const currentPhaseId = state.activePhaseId;
   const currentTab = state.phaseTab || 'overview';
@@ -45,13 +46,13 @@ export function renderPhaseExplorerView(snapshot, state) {
 
   return `
     <div class="phase-explorer-container">
-      <!-- LEFT PANEL: Scalable On-Screen Phase Navigator -->
-      <aside class="phase-nav-sidebar" aria-label="Phase Navigator">
+      <!-- LEFT PANEL: Scalable On-Screen Phase navigation -->
+      <aside class="phase-nav-sidebar" aria-label="Phase navigation">
         <div class="phase-nav-sidebar-header">
           <div class="nav-sidebar-title-row">
-            <span class="nav-sidebar-kicker font-mono">PHASE NAVIGATOR</span>
+            <span class="nav-sidebar-kicker font-mono">PHASES</span>
             <button class="all-sprints-btn font-mono ${currentPhaseId === null ? 'active' : ''}" id="toggle-all-sprints-btn">
-              All Sprints Overview
+              All phases
             </button>
           </div>
 
@@ -77,7 +78,7 @@ export function renderPhaseExplorerView(snapshot, state) {
             <input
               type="text"
               id="phase-search-field"
-              placeholder="Filter 50+ phases, tasks..."
+              placeholder="Find a phase, task or requirement"
               value="${escapeHtml(state.phaseSearchQuery || '')}"
               class="phase-search-input font-mono"
               autocomplete="off"
@@ -96,7 +97,7 @@ export function renderPhaseExplorerView(snapshot, state) {
           ` : filteredPhases.map(p => {
             const isSelected = selectedPhase && selectedPhase.id === p.id;
             const isLiveActive = p.id === activePhaseIdInSnapshot;
-            const cleanNumber = p.id.replace(/^(phase-0*|phase-)/i, 'P');
+            const cleanNumber = p.id;
             const percent = p.taskCounts?.percent || 0;
 
             return `
@@ -110,7 +111,7 @@ export function renderPhaseExplorerView(snapshot, state) {
                   <div class="phase-id-group font-mono">
                     <span class="scope-dot dot-${p.category}"></span>
                     <span class="phase-p-tag">${cleanNumber}</span>
-                    ${isLiveActive ? `<span class="active-pulse-badge">ACTIVE SPRINT</span>` : ''}
+                    ${isLiveActive ? `<span class="active-pulse-badge">CURRENT PHASE</span>` : ''}
                   </div>
                   <span class="phase-status-pill font-mono status-clean-${p.category}">
                     ${p.status.replace(/_/g, ' ')}
@@ -150,7 +151,7 @@ export function renderPhaseExplorerView(snapshot, state) {
 function renderSelectedPhaseWorkspace(phase, activeTab, snapshot, state) {
   const pHealth = phase.metrics?.healthScore ?? 0;
   const pGrade = phase.metrics?.healthGrade || 'UNKNOWN';
-  const cleanId = phase.id.replace(/^phase-0*/i, 'Phase ');
+  const cleanId = phase.id;
   const acceptanceCount = phase.acceptanceCriteria?.length || 0;
   const limitationsCount = phase.limitations?.length || 0;
   const evCount = phase.artifacts?.evidence?.length || 0;
@@ -181,8 +182,8 @@ function renderSelectedPhaseWorkspace(phase, activeTab, snapshot, state) {
             <span class="kpi-chip-val">${phase.taskCounts?.percent || 0}% (${phase.taskCounts?.completed || 0}/${phase.taskCounts?.total || 0})</span>
           </div>
           <div class="kpi-chip">
-            <span class="kpi-chip-label">HEALTH</span>
-            <span class="kpi-chip-val text-accent">${pHealth}/100 (${pGrade})</span>
+            <span class="kpi-chip-label">SPEC COMPLETENESS</span>
+            <span class="kpi-chip-val text-accent">${pHealth}/100</span>
           </div>
         </div>
       </header>
@@ -378,10 +379,10 @@ function renderRemediationsAndFutureView(phase) {
 }
 
 /**
- * Master All Sprints Overview View
+ * Master All phases View
  */
 function renderAllSprintsOverview(snapshot) {
-  const phases = snapshot.phases || [];
+  const phases = [...(snapshot.phases || [])].sort(phaseOrder);
   const metrics = snapshot.metrics || {};
 
   return `
@@ -389,13 +390,13 @@ function renderAllSprintsOverview(snapshot) {
       <header class="domain-header">
         <div>
           <span class="domain-kicker font-mono">PROJECT PORTFOLIO</span>
-          <h1 class="domain-title">All Sprints & Master Completion overview</h1>
+          <h1 class="domain-title">All phases</h1>
           <p class="domain-subtitle font-mono">
-            Holistic cross-phase roadmap, execution burndown, and milestone assurance status.
+            Recorded task progress across phases.
           </p>
         </div>
         <div class="domain-stats-pill font-mono">
-          <span>${phases.length} Total Sprints</span> • <span>${metrics.overallProgressPct || 0}% Overall Progress</span>
+          <span>${phases.length} Phases</span> • <span>${metrics.overallProgressPct || 0}% Overall Progress</span>
         </div>
       </header>
 

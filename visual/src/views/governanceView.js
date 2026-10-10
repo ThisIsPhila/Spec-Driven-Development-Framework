@@ -32,13 +32,13 @@ export function renderGovernanceView(snapshot, activeSubTab = 'active-context') 
       <header class="domain-header">
         <div>
           <span class="domain-kicker font-mono">FRAMEWORK MEMORY & GOVERNANCE</span>
-          <h1 class="domain-title">Project Memories & Rules Engine</h1>
+          <h1 class="domain-title">Context documents & rules</h1>
           <p class="domain-subtitle font-mono">
-            Persistent context records, architectural decisions, and machine-enforced development rules.
+            Persistent context records, architectural decisions, and declared development rules.
           </p>
         </div>
         <div class="domain-stats-pill font-mono">
-          <span>${memories.length} Memories</span> • <span>${rules.length} Rules Enforced</span>
+          <span>${memories.length} Memories</span> • <span>${rules.length} Declared Rules</span>
         </div>
       </header>
 

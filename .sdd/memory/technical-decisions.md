@@ -171,3 +171,11 @@
 
 **Status:** [Proposed / Approved / Implemented / Superseded / Deprecated]
 ```
+
+## TD-013: Insights First, Documents as Sources (October 10, 2026)
+
+**Decision:** Open connected projects on an overview of recorded progress, gaps, next tasks and sourced decisions. Keep global navigation limited to Projects, Skills & Profiles, About and Account; put project sections in an on-screen rail. Account connection is a settings action and never replaces project navigation.
+
+**Rationale:** The owner found the document-centric interface confusing and wanted to understand what is happening before reading source files. Markdown remains canonical, while the product derives useful summaries and links back to evidence. Recorded observations do not imply independent verification or historical performance data.
+
+**Implementation:** Interactive profile detail pages expose actual profile contents and setup commands. Phases retain their canonical full IDs and numeric ordering. The public demo remains explicitly fictional; signed-in project lists show private connected projects.

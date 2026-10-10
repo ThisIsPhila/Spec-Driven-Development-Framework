@@ -39,6 +39,7 @@ test('public page stays contained at mobile, tablet and desktop widths',async ({
   }
   if (process.env.SDD_REVIEW_SCREENSHOTS) await page.screenshot({path:path.join(os.tmpdir(),'sdd-reviewed-catalog.png')});
   await page.locator('#launch-demo-btn').click();
+  await page.getByRole('button',{name:'Explore phases',exact:true}).click();
   await page.locator('[data-phase-tab="requirements"]').click();
   await page.locator('button[data-source-path]').first().click();
   await expect(page.locator('dialog pre')).toContainText('REQ-');
@@ -54,6 +55,7 @@ test('public page stays contained at mobile, tablet and desktop widths',async ({
 });
 test('real 60-phase workspace filters tasks and follows requirement/source links',async ({page})=>{
   await page.goto(info.url);
+  await page.getByRole('button',{name:'Explore phases',exact:true}).click();
   await expect(page.locator('.phase-nav-sidebar [data-phase-select]').first()).toBeVisible();
   // Navigator selection uses the actual markup rather than synthetic demo state.
   await expect(page.locator('.phase-nav-sidebar [data-phase-select]')).toHaveCount(60);
@@ -89,7 +91,7 @@ test('real 60-phase workspace filters tasks and follows requirement/source links
   await expect(page.locator('[data-phase-tab="tasks"]')).toHaveClass(/active/);
   await expect(page.locator('.task-card')).toHaveCount(2);
   for (const width of [320,390,768,1024,1440]) { await page.setViewportSize({width,height:844}); const sizes=await page.evaluate(()=>({document:document.documentElement.scrollWidth,viewport:innerWidth,offenders:[...document.querySelectorAll('*')].filter(el=>el.getBoundingClientRect().right>innerWidth+0.5 && el.getBoundingClientRect().width<innerWidth*2).slice(0,8).map(el=>({tag:el.tagName,class:String(el.className),right:el.getBoundingClientRect().right}))})); expect(sizes.document, `workspace overflow at ${width}: ${JSON.stringify(sizes.offenders)}`).toBeLessThanOrEqual(sizes.viewport); }
-  await page.locator('[data-domain="knowledge"]').click(); await page.locator('[data-know-section="graphify"]').click();
+  await page.locator('.project-section-rail [data-domain="knowledge"]').click();
   await expect(page.getByRole('img',{name:'Imported Graphify topology'})).toBeVisible();
   await expect(page.locator('.imported-graph rect')).toHaveCount(2);
   await expect(page.locator('.imported-graph line')).toHaveCount(1);
@@ -101,6 +103,7 @@ test('account sign-up is functional and an empty account has no invented project
   await page.goto(accountInfo.url);
   page.once('dialog', dialog => dialog.accept(info.url));
   await page.locator('#connect-workspace-btn').click();
+  await page.getByRole('button',{name:'Explore phases',exact:true}).click();
   await expect(page.locator('.phase-nav-sidebar [data-phase-select]')).toHaveCount(60);
   await page.goto(accountInfo.url);
   await page.getByRole('button',{name:'Sign in',exact:true}).click();
@@ -108,7 +111,8 @@ test('account sign-up is functional and an empty account has no invented project
   await page.locator('#account-password').fill('browser-test-password');
   await page.getByRole('button',{name:'Create account',exact:true}).click();
   await expect(page.getByText('No connected projects yet')).toBeVisible();
-  await page.getByRole('button',{name:'Connect machine',exact:true}).click();
+  await page.getByRole('button',{name:'Account',exact:true}).click();
+  await page.getByRole('button',{name:'Connect another machine',exact:true}).click();
   await expect(page.locator('dialog')).toContainText('SDD_SYNC_TOKEN=');
 });
 
@@ -132,6 +136,7 @@ test('account access explains validation, connection failure, success and duplic
   await expect(page.locator('#account-error')).toContainText('Email or password is incorrect');
   await page.getByRole('button',{name:'Create account',exact:true}).click();
   await expect(page.getByText('Account created. You are signed in.',{exact:true})).toBeVisible();
+  await page.getByRole('button',{name:'Account',exact:true}).click();
   await page.getByRole('button',{name:'Sign out',exact:true}).click();
   await page.getByRole('button',{name:'Sign in',exact:true}).click();
   await page.locator('#account-email').fill('feedback@example.test');
@@ -140,4 +145,52 @@ test('account access explains validation, connection failure, success and duplic
   await expect(page.locator('#account-error')).toContainText('already exists');
   await page.locator('#account-login').click();
   await expect(page.getByText('You are signed in.',{exact:true})).toBeVisible();
+});
+
+test('signed-in navigation separates projects, examples, account settings and profile details',async({page})=>{
+  const privateService=new AccountService({database:':memory:',port:0,staticDir:path.resolve('dist'),bootstrapProjects:[root]});
+  const privateInfo=await privateService.start();
+  try {
+    await page.goto(privateInfo.url);
+    await page.getByRole('button',{name:'Sign in',exact:true}).click();
+    await page.locator('#account-email').fill('navigation@example.test');
+    await page.locator('#account-password').fill('navigation-test-password');
+    await page.getByRole('button',{name:'Create account',exact:true}).click();
+    await expect(page.getByRole('heading',{name:'Your projects',exact:true})).toBeVisible();
+    await expect(page.locator('.project-dash-card')).toHaveCount(1);
+    await page.getByRole('button',{name:'About',exact:true}).click();
+    await expect(page.locator('.skills-header [data-domain]')).toHaveCount(0);
+    await expect(page.getByRole('button',{name:'Connect machine',exact:true})).toHaveCount(0);
+    await page.getByRole('button',{name:'Projects',exact:true}).click();
+    await expect(page.locator('dialog')).toHaveCount(0);
+    await expect(page.locator('.project-dash-card')).toHaveCount(1);
+    await page.getByRole('button',{name:'View project',exact:true}).click();
+    await expect(page.getByRole('heading',{name:'Next recorded work',exact:true})).toBeVisible();
+    await expect(page.getByRole('img',{name:'Recorded progress by phase',exact:true})).toBeVisible();
+    await page.getByRole('button',{name:'About',exact:true}).click();
+    await page.locator('[data-demo-project="1"]').click();
+    await page.getByRole('button',{name:'Explore phases',exact:true}).click();
+    const ids=await page.locator('.phase-p-tag').allTextContents();
+    expect(ids.map(id=>id.trim())).toEqual(['phase-001-account-provisioning','phase-002-invoice-generation','phase-003-stripe-webhook-handling','phase-004-dunning-retry-strategy']);
+    await page.getByRole('button',{name:'Projects',exact:true}).click();
+    await page.getByRole('button',{name:'View project',exact:true}).click();
+    await expect(page.getByRole('heading',{name:'Next recorded work',exact:true})).toBeVisible();
+    await expect(page.locator('.project-section-rail')).not.toContainText('invoice');
+    for (const width of [320,390,768,1024,1440]) {
+      await page.setViewportSize({width,height:900});
+      expect(await page.evaluate(()=>document.documentElement.scrollWidth)).toBeLessThanOrEqual(width);
+    }
+    if(process.env.SDD_REVIEW_SCREENSHOTS) await page.screenshot({path:path.join(os.tmpdir(),'sdd-project-overview.png')});
+    await page.getByRole('button',{name:'Skills & Profiles',exact:true}).click();
+    await page.locator('[data-profile-id="web"]').click();
+    await expect(page.getByRole('heading',{name:'What this provides',exact:true})).toBeVisible();
+    await expect(page.locator('.profile-detail')).toContainText('accessibility-checklist.md');
+    await expect(page.locator('.profile-detail')).toContainText('--profile web');
+    await page.reload();
+    await expect(page.locator('.profile-detail')).toContainText('accessibility-checklist.md');
+    await page.getByRole('button',{name:'Account',exact:true}).click();
+    await expect(page.getByRole('heading',{name:'Account & connections',exact:true})).toBeVisible();
+    await page.getByRole('button',{name:'Projects',exact:true}).click();
+    await expect(page.locator('.project-dash-card')).toHaveCount(1);
+  } finally {await privateService.stop();}
 });

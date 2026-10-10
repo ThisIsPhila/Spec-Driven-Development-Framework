@@ -3703,3 +3703,59 @@ a {
 .account-dialog #account-error { min-height:2.5rem; line-height:1.5; color:#f5c18a; }
 .account-dialog button:disabled { opacity:0.5; cursor:wait; }
 .account-success { padding:0.8rem 1.5rem; background:#12251b; color:#d5fbe3; }
+
+/* Product hierarchy: restrained global header, on-screen project sections. */
+.skills-header { display:flex; align-items:center; justify-content:space-between; gap:1rem; height:auto; min-height:56px; padding:0.6rem 1.5rem; box-sizing:border-box; }
+.global-nav { display:flex; align-items:center; gap:1rem; flex-wrap:wrap; }
+.global-nav .nav-link, .header-right .nav-link { background:transparent; border:0; font:inherit; font-size:0.85rem; color:var(--ds-gray-500); cursor:pointer; padding:0.3rem; }
+.global-nav .nav-link.active, .global-nav .nav-link:hover, .header-right .nav-link:hover { color:var(--foreground); }
+.project-shell { display:grid; grid-template-columns:180px minmax(0,1fr); gap:1.5rem; padding-top:1.5rem; }
+.project-content { min-width:0; }
+.project-section-rail { align-self:start; position:sticky; top:80px; display:flex; flex-direction:column; gap:0.4rem; min-width:0; }
+.project-section-rail .eyebrow { overflow-wrap:anywhere; line-height:1.5; }
+.project-section-rail .nav-domain-btn { text-align:left; white-space:normal; padding:0.65rem 0.75rem; }
+.rail-status, .insights-provenance { color:var(--ds-gray-500); font-size:0.8rem; line-height:1.6; }
+.eyebrow { color:var(--ds-gray-500); font-family:var(--font-mono); font-size:0.7rem; letter-spacing:0.06em; }
+.insights-heading { display:flex; justify-content:space-between; align-items:center; gap:1rem; margin-bottom:1.5rem; }
+.project-insights h1, .profile-directory h1, .profile-detail h1 { font-size:1.8rem; margin:0.5rem 0; }
+.project-insights p, .profile-directory p, .profile-detail p { line-height:1.6; }
+.insight-kpis { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:1rem; margin-bottom:1.5rem; }
+.insight-kpis article, .insight-panel, .profile-detail-card { border:1px solid var(--border); border-radius:6px; padding:1.2rem; background:var(--background); min-width:0; }
+.insight-kpis strong { display:block; font-size:1.8rem; margin:0.6rem 0; }
+.insight-kpis span, .insight-kpis p { font-size:0.8rem; color:var(--ds-gray-500); }
+.insights-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:1.2rem; }
+.insight-panel h2 { font-size:1.1rem; margin:0 0 0.5rem; }
+.insight-panel > p { color:var(--ds-gray-500); font-size:0.85rem; }
+.insight-action, .phase-progress-row { width:100%; color:var(--foreground); background:transparent; border:0; border-bottom:1px solid var(--border); text-align:left; cursor:pointer; padding:0.8rem 0; font:inherit; }
+.insight-action { display:flex; flex-direction:column; gap:0.4rem; line-height:1.5; }
+.insight-action > span:last-child { color:var(--ds-gray-500); font-size:0.75rem; overflow-wrap:anywhere; }
+.phase-progress-row { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:0.5rem; font-size:0.8rem; }
+.phase-progress-row > span:first-child { overflow-wrap:anywhere; }
+.insight-bar { grid-column:1/-1; height:5px; background:#252525; border-radius:3px; }
+.insight-bar > span { display:block; height:100%; background:#999; border-radius:3px; }
+.decision-excerpt { border-top:1px solid var(--border); padding:1rem 0; }
+.decision-excerpt h3 { font-size:0.95rem; }
+.decision-excerpt p { font-size:0.85rem; overflow-wrap:anywhere; }
+.profile-detail-card { text-align:left; color:var(--foreground); cursor:pointer; font:inherit; }
+.profile-detail-card:hover, .insight-action:hover, .phase-progress-row:hover { background:#151515; }
+.profile-directory, .profile-detail, .account-settings { margin-top:1.5rem; }
+.profile-directory > .insight-panel { margin-top:1.5rem; }
+.profile-detail pre, .profile-directory code { white-space:pre-wrap; overflow-wrap:anywhere; }
+.profile-catalog-table button.skills-row { width:100%; color:var(--foreground); background:transparent; text-align:left; font:inherit; cursor:pointer; border-left:0; border-right:0; border-top:0; }
+.profile-catalog-table button.skills-row:hover { background:#151515; }
+.phase-card-id { overflow-wrap:anywhere; }
+@media(max-width:1100px) { .insight-kpis { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+@media(max-width:900px) { .project-shell { grid-template-columns:minmax(0,1fr); } .project-section-rail { position:static; flex-direction:row; flex-wrap:wrap; border-bottom:1px solid var(--border); padding-bottom:1rem; } .project-section-rail > p { width:100%; margin:0; } .project-section-rail .nav-domain-btn { font-size:0.8rem; } }
+@media(max-width:640px) { .skills-header { padding:0.7rem 1rem; flex-wrap:wrap; gap:0.6rem; } .global-nav { order:3; width:100%; justify-content:flex-start; gap:0.9rem; } .insights-grid { grid-template-columns:minmax(0,1fr); } .insights-heading { flex-wrap:wrap; } .insight-kpis { gap:0.6rem; } .insight-kpis article { padding:0.8rem; } }
+.project-dash-header { flex-direction:column; align-items:flex-start; gap:0.6rem; }
+.project-dash-title, .profile-tag-pill { max-width:100%; overflow-wrap:anywhere; }
+.project-source-details { font-size:0.75rem; color:var(--ds-gray-500); overflow-wrap:anywhere; margin-top:1rem; }
+.phase-p-tag { overflow-wrap:anywhere; }
+.phase-progress-list { max-height:340px; overflow:auto; padding-right:0.5rem; }
+.project-insights .insights-grid { align-items:start; }
+.project-insights .insight-panel { max-height:520px; overflow:auto; }
+.account-shortcuts { border-bottom:1px solid var(--border); padding:1.2rem 0; }
+.account-shortcuts h2 { margin:0 0 0.4rem; font-size:1.1rem; }
+.account-shortcuts p { color:var(--ds-gray-500); font-size:0.85rem; }
+.account-shortcuts > div { display:flex; flex-wrap:wrap; gap:0.6rem; }
+.account-shortcuts .nav-link { font:inherit; background:transparent; color:var(--foreground); border:0; cursor:pointer; }

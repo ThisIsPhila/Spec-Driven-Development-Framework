@@ -107,12 +107,12 @@ export function renderLandingView() {
         </div>
         <div class="skills-table-responsive-wrapper">
           <div class="skills-table profile-catalog-table">
-            ${PROFILES.map((profile, index) => `<div class="skills-row">
+            ${PROFILES.map((profile, index) => `<button class="skills-row" data-profile-id="${profile.id}">
               <div class="col-rank font-mono">${index + 1}</div>
               <div class="col-agent"><div class="profile-title-line"><span class="agent-brand-icon">${ICONS.terminal}</span><span class="profile-name font-mono font-bold">${profile.id}</span></div><p>${profile.description}</p></div>
               <div class="col-error font-mono">${profile.kind}</div>
               <div class="col-runs font-mono"><code>${profile.kind === 'base' ? '--profile ' + profile.id : '--profile general+' + profile.id}</code></div>
-            </div>`).join('')}
+            </button>`).join('')}
           </div>
         </div>
       </main>
