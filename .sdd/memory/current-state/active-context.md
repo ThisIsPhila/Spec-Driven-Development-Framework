@@ -31,3 +31,7 @@ Owner reported signup/login failures without useful feedback. Live account datab
 ## Insights-first UX correction
 
 Owner rejected a Markdown-preview-first experience and confusing navigation. Global navigation now separates Projects, Skills & Profiles, About and Account. Project overview derives progress, attention, next tasks and sourced decisions; project sections live in an on-screen rail. Profiles expose real content and installation rather than inert names. Canonical phase IDs are numerically ordered. Authenticated browser journeys cover private project entry, public-page workspace shortcuts, demo-to-real selection isolation, profile details/reload and account settings separation. No consumer source files or owner credentials were changed. See reports/phase-005/insights-ux-plan.md and docs/visual-workspace.md.
+
+## Scoped phase insights follow-up
+
+Actual owner tab was running stale assets; reload confirmed shared main navigation and Projects list. Phase Overview now embeds task distribution and explicit relationship SVG/list; dedicated metrics navigation removed and project location displayed. Header consistency and inline phase visuals covered by browser assertions. See reports/phase-005/phase-insights-flow.md.

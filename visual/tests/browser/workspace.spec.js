@@ -160,6 +160,7 @@ test('signed-in navigation separates projects, examples, account settings and pr
     await expect(page.locator('.project-dash-card')).toHaveCount(1);
     await page.getByRole('button',{name:'About',exact:true}).click();
     await expect(page.locator('.skills-header [data-domain]')).toHaveCount(0);
+    const globalHeader = await page.locator('.skills-header').innerText();
     await expect(page.getByRole('button',{name:'Connect machine',exact:true})).toHaveCount(0);
     await page.getByRole('button',{name:'Projects',exact:true}).click();
     await expect(page.locator('dialog')).toHaveCount(0);
@@ -170,12 +171,20 @@ test('signed-in navigation separates projects, examples, account settings and pr
     await page.getByRole('button',{name:'About',exact:true}).click();
     await page.locator('[data-demo-project="1"]').click();
     await page.getByRole('button',{name:'Explore phases',exact:true}).click();
+    expect(await page.locator('.skills-header').innerText()).toBe(globalHeader);
+    await expect(page.getByRole('button',{name:'Detailed metrics',exact:true})).toHaveCount(0);
     const ids=await page.locator('.phase-p-tag').allTextContents();
     expect(ids.map(id=>id.trim())).toEqual(['phase-001-account-provisioning','phase-002-invoice-generation','phase-003-stripe-webhook-handling','phase-004-dunning-retry-strategy']);
     await page.getByRole('button',{name:'Projects',exact:true}).click();
     await page.getByRole('button',{name:'View project',exact:true}).click();
     await expect(page.getByRole('heading',{name:'Next recorded work',exact:true})).toBeVisible();
     await expect(page.locator('.project-section-rail')).not.toContainText('invoice');
+    await page.getByRole('button',{name:'Explore phases',exact:true}).click();
+    await page.locator('.phase-list-card').first().click();
+    await expect(page.getByRole('heading',{name:'Task distribution',exact:true})).toBeVisible();
+    await expect(page.locator('.phase-overview-graph svg')).toBeVisible();
+    expect(await page.locator('.skills-header').innerText()).toBe(globalHeader);
+    if(process.env.SDD_REVIEW_SCREENSHOTS) await page.screenshot({path:path.join(os.tmpdir(),'sdd-phase-insights.png')});
     for (const width of [320,390,768,1024,1440]) {
       await page.setViewportSize({width,height:900});
       expect(await page.evaluate(()=>document.documentElement.scrollWidth)).toBeLessThanOrEqual(width);

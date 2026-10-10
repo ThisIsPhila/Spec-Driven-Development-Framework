@@ -3759,3 +3759,12 @@ a {
 .account-shortcuts p { color:var(--ds-gray-500); font-size:0.85rem; }
 .account-shortcuts > div { display:flex; flex-wrap:wrap; gap:0.6rem; }
 .account-shortcuts .nav-link { font:inherit; background:transparent; color:var(--foreground); border:0; cursor:pointer; }
+
+.workspace-location { color:var(--muted-foreground); font-size:12px; margin:0 0 24px; overflow-wrap:anywhere; }
+.phase-distribution-row { display:grid; grid-template-columns:100px minmax(0,1fr) 30px; align-items:center; gap:12px; margin:16px 0; }
+.phase-graph-canvas { max-height:360px; overflow:auto; }
+.phase-overview-graph { margin:20px 0; }
+.phase-distribution-row .progress-bar-bg, .progress-card .progress-bar-bg { height:8px; border-radius:4px; background:var(--ds-gray-300); overflow:hidden; }
+.phase-distribution-row .progress-bar-fill, .progress-card .progress-bar-fill { height:100%; background:var(--ds-gray-700); border-radius:4px; }
+.phase-overview-graph svg { display:block; max-width:100%; height:auto; }
+.phase-overview-graph .traceability-svg { min-height:180px; }

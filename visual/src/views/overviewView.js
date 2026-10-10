@@ -1,4 +1,5 @@
 import { escapeDisplayModel } from '../sanitize.js';
+import { generateTraceabilitySvg, generateTraceabilityList } from '../traceability.js';
 import { ICONS } from '../icons.js';
 
 /**
@@ -23,11 +24,17 @@ export function renderOverviewView(phase) {
   const tskReady = tskStatus.toUpperCase().includes('READY') || tskStatus.toUpperCase().includes('APPROVED');
   const evRecorded = evCount > 0;
 
+  const counts = ['done','doing','todo'].map(status => (tasks || []).filter(t => status === 'todo' ? !['done','doing'].includes(t.status) : t.status === status).length);
+  const total = counts.reduce((a,b)=>a+b,0);
+  const chart = `<section class="insight-panel"><h3>Task distribution</h3>${['Completed','In progress','Pending'].map((label,i)=>`<div class="phase-distribution-row"><span>${label}</span><div class="progress-bar-bg"><div class="progress-bar-fill" style="width:${total ? counts[i]/total*100 : 0}%"></div></div><strong>${counts[i]}</strong></div>`).join('')}<p>${total ? 'Recorded task status' : 'No recognized tasks; progress unassessed'}</p></section>`;
+
   // Find active task
   const activeTask = (tasks || []).find(t => t.status === 'doing');
 
   return `
     <div class="overview-view">
+      ${chart}
+      <section class="insight-panel phase-overview-graph"><h3>Requirements → tasks → evidence</h3><p>Explicit source links. Select a node to inspect its source.</p><div class="phase-graph-canvas">${generateTraceabilitySvg(phase)}</div><details><summary>Accessible relationship list</summary>${generateTraceabilityList(phase)}</details></section>
       <p class="graph-entry-point">See how this phase connects: <button class="btn btn-secondary" data-phase-tab="traceability">Open Traceability Graph</button> <span class="text-muted-foreground">Requirement, task and evidence links are visible without live activity.</span></p>
       <!-- Lifecycle Strip -->
       <section class="lifecycle-section" aria-label="Phase Lifecycle Progress">

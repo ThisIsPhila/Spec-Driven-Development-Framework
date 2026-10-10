@@ -277,7 +277,7 @@ export class SDDWorkspaceApp {
         <!-- Main Page Container -->
         <main class="page-container">
           ${this.snapshot?.readStatus === 'stale' ? `<div class="domain-content-card" role="status">${escapeHtml(this.snapshot.readError)}</div>` : ''}
-          ${this.currentView==='project'?`<div class="project-shell">${this._renderProjectRail()}<div class="project-content">${this._renderCurrentView()}</div></div>`:this._renderCurrentView()}
+          ${this.currentView==='project'?`<p class="workspace-location">Projects / ${escapeHtml(this.snapshot?.projectId || 'Project')} / ${escapeHtml(({overview:'Overview',phases:'Phases',governance:'Decisions & context',reports:'Reviews',automation:'Checks & automation',knowledge:'Resources & graphs'})[this.projectSection] || 'Overview')}</p><div class="project-shell">${this._renderProjectRail()}<div class="project-content">${this._renderCurrentView()}</div></div>`:this._renderCurrentView()}
           ${this.currentView==='landing'?this._renderFooter():''}
         </main>
       </div>
@@ -400,11 +400,11 @@ npm --prefix visual run workspace -- --project /path/to/project --project /path/
         ${this.token || this.accountSession ? `<button class="nav-link ${this.currentView==='projects'?'active':''}" id="nav-projects-dashboard-btn">Projects</button>` : `<button class="nav-link" id="connect-workspace-header-btn">Open local project</button>`}
         <button class="nav-link ${this.currentView==='profiles'?'active':''}" id="nav-profiles-btn">Skills & Profiles</button>
         <button class="nav-link ${this.currentView==='landing'?'active':''}" id="nav-landing-page-btn">About</button>
-      </nav><div class="header-right">${this.connectionStatus==='demo'?'<span class="sync-text">Fictional example</span>':''}${this.accountSession?`<button class="nav-link" id="nav-account-btn">Account</button>`:''}</div>`;
+      </nav><div class="header-right">${this.accountSession?`<button class="nav-link" id="nav-account-btn">Account</button>`:''}</div>`;
   }
 
   _renderProjectRail() {
-    const sections=[['overview','Project overview'],['phases','Phases'],['governance','Decisions & context'],['reports','Reviews'],['automation','Checks & automation'],['knowledge','Resources & graphs'],['metrics','Detailed metrics']];
+    const sections=[['overview','Project overview'],['phases','Phases'],['governance','Decisions & context'],['reports','Reviews'],['automation','Checks & automation'],['knowledge','Resources & graphs']];
     return `<nav class="project-section-rail" aria-label="Project sections"><p class="eyebrow">${escapeHtml(this.snapshot?.projectId || 'Project')}</p>${sections.map(([id,label])=>`<button class="nav-domain-btn ${this.projectSection===id?'active':''}" data-domain="${id}">${label}</button>`).join('')}<p class="rail-status">${this.connectionStatus==='demo'?'Synthetic demo':this.accountSession?'Private account project':'Connected locally'}</p></nav>`;
   }
 
@@ -447,7 +447,8 @@ npm --prefix visual run workspace -- --project /path/to/project --project /path/
       return renderKnowledgeView(this.snapshot, this.activeKnowledgeSection, this.selectedKnowledgeItemId);
     }
     if (this.projectSection === 'metrics') {
-      return this._renderProjectMetricsView();
+      this.projectSection = 'overview';
+      return renderProjectOverview(this.snapshot);
     }
 
     // Default: 'phases' section with On-Screen Phase Explorer

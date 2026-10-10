@@ -169,7 +169,7 @@ function renderSelectedPhaseWorkspace(phase, activeTab, snapshot, state) {
             <span class="header-slash">•</span>
             <span class="freshness-tag font-mono">${phase.metrics?.verificationAssurance?.freshness === 'HEAD_MATCH_ONLY' ? 'GIT HEAD MATCH' : 'LOCAL BASELINE'}</span>
           </div>
-          <h1 class="phase-main-title">${phase.name || phase.id}</h1>
+          <h1 class="phase-main-title">${phase.id}</h1>
         </div>
 
         <div class="phase-header-kpi-bar font-mono">
