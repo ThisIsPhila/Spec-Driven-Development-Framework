@@ -32,7 +32,7 @@ test('accounts persist private projects, isolate owners and support connector pu
     await assert.rejects(() => publisher.publish({id:'project-a',lastSnapshot:{...snapshot,contentRevision:'revision-two'}}),/401/);
     await post('/api/account/logout',{},cookie);
     assert.equal((await fetch(url+'/api/projects',{headers:{Cookie:cookie}})).status,401);
-    assert.equal((await post('/api/account/login',{email:'first@example.test',password:'wrong-password'})).status,400);
+    assert.equal((await post('/api/account/login',{email:'first@example.test',password:'wrong-password'})).status,401);
     assert.equal((await post('/api/account/login',{email:'first@example.test',password:'sufficiently-long-password'})).status,200);
   } finally { await service.stop(); }
 });

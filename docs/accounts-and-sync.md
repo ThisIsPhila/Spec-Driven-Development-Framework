@@ -10,7 +10,7 @@ npm --prefix visual run build
 SDD_ACCOUNT_DATABASE="$PWD/.sdd/local/accounts.sqlite" npm --prefix visual run accounts
 ```
 
-Open `http://127.0.0.1:3457`, select Sign in → Create account, and choose your own email/password (minimum 12 characters). New accounts start empty. Public fictional projects are examples only; they are never silently added to your account.
+Open `http://127.0.0.1:3457`, select Sign in → Create account, and choose your own email/password (minimum 12 characters). The dialog validates email format and shows the 12–256 character signup password requirement before submitting. It preserves entries after failures, distinguishes duplicate signup from incorrect login, reports connection failures and rate limits, and confirms successful signup/sign-in. New accounts start empty. Public fictional projects are examples only; they are never silently added to your account.
 
 Select **Connect machine** while signed in to issue a connector credential. Set these environment variables in the workspace process without putting credentials in Git:
 

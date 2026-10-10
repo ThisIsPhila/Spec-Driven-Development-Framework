@@ -19,7 +19,8 @@ export class AccountStore {
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 254 || typeof password !== 'string' || password.length < 12 || password.length > 256) throw new Error('Use a valid email and a password of 12–256 characters');
     const id = crypto.randomUUID(), salt = crypto.randomBytes(16).toString('hex');
     const hashed = await new Promise((resolve, reject) => crypto.scrypt(password, salt, 64, (err, result) => err ? reject(err) : resolve(result.toString('hex'))));
-    this.db.prepare('INSERT INTO users VALUES(?,?,?,?)').run(id, email, salt, hashed);
+    try { this.db.prepare('INSERT INTO users VALUES(?,?,?,?)').run(id, email, salt, hashed); }
+    catch (error) { if (error.message.includes('UNIQUE constraint failed: users.email')) {const duplicate = new Error('An account with this email already exists. Choose Sign in instead.'); duplicate.code = 'ACCOUNT_EXISTS'; throw duplicate;} throw error; }
     return { id, email };
   }
   async login(email, password) {

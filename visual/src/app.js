@@ -284,17 +284,33 @@ export class SDDWorkspaceApp {
   _requestOptions() { return this.accountSession ? { credentials: 'same-origin' } : { headers: { Authorization: `Bearer ${this.token}` } }; }
 
   async _showAccountDialog() {
-    const dialog = document.createElement('dialog'); dialog.className = 'source-dialog';
-    dialog.innerHTML = sanitizeUi(`<h2>Account access</h2><p>Use an account to read projects published from your machines. Local workspaces work independently.</p><label>Email <input id="account-email" type="email" autocomplete="username"></label><label>Password <input id="account-password" type="password" autocomplete="current-password"></label><p id="account-error" role="status"></p><button id="account-login">Sign in</button><button id="account-register">Create account</button><button id="account-close">Close</button>`);
-    for (const action of ['login', 'register']) dialog.querySelector('#account-' + action).addEventListener('click', async () => {
-      const email = dialog.querySelector('#account-email').value, password = dialog.querySelector('#account-password').value;
-      const response = await fetch('/api/account/' + action, { method: 'POST', headers: {'Content-Type':'application/json', ...(sessionStorage.getItem('sdd_bootstrap') ? {'X-SDD-Bootstrap':sessionStorage.getItem('sdd_bootstrap')} : {})}, body: JSON.stringify({ email, password }) });
-      const result = await response.json();
-      if (!response.ok) { dialog.querySelector('#account-error').textContent = result.error; return; }
-      sessionStorage.removeItem('sdd_bootstrap'); this.accountSession = result; this.connectionStatus = 'account'; dialog.close(); await this._loadProjects();
-    });
+    const dialog = document.createElement('dialog'); dialog.className = 'source-dialog account-dialog';
+    dialog.innerHTML = sanitizeUi(`<h2>Sign in or create an account</h2><p>This account is stored by this SDD service. It is not a Google or GitHub login.</p><p>${sessionStorage.getItem('sdd_bootstrap') ? 'Your private setup link will connect the configured projects after you sign in or create an account.' : 'New accounts start empty. Connect your projects after signing in.'}</p><label for="account-email">Email</label><input id="account-email" type="email" autocomplete="username" required maxlength="254"><label for="account-password">Password</label><input id="account-password" type="password" autocomplete="current-password" required maxlength="256" aria-describedby="account-password-help"><p id="account-password-help">Creating an account requires 12–256 characters. To sign in, use the password you previously chose.</p><label class="account-show-password"><input id="account-show-password" type="checkbox"> Show password</label><p id="account-error" role="alert" aria-live="assertive"></p><div class="account-actions"><button class="btn btn-primary" id="account-login">Sign in</button><button class="btn btn-secondary" id="account-register">Create account</button><button class="btn btn-secondary" id="account-close">Cancel</button></div>`);
+    const emailField = dialog.querySelector('#account-email'), passwordField = dialog.querySelector('#account-password'), feedback = dialog.querySelector('#account-error');
+    const actionButtons = [...dialog.querySelectorAll('#account-login, #account-register')];
+    let busy = false;
+    dialog.querySelector('#account-show-password').addEventListener('change', e => { passwordField.type = e.target.checked ? 'text' : 'password'; });
+    const submit = async action => {
+      if (busy) return;
+      const email = emailField.value.trim(), password = passwordField.value;
+      emailField.removeAttribute('aria-invalid'); passwordField.removeAttribute('aria-invalid');
+      if (!email || !emailField.checkValidity()) { feedback.textContent = 'Enter a valid email address, such as name@example.com.'; emailField.setAttribute('aria-invalid','true'); emailField.focus(); return; }
+      if (!password || password.length > 256 || (action === 'register' && password.length < 12)) { feedback.textContent = action === 'register' ? 'Choose a password of 12–256 characters to create your account.' : 'Enter your account password.'; passwordField.setAttribute('aria-invalid','true'); passwordField.focus(); return; }
+      busy = true; dialog.setAttribute('aria-busy','true'); actionButtons.forEach(button => {button.disabled = true;});
+      feedback.textContent = action === 'register' ? 'Creating your account…' : 'Signing in…';
+      try {
+        const response = await fetch('/api/account/' + action, { method: 'POST', signal: AbortSignal.timeout(15000), headers: {'Content-Type':'application/json', ...(sessionStorage.getItem('sdd_bootstrap') ? {'X-SDD-Bootstrap':sessionStorage.getItem('sdd_bootstrap')} : {})}, body: JSON.stringify({ email, password }) });
+        const result = await response.json().catch(() => ({}));
+        if (!response.ok) { feedback.textContent = result.error || 'The account service could not complete the request. Try again.'; return; }
+        sessionStorage.removeItem('sdd_bootstrap'); this.accountSession = result; this.connectionStatus = 'account'; dialog.close(); await this._loadProjects();
+        const notice = document.createElement('p'); notice.className = 'account-success'; notice.setAttribute('role','status'); notice.textContent = action === 'register' ? 'Account created. You are signed in.' : 'You are signed in.'; this.container.prepend(notice);
+      } catch { feedback.textContent = 'Could not reach the account service. Your entries are preserved; check the connection and try again.'; }
+      finally { busy = false; dialog.removeAttribute('aria-busy'); actionButtons.forEach(button => {button.disabled = false;}); }
+    };
+    for (const action of ['login','register']) dialog.querySelector('#account-' + action).addEventListener('click', () => submit(action));
+    passwordField.addEventListener('keydown', e => {if (e.key === 'Enter') {e.preventDefault(); submit('login');}});
     dialog.querySelector('#account-close').addEventListener('click', () => dialog.close());
-    dialog.addEventListener('close', () => dialog.remove()); document.body.append(dialog); dialog.showModal();
+    dialog.addEventListener('close', () => dialog.remove()); document.body.append(dialog); dialog.showModal(); emailField.focus();
   }
 
   async _showConnectorDialog() {

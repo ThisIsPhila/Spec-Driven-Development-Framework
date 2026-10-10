@@ -111,3 +111,33 @@ test('account sign-up is functional and an empty account has no invented project
   await page.getByRole('button',{name:'Connect machine',exact:true}).click();
   await expect(page.locator('dialog')).toContainText('SDD_SYNC_TOKEN=');
 });
+
+test('account access explains validation, connection failure, success and duplicate signup',async ({page})=>{
+  await page.goto(accountInfo.url);
+  await page.getByRole('button',{name:'Sign in',exact:true}).click();
+  await page.getByRole('button',{name:'Create account',exact:true}).click();
+  await expect(page.locator('#account-error')).toContainText('valid email');
+  await page.locator('#account-email').fill('feedback@example.test');
+  await page.locator('#account-password').fill('short');
+  await page.getByRole('button',{name:'Create account',exact:true}).click();
+  await expect(page.locator('#account-error')).toContainText('12–256');
+  await page.locator('#account-password').fill('feedback-test-password');
+  await page.route('**/api/account/register',route=>route.abort());
+  await page.getByRole('button',{name:'Create account',exact:true}).click();
+  await expect(page.locator('#account-error')).toContainText('Could not reach');
+  await expect(page.getByRole('button',{name:'Create account',exact:true})).toBeEnabled();
+  await expect(page.locator('#account-email')).toHaveValue('feedback@example.test');
+  await page.unroute('**/api/account/register');
+  await page.getByRole('button',{name:'Sign in',exact:true}).last().click();
+  await expect(page.locator('#account-error')).toContainText('Email or password is incorrect');
+  await page.getByRole('button',{name:'Create account',exact:true}).click();
+  await expect(page.getByText('Account created. You are signed in.',{exact:true})).toBeVisible();
+  await page.getByRole('button',{name:'Sign out',exact:true}).click();
+  await page.getByRole('button',{name:'Sign in',exact:true}).click();
+  await page.locator('#account-email').fill('feedback@example.test');
+  await page.locator('#account-password').fill('feedback-test-password');
+  await page.getByRole('button',{name:'Create account',exact:true}).click();
+  await expect(page.locator('#account-error')).toContainText('already exists');
+  await page.locator('#account-login').click();
+  await expect(page.getByText('You are signed in.',{exact:true})).toBeVisible();
+});

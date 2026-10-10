@@ -23,3 +23,7 @@ Source 3db34d0 is locally and independently verified by green GitHub CI run 3798
 ## Owner display follow-up
 
 Reproduced and corrected undefined profile icons, catalog overlap and stripped Mermaid labels; exposed derived graph topology and repaired demo reload/reference lists. Local source 7b58c26 passes 28 unit/integration tests, 3 expanded browser journeys and build. Live synthetic update/reset and diagram inspected. Owner review fixture and 11 manual cases are available in docs/visual-review-walkthrough.md; detailed evidence is in reports/phase-005/display-review.md. Owner acceptance remains pending.
+
+## Account access feedback correction
+
+Owner reported signup/login failures without useful feedback. Live account database still had zero users; no credentials were inspected or entered. Added explicit client validation, loading/retry/error/success feedback, show-password control and separate duplicate/signup/login API errors. Local verification: 28 unit/integration tests, 4 Chromium journeys and production build pass. Restarted the private local service against the same database and project roots; its unclaimed bootstrap link rotated. Owner enters credentials through the fresh link. No owner acceptance inferred.

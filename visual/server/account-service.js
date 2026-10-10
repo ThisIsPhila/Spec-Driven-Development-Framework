@@ -65,7 +65,11 @@ export class AccountService {
           this.bootstrapToken = null;
         }
         return json(200, account);
-      } catch { return json(400, { error: 'Unable to sign in. Use a valid email and a password of at least 12 characters for a new account.' }); }
+      } catch (error) {
+        if (error.code === 'ACCOUNT_EXISTS') return json(409, {error:error.message});
+        if (url.pathname.endsWith('login')) return json(401, {error:'Email or password is incorrect. If you have not created an account yet, choose Create account.'});
+        return json(400, {error:'Account creation failed. Enter a valid email and a password of 12–256 characters.'});
+      }
     }
     if (url.pathname === '/api/account/logout' && req.method === 'POST') { this.store.revoke(token); cookie(''); return json(200, { ok: true }); }
     if (url.pathname === '/api/sync' && req.method === 'POST') {

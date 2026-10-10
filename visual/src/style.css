@@ -3692,3 +3692,14 @@ a {
  .profile-catalog-table .skills-row { grid-template-columns:28px minmax(0,1fr); gap:0.5rem; }
  .profile-catalog-table .col-error, .profile-catalog-table .col-runs { grid-column:2; }
 }
+
+.account-dialog { width:min(90vw,520px); padding:1.5rem; border-radius:8px; }
+.account-dialog > label:not(.account-show-password) { display:block; margin:1rem 0 0.4rem; font-weight:600; }
+.account-dialog > input { box-sizing:border-box; width:100%; padding:0.75rem; color:var(--foreground); background:#191919; border:1px solid #555; border-radius:4px; }
+.account-dialog input[aria-invalid="true"] { border-color:#f87171; }
+.account-dialog #account-password-help { font-size:0.8rem; color:#aaa; line-height:1.5; }
+.account-show-password { display:flex; align-items:center; gap:0.5rem; }
+.account-actions { display:flex; gap:0.5rem; flex-wrap:wrap; }
+.account-dialog #account-error { min-height:2.5rem; line-height:1.5; color:#f5c18a; }
+.account-dialog button:disabled { opacity:0.5; cursor:wait; }
+.account-success { padding:0.8rem 1.5rem; background:#12251b; color:#d5fbe3; }
