@@ -51,7 +51,7 @@ test('demo phase integrates with workspace views without errors', () => {
 
   // Overview View
   const overviewHtml = renderOverviewView(activePhase);
-  assert.ok(overviewHtml.includes('Observed Lifecycle Stages'));
+  assert.ok(overviewHtml.includes('aria-label="Phase Lifecycle Progress"'));
   assert.ok(overviewHtml.includes('50%'));
   assert.ok(overviewHtml.includes('T003.3')); // in-progress active task
 

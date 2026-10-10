@@ -769,6 +769,7 @@ npm --prefix visual run workspace -- --project /path/to/project --project /path/
 
     const openRef = id => {
       const phase = this.snapshot?.phases.find(p => p.id === this.activePhaseId);
+      if (this.snapshot?.phases.some(p=>p.id===id)) {this.activePhaseId=id;this.phaseTab='overview';this.render();return;}
       if (!phase) return;
       if (phase.tasks.some(t => t.id === id)) this.phaseTab = 'tasks';
       else if (phase.requirements.some(r => r.id === id)) this.phaseTab = 'requirements';
@@ -779,6 +780,36 @@ npm --prefix visual run workspace -- --project /path/to/project --project /path/
       target?.scrollIntoView({ block: 'center' });
       if (target) { target.tabIndex = -1; target.focus({ preventScroll: true }); }
     };
+    const wireGraph = root => {
+      root.querySelectorAll('svg').forEach(svg => {
+        if (!svg.querySelector('.trace-node, .trace-edge')) return;
+        const highlight = id => {
+          const edges = [...svg.querySelectorAll('.trace-edge')];
+          const related = new Set([id]);
+          edges.forEach(edge=>{ if(edge.dataset.from===id || edge.dataset.to===id) {related.add(edge.dataset.from);related.add(edge.dataset.to);} });
+          svg.querySelectorAll('.trace-node').forEach(node=>node.style.opacity=!id || related.has(node.dataset.id)?'1':'0.2');
+          edges.forEach(edge=>{edge.style.opacity=!id || edge.dataset.from===id || edge.dataset.to===id?'1':'0.12';});
+        };
+        svg.querySelectorAll('.trace-node').forEach(node=>{node.addEventListener('mouseenter',()=>highlight(node.dataset.id));node.addEventListener('focus',()=>highlight(node.dataset.id));node.addEventListener('mouseleave',()=>highlight(null));});
+        svg.querySelectorAll('.trace-edge').forEach(edge=>{
+          const inspect=()=>{highlight(edge.dataset.from); const label=root.querySelector('.graph-connection-detail'); if(label) label.textContent=`${edge.dataset.from} → ${edge.dataset.to}`;};
+          edge.addEventListener('mouseenter',inspect);edge.addEventListener('click',inspect);edge.addEventListener('focus',inspect);
+        });
+      });
+    };
+    this.container.querySelectorAll('.phase-graph-canvas, .traceability-svg-wrapper, .derived-graph-scroll, .imported-graph-scroller, .phase-dependency-canvas').forEach(canvas=>{
+      if (!canvas.querySelector('svg') || canvas.parentElement.closest('.phase-graph-canvas')) return;
+      const expand=document.createElement('button');expand.className='graph-expand btn btn-secondary';expand.setAttribute('aria-label','Expand graph');expand.innerHTML=ICONS.external;
+      expand.addEventListener('click',()=>{
+        const dialog=document.createElement('dialog');dialog.className='graph-dialog';
+        const close=document.createElement('button');close.className='btn btn-secondary';close.textContent='Close graph';close.onclick=()=>dialog.close();
+        const detail=document.createElement('p');detail.className='graph-connection-detail';detail.textContent='Select or hover a connection to inspect its endpoints.';
+        const body=document.createElement('div');body.className='expanded-graph-body';body.append(canvas.querySelector('svg').cloneNode(true));
+        dialog.append(close,detail,body);document.body.append(dialog);dialog.addEventListener('close',()=>dialog.remove());wireGraph(dialog);
+        body.querySelectorAll('.trace-node').forEach(node=>node.addEventListener('click',()=>{const id=node.dataset.id;const phase=this.snapshot?.phases.find(p=>p.id===this.activePhaseId);if(this.snapshot?.phases.some(p=>p.id===id) || phase?.tasks.some(t=>t.id===id) || phase?.requirements.some(r=>r.id===id) || phase?.artifacts?.evidence?.some(e=>e.id===id || e.filename===id)) {dialog.close();openRef(id);} else {detail.textContent=node.getAttribute('aria-label') || id;}}));dialog.showModal();
+      });canvas.before(expand);
+    });
+    wireGraph(this.container);
     this.container.querySelectorAll('.trace-node[data-id], [data-open-ref]').forEach(el => {
       el.addEventListener('click', () => openRef(el.dataset.id || el.dataset.openRef));
       el.addEventListener('keydown', e => { if (['Enter', ' '].includes(e.key)) { e.preventDefault(); openRef(el.dataset.id || el.dataset.openRef); } });

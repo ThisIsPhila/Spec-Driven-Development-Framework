@@ -39,3 +39,7 @@ Actual owner tab was running stale assets; reload confirmed shared main navigati
 ## Owner layout direction
 
 Project navigation is now a horizontal icon tab bar below the shared header. Logo always opens About/home; signed-in workspace sits after hero and before profiles. Profile catalog is compact; details stack vertically. Build and five browser journeys pass; owner visual acceptance remains pending. See reports/phase-005/subheader-layout.md.
+
+## Graph inspection and compact phase summary
+
+Phase lifecycle, task progress and scope counts precede the graph; lifecycle labels omit emoji. Graphs expand with endpoint inspection and related-node emphasis. Resources topology now uses connected layout; all-phase dependency view reads explicit phase.json declarations, distinguishing unknown from none declared. Rebuilt live UI preserving other agents' style/index edits. 31 unit tests, five browser journeys and build pass. See reports/phase-005/graph-inspection.md.

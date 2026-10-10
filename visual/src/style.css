@@ -3785,3 +3785,24 @@ a {
 .profile-detail { max-width:900px; margin-left:auto; margin-right:auto; }
 .account-shortcuts { margin:0 0 2.5rem; padding:1.5rem 0; border-top:1px solid var(--border); }
 @media(max-width:640px) { .profile-compact-grid { grid-template-columns:minmax(0,1fr); } .project-section-rail .nav-domain-btn { font-size:0.75rem; } }
+
+/* Compact phase summary and expandable graph inspection. */
+.compact-phase-insights .lifecycle-section { padding:0; margin:0 0 1rem; }
+.compact-phase-insights .lifecycle-strip { display:flex; flex-wrap:wrap; gap:0.6rem; align-items:center; }
+.compact-phase-insights .lifecycle-step { display:flex; flex:1 1 140px; gap:0.5rem; padding:0.5rem; min-width:0; }
+.compact-phase-insights .step-num, .compact-phase-insights .lifecycle-connector { display:none; }
+.compact-phase-insights .step-meta { display:flex; flex-wrap:wrap; gap:0.4rem; font-size:0.75rem; }
+.compact-phase-insights .metrics-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:1rem; margin:0 0 1rem; }
+.compact-phase-insights .metric-card { min-width:0; padding:1rem; }
+.compact-phase-insights .metric-breakdown, .compact-phase-insights .counts-grid { display:flex; flex-wrap:wrap; gap:0.75rem; }
+.compact-phase-insights .count-box { flex:1 1 70px; min-width:0; overflow-wrap:anywhere; }
+.graph-dialog { width:95vw; max-width:none; height:90vh; max-height:none; background:var(--background); color:var(--foreground); border:1px solid var(--border); padding:1rem; }
+.graph-dialog::backdrop { background:rgba(0,0,0,.8); }
+.expanded-graph-body { height:calc(100% - 90px); overflow:auto; }
+.expanded-graph-body svg { min-width:1050px; width:100%; height:auto; max-height:none; }
+.trace-edge { cursor:pointer; pointer-events:stroke; }
+.trace-edge:hover, .trace-edge:focus { stroke-width:5; outline:none; }
+.graph-expand { display:block; margin:0.4rem 0 0.4rem auto; }
+@media(max-width:640px) { .compact-phase-insights .metrics-grid { grid-template-columns:minmax(0,1fr); } }
+.phase-dependency-canvas { max-height:350px; overflow:auto; }
+.phase-dependency-canvas svg { width:100%; min-width:800px; }

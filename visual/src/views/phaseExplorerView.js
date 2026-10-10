@@ -1,3 +1,4 @@
+import { renderPhaseDependencies } from '../phase-dependencies.js';
 import { phaseOrder } from './projectOverviewView.js';
 import { escapeHtml } from '../sanitize.js';
 import { escapeDisplayModel } from '../sanitize.js';
@@ -400,6 +401,7 @@ function renderAllSprintsOverview(snapshot) {
         </div>
       </header>
 
+      ${renderPhaseDependencies(phases)}
       <!-- Phases Completion overview Grid -->
       <div class="all-phases-grid font-mono" style="margin-top: 1.5rem;">
         ${phases.map(p => {

@@ -14,9 +14,10 @@ export function renderOverviewView(phase) {
   const { taskCounts, artifacts, requirements, tasks, warnings } = phase;
 
   // Determine Lifecycle Step Statuses
-  const reqStatus = artifacts?.requirements?.status || 'MISSING';
-  const desStatus = artifacts?.design?.status || 'MISSING';
-  const tskStatus = artifacts?.tasks?.status || 'MISSING';
+  const cleanStatus = value => String(value || 'MISSING').replace(/\p{Extended_Pictographic}|[\uFE0F\u200D✅]/gu, '').trim();
+  const reqStatus = cleanStatus(artifacts?.requirements?.status);
+  const desStatus = cleanStatus(artifacts?.design?.status);
+  const tskStatus = cleanStatus(artifacts?.tasks?.status);
   const evCount = artifacts?.evidence?.length || 0;
 
   const reqApproved = reqStatus.toUpperCase().includes('APPROVED');
@@ -32,13 +33,10 @@ export function renderOverviewView(phase) {
   const activeTask = (tasks || []).find(t => t.status === 'doing');
 
   return `
-    <div class="overview-view">
-      ${chart}
-      <section class="insight-panel phase-overview-graph"><h3>Requirements → tasks → evidence</h3><p>Explicit source links. Select a node to inspect its source.</p><div class="phase-graph-canvas">${generateTraceabilitySvg(phase)}</div><details><summary>Accessible relationship list</summary>${generateTraceabilityList(phase)}</details></section>
-      <p class="graph-entry-point">See how this phase connects: <button class="btn btn-secondary" data-phase-tab="traceability">Open Traceability Graph</button> <span class="text-muted-foreground">Requirement, task and evidence links are visible without live activity.</span></p>
+    <div class="overview-view compact-phase-insights">
       <!-- Lifecycle Strip -->
       <section class="lifecycle-section" aria-label="Phase Lifecycle Progress">
-        <h3 class="section-subtitle">Observed Lifecycle Stages</h3>
+
         <div class="lifecycle-strip">
           <div class="lifecycle-step ${reqApproved ? 'step-approved' : 'step-pending'}">
             <div class="step-num">1</div>
@@ -126,6 +124,7 @@ export function renderOverviewView(phase) {
         </div>
       </section>
 
+      <section class="insight-panel phase-overview-graph"><h3>Requirements → tasks → evidence</h3><p>Explicit source links. Select a node to inspect its source.</p><div class="phase-graph-canvas">${generateTraceabilitySvg(phase)}</div><details><summary>Accessible relationship list</summary>${generateTraceabilityList(phase)}</details></section>
       <!-- Active Task Highlight -->
       ${
         activeTask

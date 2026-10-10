@@ -76,6 +76,8 @@ export function generateTraceabilitySvg(phase) {
   }
 
   layoutColumn(requirements, xReq);
+  const linkedRank = item => { const peer = edges.flatMap(edge=>edge.from===item.id?[edge.to]:edge.to===item.id?[edge.from]:[]).map(id=>requirements.findIndex(req=>req.id===id)).filter(i=>i>=0); return peer.length ? Math.min(...peer) : requirements.length; };
+  tasks.sort((a,b)=>linkedRank(a)-linkedRank(b));
   layoutColumn(tasks, xTask);
   layoutColumn(evidence, xEv);
 
@@ -114,8 +116,8 @@ export function generateTraceabilitySvg(phase) {
         stroke="${strokeColor}"
         stroke-width="2"
         fill="none"
-        stroke-opacity="0.65"
-      />
+        stroke-opacity="0.65" tabindex="0" role="button" aria-label="${edge.from} → ${edge.to}: ${edge.type}"
+      ><title>${edge.from} → ${edge.to}: ${edge.type}${edge.source ? " — "+edge.source : ""}</title></path>
     `;
   });
 
@@ -136,6 +138,7 @@ export function generateTraceabilitySvg(phase) {
 
     nodesSvg += `
       <g class="trace-node" data-id="${id}" tabindex="0" role="button" aria-label="${item.type}: ${label}">
+        <title>${item.type}: ${label} — ${title}</title>
         <rect
           x="${x}"
           y="${y}"

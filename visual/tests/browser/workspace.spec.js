@@ -45,7 +45,7 @@ test('public page stays contained at mobile, tablet and desktop widths',async ({
   await expect(page.locator('dialog pre')).toContainText('REQ-');
   await page.getByRole('button',{name:'Close',exact:true}).click();
   await page.locator('.phase-subtabs-bar [data-phase-tab="overview"]').click();
-  await page.getByRole('button',{name:'Open Traceability Graph',exact:true}).click();
+  await page.locator('.phase-subtabs-bar [data-phase-tab="traceability"]').click();
   await expect(page.getByRole('img',{name:'Traceability Graph',exact:true})).toBeVisible();
   if (process.env.SDD_REVIEW_SCREENSHOTS) await page.screenshot({path:path.join(os.tmpdir(),'sdd-reviewed-graph.png')});
   expect(await page.locator('.traceability-svg .edges-group path').count()).toBeGreaterThan(0);
@@ -183,8 +183,13 @@ test('signed-in navigation separates projects, examples, account settings and pr
     await expect(page.locator('.project-section-rail')).not.toContainText('invoice');
     await page.getByRole('button',{name:'Explore phases',exact:true}).click();
     await page.locator('.phase-list-card').first().click();
-    await expect(page.getByRole('heading',{name:'Task distribution',exact:true})).toBeVisible();
-    await expect(page.locator('.phase-overview-graph svg')).toBeVisible();
+    await expect(page.getByRole('heading',{name:'Task Execution Progress',exact:true})).toBeVisible();
+    await expect(page.locator('.phase-overview-graph svg.traceability-svg')).toBeVisible();
+    await page.locator('.phase-overview-graph').getByRole('button',{name:'Expand graph',exact:true}).click();
+    await expect(page.locator('.graph-dialog svg')).toBeVisible();
+    await page.locator('.graph-dialog .trace-edge').first().focus();
+    await expect(page.locator('.graph-connection-detail')).toContainText('→');
+    await page.getByRole('button',{name:'Close graph',exact:true}).click();
     await expect(page.locator('.project-section-rail button svg')).toHaveCount(6);
     expect(await page.locator('.project-section-rail').evaluate(el=>el.getBoundingClientRect().bottom)).toBeLessThanOrEqual(await page.locator('.project-content').evaluate(el=>el.getBoundingClientRect().top));
     expect(await page.locator('.skills-header').innerText()).toBe(globalHeader);

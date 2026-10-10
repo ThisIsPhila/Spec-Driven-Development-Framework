@@ -1,0 +1,202 @@
+
+> @sdd/visual@0.1.0 test
+> node --import ./tests/setup-dom.js --test tests/*.test.js
+
+TAP version 13
+# (node:54462) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: accounts persist private projects, isolate owners and support connector publishing
+ok 1 - accounts persist private projects, isolate owners and support connector publishing
+  ---
+  duration_ms: 436.703541
+  type: 'test'
+  ...
+# Subtest: bootstrap claim is private, persistent and automatically refreshes configured projects
+ok 2 - bootstrap claim is private, persistent and automatically refreshes configured projects
+  ---
+  duration_ms: 661.338875
+  type: 'test'
+  ...
+# Subtest: actual CLI accepts repeated project arguments, serves them and exits cleanly
+ok 3 - actual CLI accepts repeated project arguments, serves them and exits cleanly
+  ---
+  duration_ms: 730.702167
+  type: 'test'
+  ...
+# Subtest: CLI rejects unknown options rather than silently ignoring them
+ok 4 - CLI rejects unknown options rather than silently ignoring them
+  ---
+  duration_ms: 164.15125
+  type: 'test'
+  ...
+# Subtest: missing results, references and acceptance prose cannot certify work
+ok 5 - missing results, references and acceptance prose cannot certify work
+  ---
+  duration_ms: 254.244792
+  type: 'test'
+  ...
+# Subtest: real DOM sanitization removes executable metadata while preserving controls
+ok 6 - real DOM sanitization removes executable metadata while preserving controls
+  ---
+  duration_ms: 38.526292
+  type: 'test'
+  ...
+# Subtest: service isolates artifacts, rejects foreign origins and refreshes changed sources
+ok 7 - service isolates artifacts, rejects foreign origins and refreshes changed sources
+  ---
+  duration_ms: 724.712167
+  type: 'test'
+  ...
+# Subtest: same-named projects register independently and repeated roots are idempotent
+ok 8 - same-named projects register independently and repeated roots are idempotent
+  ---
+  duration_ms: 266.359792
+  type: 'test'
+  ...
+# Subtest: read failures retain the last valid source and expose a bounded stale diagnostic
+ok 9 - read failures retain the last valid source and expose a bounded stale diagnostic
+  ---
+  duration_ms: 382.719042
+  type: 'test'
+  ...
+# Subtest: extracts canonical project accurately
+ok 10 - extracts canonical project accurately
+  ---
+  duration_ms: 319.038833
+  type: 'test'
+  ...
+# Subtest: extracts legacy project tasks correctly
+ok 11 - extracts legacy project tasks correctly
+  ---
+  duration_ms: 345.542875
+  type: 'test'
+  ...
+# Subtest: computes deterministic contentRevision that reflects changes
+ok 12 - computes deterministic contentRevision that reflects changes
+  ---
+  duration_ms: 628.054667
+  type: 'test'
+  ...
+# Subtest: rejects directories without .sdd folder
+ok 13 - rejects directories without .sdd folder
+  ---
+  duration_ms: 0.997875
+  type: 'test'
+  ...
+# Subtest: extracts comprehensive framework elements from repository
+ok 14 - extracts comprehensive framework elements from repository
+  ---
+  duration_ms: 393.612833
+  type: 'test'
+  ...
+# Subtest: renderPhaseExplorerView renders scalable on-screen navigator and phase canvas
+ok 15 - renderPhaseExplorerView renders scalable on-screen navigator and phase canvas
+  ---
+  duration_ms: 1.612292
+  type: 'test'
+  ...
+# Subtest: renderGovernanceView surfaces constitution, memories and enforced rules
+ok 16 - renderGovernanceView surfaces constitution, memories and enforced rules
+  ---
+  duration_ms: 16.165708
+  type: 'test'
+  ...
+# Subtest: renderAutomationView surfaces scripts and Git pre-commit telemetry
+ok 17 - renderAutomationView surfaces scripts and Git pre-commit telemetry
+  ---
+  duration_ms: 0.446084
+  type: 'test'
+  ...
+# Subtest: renderKnowledgeView surfaces spec templates, docs and Graphify network
+ok 18 - renderKnowledgeView surfaces spec templates, docs and Graphify network
+  ---
+  duration_ms: 9.505375
+  type: 'test'
+  ...
+# Subtest: actual Graphify exports show topology and external node types instead of an empty matrix
+ok 19 - actual Graphify exports show topology and external node types instead of an empty matrix
+  ---
+  duration_ms: 0.304666
+  type: 'test'
+  ...
+# Subtest: overview separates recorded progress, absent inputs and declared decisions
+ok 20 - overview separates recorded progress, absent inputs and declared decisions
+  ---
+  duration_ms: 4.431292
+  type: 'test'
+  ...
+# Subtest: overview orders phases numerically and does not invent task progress
+ok 21 - overview orders phases numerically and does not invent task progress
+  ---
+  duration_ms: 0.146625
+  type: 'test'
+  ...
+# Subtest: phase dependencies distinguish unknown and empty declarations and resolve only existing targets
+ok 22 - phase dependencies distinguish unknown and empty declarations and resolve only existing targets
+  ---
+  duration_ms: 0.645416
+  type: 'test'
+  ...
+# Subtest: synthetic demo dataset is valid and free of sensitive private paths
+ok 23 - synthetic demo dataset is valid and free of sensitive private paths
+  ---
+  duration_ms: 1.383791
+  type: 'test'
+  ...
+# Subtest: landing view renders hero, install command, and profiles catalog
+ok 24 - landing view renders hero, install command, and profiles catalog
+  ---
+  duration_ms: 0.357708
+  type: 'test'
+  ...
+# Subtest: demo phase integrates with workspace views without errors
+ok 25 - demo phase integrates with workspace views without errors
+  ---
+  duration_ms: 180.035583
+  type: 'test'
+  ...
+# Subtest: rendered views are completely free of emojis and contain vector SVG icons
+ok 26 - rendered views are completely free of emojis and contain vector SVG icons
+  ---
+  duration_ms: 15.328333
+  type: 'test'
+  ...
+# Subtest: sanitization removes scripts and unsafe links
+ok 27 - sanitization removes scripts and unsafe links
+  ---
+  duration_ms: 31.39475
+  type: 'test'
+  ...
+# Subtest: renderMarkdown converts markdown and wraps mermaid fences safely
+ok 28 - renderMarkdown converts markdown and wraps mermaid fences safely
+  ---
+  duration_ms: 30.295833
+  type: 'test'
+  ...
+# Subtest: buildTraceabilityModel maps requirements, tasks, and evidence
+ok 29 - buildTraceabilityModel maps requirements, tasks, and evidence
+  ---
+  duration_ms: 13.452125
+  type: 'test'
+  ...
+# Subtest: server handles auth, snapshots, and security bounds
+ok 30 - server handles auth, snapshots, and security bounds
+  ---
+  duration_ms: 324.664542
+  type: 'test'
+  ...
+# Subtest: community packs install and update managed skills without overwriting local edits
+ok 31 - community packs install and update managed skills without overwriting local edits
+  ---
+  duration_ms: 34.391
+  type: 'test'
+  ...
+1..31
+# tests 31
+# suites 0
+# pass 31
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 3994.74525
