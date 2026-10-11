@@ -86,4 +86,10 @@ assert_eq "" "$(grep '^active_phase=' "$sandbox/.sdd/state" | cut -d= -f2-)" \
 assert_contains "$sandbox/finish.out" 'Progress tracker NOT updated' \
     "finish also reports absent tracker anchor honestly"
 
+if command -v node >/dev/null 2>&1; then
+    assert_contains "$sandbox/.sdd/graphs/framework.json" 'sdd-derived' "finish refreshes the derived graph"
+    node -e 'const g=require(process.argv[1]); if(g.source!=="sdd-derived" || !g.nodes.some(n=>n.type==="task"))process.exit(1)' "$sandbox/.sdd/graphs/framework.json"
+    assert_eq "0" "$?" "closeout graph contains extracted task nodes"
+fi
+
 finish_test_file

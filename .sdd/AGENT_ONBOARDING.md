@@ -131,3 +131,7 @@ Recent Decisions:
 - **Specs live in `.sdd/specs/` only.** Do not place `requirements.md`, `design.md`, or `tasks.md` under `docs/`.
 - **Project docs live in `docs/`**, and may link to specs instead of duplicating them.
 - If unsure, run: `bash scripts/scan-strays.sh`.
+
+## Optional visual workspace and graph closeout
+
+Read `memory/rules/visual-workspace.md` when working with the visual interface. It defines service startup/verification, canonical CLI operations, automatic updates, closeout graph refresh and external Graphify boundaries. Existing-project upgrades preserve onboarding, so explicitly follow the additive rule after upgrading.

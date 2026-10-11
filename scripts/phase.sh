@@ -761,6 +761,15 @@ EOF
     state_set tasks_approved "" || exit 1
     say "🗃️  Sprint state cleared."
 
+    # Optional derived graph cache; core lifecycle remains usable without Node.
+    if command -v node >/dev/null 2>&1 && [[ -f "$SCRIPT_DIR/graph-refresh.cjs" ]]; then
+        if ! node "$SCRIPT_DIR/graph-refresh.cjs" "$REPO_ROOT"; then
+            say "WARNING: Graph refresh failed; run node .sdd/scripts/graph-refresh.cjs after resolving the error."
+        fi
+    else
+        say "INFO: Graph refresh skipped (Node or graph-refresh.cjs unavailable); visual workspace derives live graphs when opened."
+    fi
+
     say ""
     say "🎉 Phase Sprint '$active_phase' marked as finished!"
     say "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"

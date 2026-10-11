@@ -47,3 +47,7 @@ Phase lifecycle, task progress and scope counts precede the graph; lifecycle lab
 ## Shared sort controls and page flow
 
 Latest / Phase order / A–Z buttons now apply across overview progress chart and phase listings with a shared session preference. Inline phase graphs and relationship/progress lists have no fixed-height limit. Build, 32 unit tests and five browser journeys pass; owner visual review pending.
+
+## Local adoption trial readiness
+
+Added installed visual-workspace agent rule and onboarding pointer, optional phase-finish graph refresh with explicit skip/failure reporting, extracted graph cache and live graph refresh metadata, and network-style Resources nodes/labels. Cache does not replace live extraction or external Graphify runs. Local framework graph refreshed without closing the active phase. 32 unit tests, five Chromium journeys and nine core Bash test files pass. Ready for an owner-supervised local trial on this feature branch; no official release or hosted readiness claimed. See reports/phase-005/local-adoption-readiness.md.

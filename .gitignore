@@ -51,3 +51,7 @@ graphify-out/
 
 # Observed hook executions are private runtime records.
 .sdd/evidence/hooks/
+
+# Derived graph caches are generated locally, not canonical specifications.
+.sdd/graphs/*.json
+.sdd/graphs/*.tmp

@@ -1058,11 +1058,18 @@ function extractGraphify(projectRoot, snapshot) {
       const nodes = graph.nodes.slice(0, 3000).map(node => ({ id: String(node.id), label: String(node.label || node.name || node.id), type: String(node.type || 'external'), source: node.source || '' }));
       const ids = new Set(nodes.map(node => node.id));
       const edges = (graph.edges || graph.links).slice(0, 10000).map(edge => ({ from: String(edge.from || edge.source), to: String(edge.to || edge.target), label: String(edge.label || edge.type || 'related'), provenance: edge.provenance || edge.evidence_type || 'UNSPECIFIED', confidence: edge.confidence ?? null })).filter(edge => ids.has(edge.from) && ids.has(edge.to));
-      return { source: 'graphify-export', path: graphPath, nodes, edges, totalNodes: nodes.length, totalEdges: edges.length, summary: 'Imported Graphify output. Inferred or unspecified edges do not establish implementation or verification.' };
+      return { source: graph.source === 'sdd-derived' ? 'sdd-closeout' : 'graphify-export', generatedAt: graph.generatedAt || null, sourceRevision: graph.sourceRevision || null, path: graphPath, nodes, edges, totalNodes: nodes.length, totalEdges: edges.length, summary: graph.source === 'sdd-derived' ? 'Derived closeout graph cache; live phase views remain authoritative. Refresh with node .sdd/scripts/graph-refresh.cjs .' : 'Imported Graphify output. Inferred or unspecified edges do not establish implementation or verification.' };
     } catch (error) { snapshot.diagnostics.push({type:'warning',message:`Graphify import failed: ${error.message}`}); }
   }
   const nodes = [];
   const edges = [];
+
+  let closeout = {};
+  const closeoutPath = path.join(projectRoot, '.sdd/graphs/framework.json');
+  if (fs.existsSync(closeoutPath)) {
+    try { const cache=JSON.parse(fs.readFileSync(closeoutPath,'utf8')); if(cache.source==='sdd-derived') closeout={generatedAt:cache.generatedAt,sourceRevision:cache.sourceRevision,closeoutPath}; }
+    catch(error) { snapshot.diagnostics.push({type:'warning',message:`Closeout graph record unavailable: ${error.message}`}); }
+  }
 
   // 1. Core Constitution & Rules nodes
   nodes.push({ id: 'constitution', label: 'Constitution', type: 'constitution' });
@@ -1097,6 +1104,7 @@ function extractGraphify(projectRoot, snapshot) {
     nodes,
     edges: edges.map(edge => ({ ...edge, provenance: 'DERIVED_ORGANIZATION' })),
     source: 'artifact-map',
+    ...closeout,
     totalNodes: nodes.length,
     totalEdges: edges.length,
     summary: `SDD Knowledge Graph connecting ${nodes.length} entities and ${edges.length} derived organizational links. This is an artifact map, not Graphify output.`,

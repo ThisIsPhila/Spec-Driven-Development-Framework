@@ -93,11 +93,12 @@ test('real 60-phase workspace filters tasks and follows requirement/source links
   for (const width of [320,390,768,1024,1440]) { await page.setViewportSize({width,height:844}); const sizes=await page.evaluate(()=>({document:document.documentElement.scrollWidth,viewport:innerWidth,offenders:[...document.querySelectorAll('*')].filter(el=>el.getBoundingClientRect().right>innerWidth+0.5 && el.getBoundingClientRect().width<innerWidth*2).slice(0,8).map(el=>({tag:el.tagName,class:String(el.className),right:el.getBoundingClientRect().right}))})); expect(sizes.document, `workspace overflow at ${width}: ${JSON.stringify(sizes.offenders)}`).toBeLessThanOrEqual(sizes.viewport); }
   await page.locator('.project-section-rail [data-domain="knowledge"]').click();
   await expect(page.getByRole('img',{name:'Imported Graphify topology'})).toBeVisible();
-  await expect(page.locator('.imported-graph rect')).toHaveCount(2);
+  await expect(page.locator('.imported-graph circle')).toHaveCount(2);
   await expect(page.locator('.imported-graph line')).toHaveCount(1);
+  if(process.env.SDD_REVIEW_SCREENSHOTS) { await page.locator('.imported-graph').scrollIntoViewIfNeeded(); await page.screenshot({path:path.join(os.tmpdir(),'sdd-network-ready.png')}); }
   fs.unlinkSync(path.join(root,'graphify-out/graph.json'));
   await expect(page.getByRole('img',{name:'Derived artifact topology'})).toBeVisible({timeout:5000});
-  expect(await page.locator('.imported-graph rect').count()).toBeGreaterThan(0);
+  expect(await page.locator('.imported-graph circle').count()).toBeGreaterThan(0);
 });
 test('account sign-up is functional and an empty account has no invented projects',async ({page})=>{
   await page.goto(accountInfo.url);

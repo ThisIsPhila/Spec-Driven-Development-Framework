@@ -3817,3 +3817,7 @@ a {
 .phase-graph-canvas, .phase-dependency-canvas, .traceability-svg-wrapper, .phase-progress-list, .project-insights .insight-panel, .phase-overview-graph, .traceability-list { max-height:none; height:auto; overflow:visible; }
 .phase-graph-canvas svg, .traceability-svg-wrapper svg { height:auto; max-height:none; }
 .phase-dependency-canvas { overflow-x:auto; }
+
+/* Network labels reveal local context without obscuring dense connections. */
+.network-label-secondary { opacity:0; }
+.trace-node:hover .network-label-secondary, .trace-node:focus .network-label-secondary { opacity:1; }

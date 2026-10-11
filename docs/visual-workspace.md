@@ -105,8 +105,18 @@ Imported Graphify topology draws a bounded subset (150 nodes / 500 internal edge
 
 Signed-in users start at **Projects**, with their real connected projects. **About** is the public product page; when signed in it includes a private **Your workspace** shortcut section. **Account** owns identity, sign-out and machine connection. Opening Projects never issues a machine credential or opens a connection dialog.
 
-A project opens at **Project overview**. The on-screen section rail contains Phases, Decisions & context, Reviews, Checks & automation, Resources & graphs, and Detailed metrics. Project sections do not occupy the global header.
+A project opens at **Project overview**. A horizontal icon subheader contains Phases, Decisions & context, Reviews, Checks & automation, and Resources & graphs. Project sections do not occupy the global header.
 
 Overview derives recognized task completion, phase progress, requirement mappings, recorded evidence outcomes, missing active-phase inputs and extraction warnings. Pending work and attention items link to the relevant phase. Decision excerpts link to their source record. Unsupported task formats remain unassessed; charts are current recorded progress, not invented historical performance or acceptance.
 
 The Skills & Profiles directory and public catalog entries open real bundled profile documentation, included files, composition guidance and copyable setup commands. Profiles remain framework configurations; standard SKILL.md packages are reusable instructions, and composition packs interoperate with them. A profile is not advertised as a downloadable third-party skill that does not exist.
+
+## Agent operation and existing-project trial
+
+Read `.sdd/memory/rules/visual-workspace.md` (added by setup/upgrade). Agents operate canonical phase/task/evidence files through CLI; the UI follows automatically while its service runs. Successful `phase.sh finish` now refreshes `.sdd/graphs/framework.json` with Node if available, otherwise reports a skip. Manual refresh: `node .sdd/scripts/graph-refresh.cjs .`. This is an extracted reference graph, separate from external Graphify inference. Imported Graphify exports take precedence and require their own authorized refresh. A closeout graph is a dated cache; the Resources map and phase views continue deriving live data, and Resources shows the last closeout refresh timestamp.
+
+Before adopting into an older project, checkpoint its working tree and run the framework clone's `bash scripts/setup.sh --upgrade --yes` from the consumer project directory. Review `.sdd/memory/archive/framework-upgrades/` and run `bash .sdd/scripts/doctor.sh`. Upgrade preserves existing constitution, memory, specs, skills, entrypoints and hooks; it does not silently merge changed onboarding. Explicitly direct the agent to read the new visual-workspace rule. Do not run finish on an incomplete phase merely to refresh a graph.
+
+Keep track of: missing/unrecognized task formats, unresolved requirement links, declared dependency arrays, evidence freshness, actual hook-run outcomes, service connectivity and consumer custom rules preserved by upgrade. Task completion is not owner acceptance. Use local mode first; account publishing is opt-in and limited to explicitly connected projects.
+
+This implementation is currently on `feat/phase-005-visual-framework-workspace`, not an official release. For this trial, use that branch or this checkout; cloning the default release branch does not imply these changes are available. Run the installer from the consumer project's working directory using the absolute path to this framework checkout's `scripts/setup.sh --upgrade --yes`. Keep the framework checkout outside the consumer's `.sdd` directory.
