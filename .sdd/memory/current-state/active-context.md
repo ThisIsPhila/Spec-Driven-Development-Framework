@@ -43,3 +43,7 @@ Project navigation is now a horizontal icon tab bar below the shared header. Log
 ## Graph inspection and compact phase summary
 
 Phase lifecycle, task progress and scope counts precede the graph; lifecycle labels omit emoji. Graphs expand with endpoint inspection and related-node emphasis. Resources topology now uses connected layout; all-phase dependency view reads explicit phase.json declarations, distinguishing unknown from none declared. Rebuilt live UI preserving other agents' style/index edits. 31 unit tests, five browser journeys and build pass. See reports/phase-005/graph-inspection.md.
+
+## Shared sort controls and page flow
+
+Latest / Phase order / A–Z buttons now apply across overview progress chart and phase listings with a shared session preference. Inline phase graphs and relationship/progress lists have no fixed-height limit. Build, 32 unit tests and five browser journeys pass; owner visual review pending.

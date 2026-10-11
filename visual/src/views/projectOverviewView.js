@@ -1,5 +1,11 @@
 import { escapeHtml as e } from '../sanitize.js';
 export const phaseOrder = (a,b) => Number(a.id.match(/^phase-(\d+)/)?.[1] || 0)-Number(b.id.match(/^phase-(\d+)/)?.[1] || 0) || a.id.localeCompare(b.id);
+export function sortPhases(phases, order = 'latest') {
+ return [...phases].sort(order==='name'?(a,b)=>(a.name || a.id).localeCompare(b.name || b.id):order==='oldest'?phaseOrder:(a,b)=>phaseOrder(b,a));
+}
+export function renderPhaseSort(order='latest') {
+ return `<div class="phase-sort-buttons" role="group" aria-label="Sort phases">${[['latest','Latest'],['oldest','Phase order'],['name','A–Z']].map(([value,label])=>`<button class="phase-sort-button" data-phase-sort="${value}" aria-pressed="${value===order}">${label}</button>`).join('')}</div>`;
+}
 export function deriveInsights(snapshot) {
   const phases=[...(snapshot?.phases || [])].sort(phaseOrder);
   const tasks=phases.flatMap(phase=>(phase.tasks || []).map(task=>({...task,phaseId:phase.id})));
@@ -26,12 +32,12 @@ export function deriveInsights(snapshot) {
   }
   return {phases,tasks,completed,percent:tasks.length?Math.round(completed/tasks.length*100):null,attention,reqs,mapped,records,next,decisions:decisions.slice(-6).reverse()};
 }
-export function renderProjectOverview(snapshot) {
+export function renderProjectOverview(snapshot, order = 'latest') {
   if (!snapshot) return '<p class="empty-state">Loading project…</p>';
   const i=deriveInsights(snapshot), active=i.phases.find(p=>p.id===snapshot.activePhaseId);
   return `<section class="project-insights"><div class="insights-heading"><div><p class="eyebrow">PROJECT OVERVIEW</p><h1>${e(snapshot.projectId)}</h1><p>${active?`Current phase: ${e(active.id)}`:'No current phase declared'} · ${e(snapshot.profile || 'general')}</p></div><button class="btn btn-secondary" data-domain="phases">Explore phases</button></div>
     <div class="insight-kpis"><article><span>Recorded progress</span><strong>${i.percent===null?'No task plan':i.percent+'%'}</strong><p>${i.completed} of ${i.tasks.length} tasks marked complete</p></article><article><span>Needs attention</span><strong>${i.attention.length}</strong><p>Missing phase inputs and extraction warnings</p></article><article><span>Requirement links</span><strong>${i.mapped}/${i.reqs.length}</strong><p>Requirements mapped to tasks</p></article><article><span>Evidence records</span><strong>${i.records.length}</strong><p>${i.records.filter(r=>/^PASS(?:ED)?\b/i.test(r.parsed?.result || '')).length} recorded pass outcomes · not independent certification</p></article></div>
-    <div class="insights-grid"><section class="insight-panel"><h2>Progress by phase</h2><p>Current task completion, not a historical burndown.</p><div role="img" aria-label="Recorded progress by phase" class="phase-progress-list">${i.phases.map(p=>`<button class="phase-progress-row" data-insight-phase="${e(p.id)}" data-insight-tab="overview"><span>${e(p.id)}</span><span>${p.taskCounts?.total?`${p.taskCounts.completed}/${p.taskCounts.total}`:p.artifacts?.tasks?'Unassessed':'No task plan'}</span><span class="insight-bar"><span style="width:${Math.max(0,Math.min(100,p.taskCounts?.percent || 0))}%"></span></span></button>`).join('')}</div></section>
+    <div class="insights-grid"><section class="insight-panel"><h2>Progress by phase</h2>${renderPhaseSort(order)}<p>Current task completion, not a historical burndown.</p><div role="img" aria-label="Recorded progress by phase" class="phase-progress-list">${sortPhases(i.phases, order).map(p=>`<button class="phase-progress-row" data-insight-phase="${e(p.id)}" data-insight-tab="overview"><span>${e(p.id)}</span><span>${p.taskCounts?.total?`${p.taskCounts.completed}/${p.taskCounts.total}`:p.artifacts?.tasks?'Unassessed':'No task plan'}</span><span class="insight-bar"><span style="width:${Math.max(0,Math.min(100,p.taskCounts?.percent || 0))}%"></span></span></button>`).join('')}</div></section>
     <section class="insight-panel"><h2>Next recorded work</h2>${i.next.length?i.next.map(t=>`<button class="insight-action" data-insight-phase="${e(t.phaseId)}" data-insight-tab="tasks"><span class="eyebrow">${e(t.id)} · ${t.status==='doing'?'In progress':'Pending'}</span><strong>${e((t.title || '').replace(/[*`]/g,''))}</strong><span>${e(t.phaseId)}</span></button>`).join(''):'<p>No pending tasks recorded in active phases. This does not establish acceptance.</p>'}</section>
     <section class="insight-panel"><h2>Needs attention</h2>${i.attention.length?i.attention.slice(0,8).map(item=>`<button class="insight-action" data-insight-phase="${e(item.phaseId)}" data-insight-tab="${item.tab}"><strong>${e(item.text)}</strong><span>${e(item.phaseId)}</span></button>`).join(''):'<p>No missing active-phase inputs or extraction warnings recorded.</p>'}<button class="btn btn-secondary" data-domain="automation">View checks & automation</button></section>
     <section class="insight-panel"><h2>Recorded decisions</h2><p>Excerpts from project decision records, with source links.</p>${i.decisions.length?i.decisions.map(d=>`<article class="decision-excerpt"><h3>${e(d.title)}</h3><p>${e(d.text)}</p><button class="btn btn-secondary" data-source-path="${e(d.path)}">Read decision source</button></article>`).join(''):'<p>No populated decision sections found. Add decisions to your project decision record to surface them here.</p>'}</section></div>

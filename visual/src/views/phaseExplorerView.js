@@ -1,5 +1,5 @@
 import { renderPhaseDependencies } from '../phase-dependencies.js';
-import { phaseOrder } from './projectOverviewView.js';
+import { phaseOrder, sortPhases, renderPhaseSort } from './projectOverviewView.js';
 import { escapeHtml } from '../sanitize.js';
 import { escapeDisplayModel } from '../sanitize.js';
 import { renderMarkdown } from '../markdown.js';
@@ -14,9 +14,7 @@ import { ICONS } from '../icons.js';
  * Scalable navigation designed to effortlessly manage 50+ phases without cluttering the header.
  * Surfaces all phase contents: requirements, design, tasks, evidence, acceptance, remediations, future work.
  */
-export function sortPhases(phases, order = 'latest') {
-  return [...phases].sort(order === 'name' ? (a,b)=>(a.name || a.id).localeCompare(b.name || b.id) : order === 'oldest' ? phaseOrder : (a,b)=>phaseOrder(b,a));
-}
+export { sortPhases } from './projectOverviewView.js';
 
 export function renderPhaseExplorerView(snapshot, state) {
   snapshot = escapeDisplayModel(snapshot);
@@ -77,10 +75,7 @@ export function renderPhaseExplorerView(snapshot, state) {
             </button>
           </div>
 
-          <label class="phase-sort-label" for="phase-sort">Sort by</label>
-          <select id="phase-sort" class="phase-sort-select" aria-label="Sort phases">
-            ${[['latest','Latest phase first'],['oldest','Phase number: ascending'],['name','Name: A–Z']].map(([value,label])=>`<option value="${value}" ${(state.phaseSort || 'latest')===value?'selected':''}>${label}</option>`).join('')}
-          </select>
+          ${renderPhaseSort(state.phaseSort || 'latest')}
           <!-- Real-Time Search Box for 50+ Phases -->
           <div class="phase-nav-search-wrapper">
             <span class="search-glyph">${ICONS.search}</span>

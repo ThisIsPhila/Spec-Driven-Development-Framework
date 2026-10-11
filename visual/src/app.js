@@ -433,7 +433,7 @@ npm --prefix visual run workspace -- --project /path/to/project --project /path/
     }
 
     if (this.currentView === 'account') return `<section class="insight-panel account-settings"><h1>Account & connections</h1><p>${escapeHtml(this.accountSession?.email || 'Local workspace')}</p><p>Projects are connected explicitly from your machines. Your email is your login identifier; it does not discover folders.</p><div id="account-settings-actions"><button class="btn btn-secondary" id="account-connect-machine">Connect another machine</button></div><p>Manage machine credentials here. To open an existing project, choose Projects in the navigation.</p></section>`;
-    if (this.projectSection === 'overview') return renderProjectOverview(this.snapshot);
+    if (this.projectSection === 'overview') return renderProjectOverview(this.snapshot, this.phaseSort);
     // Tier 3: Direct Project Views based on Domain Section:
     if (this.projectSection === 'governance') {
       if (this.activeGovTab === 'summary') return renderDecisionOverview(this.snapshot);
@@ -450,7 +450,7 @@ npm --prefix visual run workspace -- --project /path/to/project --project /path/
     }
     if (this.projectSection === 'metrics') {
       this.projectSection = 'overview';
-      return renderProjectOverview(this.snapshot);
+      return renderProjectOverview(this.snapshot, this.phaseSort);
     }
 
     // Default: 'phases' section with On-Screen Phase Explorer
@@ -743,7 +743,7 @@ npm --prefix visual run workspace -- --project /path/to/project --project /path/
     });
 
     // Real-time search for 50+ phases
-    this.container.querySelector('#phase-sort')?.addEventListener('change', event=>{this.phaseSort=event.target.value;sessionStorage.setItem('sdd-phase-sort',this.phaseSort);this.render();});
+    this.container.querySelectorAll('[data-phase-sort]').forEach(button=>button.addEventListener('click',()=>{this.phaseSort=button.dataset.phaseSort;sessionStorage.setItem('sdd-phase-sort',this.phaseSort);this.render();}));
     const phaseSearchInput = document.getElementById('phase-search-field');
     if (phaseSearchInput) {
       phaseSearchInput.addEventListener('input', (e) => {

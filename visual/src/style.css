@@ -3809,3 +3809,11 @@ a {
 
 .phase-sort-label { display:block; margin:0.7rem 0 0.3rem; color:var(--muted-foreground); font-size:0.75rem; }
 .phase-sort-select { width:100%; padding:0.5rem; background:var(--background); color:var(--foreground); border:1px solid var(--border); border-radius:4px; font:inherit; font-size:0.8rem; }
+
+/* Shared inline sorting and natural-height page content. */
+.phase-sort-buttons { display:flex; flex-wrap:wrap; gap:0.25rem; margin:0.75rem 0; }
+.phase-sort-button { padding:0.3rem 0.6rem; color:var(--muted-foreground); background:transparent; border:1px solid transparent; border-radius:4px; font:inherit; font-size:0.75rem; cursor:pointer; }
+.phase-sort-button[aria-pressed="true"] { border-color:var(--border); color:var(--foreground); background:var(--ds-gray-100); }
+.phase-graph-canvas, .phase-dependency-canvas, .traceability-svg-wrapper, .phase-progress-list, .project-insights .insight-panel, .phase-overview-graph, .traceability-list { max-height:none; height:auto; overflow:visible; }
+.phase-graph-canvas svg, .traceability-svg-wrapper svg { height:auto; max-height:none; }
+.phase-dependency-canvas { overflow-x:auto; }
