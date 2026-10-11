@@ -14,11 +14,15 @@ import { ICONS } from '../icons.js';
  * Scalable navigation designed to effortlessly manage 50+ phases without cluttering the header.
  * Surfaces all phase contents: requirements, design, tasks, evidence, acceptance, remediations, future work.
  */
+export function sortPhases(phases, order = 'latest') {
+  return [...phases].sort(order === 'name' ? (a,b)=>(a.name || a.id).localeCompare(b.name || b.id) : order === 'oldest' ? phaseOrder : (a,b)=>phaseOrder(b,a));
+}
+
 export function renderPhaseExplorerView(snapshot, state) {
   snapshot = escapeDisplayModel(snapshot);
   if (!snapshot) return `<div class="empty-state">No project loaded.</div>`;
 
-  const phases = [...(snapshot.phases || [])].sort(phaseOrder);
+  const phases = sortPhases(snapshot.phases || [], state.phaseSort);
   const activePhaseIdInSnapshot = snapshot.activePhaseId;
   const currentPhaseId = state.activePhaseId;
   const currentTab = state.phaseTab || 'overview';
@@ -73,6 +77,10 @@ export function renderPhaseExplorerView(snapshot, state) {
             </button>
           </div>
 
+          <label class="phase-sort-label" for="phase-sort">Sort by</label>
+          <select id="phase-sort" class="phase-sort-select" aria-label="Sort phases">
+            ${[['latest','Latest phase first'],['oldest','Phase number: ascending'],['name','Name: A–Z']].map(([value,label])=>`<option value="${value}" ${(state.phaseSort || 'latest')===value?'selected':''}>${label}</option>`).join('')}
+          </select>
           <!-- Real-Time Search Box for 50+ Phases -->
           <div class="phase-nav-search-wrapper">
             <span class="search-glyph">${ICONS.search}</span>
@@ -138,7 +146,7 @@ export function renderPhaseExplorerView(snapshot, state) {
       <!-- RIGHT CANVAS: Phase Workspace or All Sprints Master Overview -->
       <main class="phase-workspace-main">
         ${selectedPhase === null
-          ? renderAllSprintsOverview(snapshot)
+          ? renderAllSprintsOverview(snapshot, state)
           : renderSelectedPhaseWorkspace(selectedPhase, currentTab, snapshot, state)
         }
       </main>
@@ -382,8 +390,8 @@ function renderRemediationsAndFutureView(phase) {
 /**
  * Master All phases View
  */
-function renderAllSprintsOverview(snapshot) {
-  const phases = [...(snapshot.phases || [])].sort(phaseOrder);
+function renderAllSprintsOverview(snapshot, state = {}) {
+  const phases = sortPhases(snapshot.phases || [], state.phaseSort);
   const metrics = snapshot.metrics || {};
 
   return `

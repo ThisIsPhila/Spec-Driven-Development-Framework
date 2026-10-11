@@ -63,7 +63,7 @@ test('real 60-phase workspace filters tasks and follows requirement/source links
   await expect(page.locator('.phase-nav-sidebar [data-phase-select]')).toHaveCount(1);
   await page.locator('#phase-search-field').fill('');
   await expect(page.locator('.phase-nav-sidebar [data-phase-select]')).toHaveCount(60);
-  const phaseButton=page.locator('.phase-nav-sidebar [data-phase-select]').first();
+  const phaseButton=page.locator('.phase-nav-sidebar [data-phase-select="phase-001-example"]');
   await phaseButton.click();
   await page.locator('.phase-subtabs-bar [data-phase-tab="traceability"]').click();
   await expect(page.locator('.traceability-list')).toContainText('reference-note.md');
@@ -175,6 +175,9 @@ test('signed-in navigation separates projects, examples, account settings and pr
     await page.getByRole('button',{name:'Explore phases',exact:true}).click();
     expect(await page.locator('.skills-header').innerText()).toBe(globalHeader);
     await expect(page.getByRole('button',{name:'Detailed metrics',exact:true})).toHaveCount(0);
+    await expect(page.getByRole('combobox',{name:'Sort phases'})).toHaveValue('latest');
+    expect((await page.locator('.phase-p-tag').allTextContents())[0].trim()).toBe('phase-004-dunning-retry-strategy');
+    await page.getByRole('combobox',{name:'Sort phases'}).selectOption('oldest');
     const ids=await page.locator('.phase-p-tag').allTextContents();
     expect(ids.map(id=>id.trim())).toEqual(['phase-001-account-provisioning','phase-002-invoice-generation','phase-003-stripe-webhook-handling','phase-004-dunning-retry-strategy']);
     await page.getByRole('button',{name:'Projects',exact:true}).click();

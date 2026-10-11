@@ -41,6 +41,7 @@ export class SDDWorkspaceApp {
     this.activePhaseId = null; // null = All Sprints Overview, string = specific phase ID
     this.phaseTab = 'overview'; // 'overview' | 'requirements' | 'design' | 'tasks' | 'evidence' | 'remediations' | 'traceability'
     this.phaseScopeFilter = 'all'; // 'all' | 'active' | 'backlog' | 'archive'
+    this.phaseSort = sessionStorage.getItem('sdd-phase-sort') || 'latest';
     this.phaseSearchQuery = '';
 
     this.activeGovTab = 'summary';
@@ -742,6 +743,7 @@ npm --prefix visual run workspace -- --project /path/to/project --project /path/
     });
 
     // Real-time search for 50+ phases
+    this.container.querySelector('#phase-sort')?.addEventListener('change', event=>{this.phaseSort=event.target.value;sessionStorage.setItem('sdd-phase-sort',this.phaseSort);this.render();});
     const phaseSearchInput = document.getElementById('phase-search-field');
     if (phaseSearchInput) {
       phaseSearchInput.addEventListener('input', (e) => {
