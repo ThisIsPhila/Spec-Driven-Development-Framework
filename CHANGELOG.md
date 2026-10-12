@@ -2,7 +2,7 @@
 
 All notable changes to the SDD Framework are documented here.
 
-## [2.0.0] - 2026-10-12
+## [2.1.0] - 2026-10-12
 
 ### Closeout
 - Consistent global navigation, horizontal project sections, compact skill details and shared latest-first phase sorting.
@@ -18,6 +18,10 @@ All notable changes to the SDD Framework are documented here.
 - Add refresh fallback, conditional snapshots, preserved focus/reading state, recursive artifact coverage and provenance-aware Graphify import.
 - Add preserved/chained recorded Git gates and community SKILL.md composition packs with content-hash update protection.
 - Add optional persisted private accounts, connector publishing/revocation and owner-scoped local project bootstrap. Hosted deployment is separately configured; local use remains account-free.
+
+## [2.0.0] - 2026-10-12
+
+The original published tag is retained. Subsequent workspace additions and corrections are versioned as 2.1.0 above.
 
 ### Added
 - **Visual Framework Workspace (`visual/`)**: Optional read-only interactive cockpit and static documentation site for Spec-Driven Development (Phase 005).

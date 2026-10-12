@@ -55,3 +55,7 @@ Added installed visual-workspace agent rule and onboarding pointer, optional pha
 ## Version 2.0.0 closeout — 2026-10-12
 
 Owner authorized version closeout and categorized GitHub commits. Phase 005 finish hook passed and regenerated 89 graph nodes / 83 links. Version 2.0.0 closes this local iteration; 39 unit tests, 5 browser journeys, 9 core Bash files and build pass. Fixed-scale selected-node highlighting supersedes the rejected auto-zoom. Hosted deployment, recovery, Windows certification and full-network exploration remain limitations. No main merge or spec archive performed.
+
+## Version correction — 2.1.0
+
+Owner clarified 2.0.0 predates the latest additions. Framework/default and visual package metadata now use 2.1.0. Existing v2.0.0 tag retained; publish v2.1.0 for the additive workspace iteration. Earlier 2.0.0 closeout evidence remains historical.
