@@ -1,3 +1,4 @@
+import { attachGraphExplorer } from './graphExplorer.js';
 import { renderProjectOverview, renderDecisionOverview } from './views/projectOverviewView.js';
 import { renderProfiles } from './views/profilesView.js';
 import { PROFILES, INSTALL_COMMAND } from './catalog.js';
@@ -807,8 +808,8 @@ npm --prefix visual run workspace -- --project /path/to/project --project /path/
         const close=document.createElement('button');close.className='btn btn-secondary';close.textContent='Close graph';close.onclick=()=>dialog.close();
         const detail=document.createElement('p');detail.className='graph-connection-detail';detail.textContent='Select or hover a connection to inspect its endpoints.';
         const body=document.createElement('div');body.className='expanded-graph-body';body.append(canvas.querySelector('svg').cloneNode(true));
-        dialog.append(close,detail,body);document.body.append(dialog);dialog.addEventListener('close',()=>dialog.remove());wireGraph(dialog);
-        body.querySelectorAll('.trace-node').forEach(node=>node.addEventListener('click',()=>{const id=node.dataset.id;const phase=this.snapshot?.phases.find(p=>p.id===this.activePhaseId);if(this.snapshot?.phases.some(p=>p.id===id) || phase?.tasks.some(t=>t.id===id) || phase?.requirements.some(r=>r.id===id) || phase?.artifacts?.evidence?.some(e=>e.id===id || e.filename===id)) {dialog.close();openRef(id);} else {detail.textContent=node.getAttribute('aria-label') || id;}}));dialog.showModal();
+        dialog.append(close,detail,body);document.body.append(dialog);dialog.addEventListener('close',()=>dialog.remove());
+        const toolbar=document.createElement('div');toolbar.className='graph-explorer-toolbar';body.before(toolbar);attachGraphExplorer(body.querySelector('svg'),toolbar,detail);dialog.showModal();
       });canvas.before(expand);
     });
     wireGraph(this.container);

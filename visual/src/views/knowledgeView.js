@@ -2,6 +2,7 @@ import { escapeHtml } from '../sanitize.js';
 import { escapeDisplayModel } from '../sanitize.js';
 import { renderMarkdown } from '../markdown.js';
 import { ICONS } from '../icons.js';
+import { layoutNetwork } from '../networkLayout.js';
 
 /**
  * Docs, Templates, and Graphify Knowledge View
@@ -187,23 +188,15 @@ export function renderKnowledgeView(snapshot, activeSubTab = 'templates', select
 
 function renderImportedGraph(graph) {
   const nodes = (graph.nodes || []).slice(0, 150);
-  const positions = new Map(nodes.map((node,i)=>[node.id,{x:730+550*Math.cos(i*2*Math.PI/Math.max(nodes.length,1)),y:420+330*Math.sin(i*2*Math.PI/Math.max(nodes.length,1))}]));
-  const edges = (graph.edges || []).filter(edge=>positions.has(edge.from) && positions.has(edge.to)).slice(0,500);
-  for(let step=0;step<180;step++) {
-    const forces=new Map(nodes.map(n=>[n.id,{x:0,y:0}]));
-    for(let i=0;i<nodes.length;i++) for(let j=i+1;j<nodes.length;j++) {
-      const a=positions.get(nodes[i].id),b=positions.get(nodes[j].id),dx=a.x-b.x,dy=a.y-b.y,d=Math.max(30,Math.hypot(dx,dy)),push=2800/(d*d);
-      forces.get(nodes[i].id).x+=dx*push;forces.get(nodes[i].id).y+=dy*push;forces.get(nodes[j].id).x-=dx*push;forces.get(nodes[j].id).y-=dy*push;
-    }
-    for(const edge of edges) {const a=positions.get(edge.from),b=positions.get(edge.to),dx=b.x-a.x,dy=b.y-a.y,d=Math.max(1,Math.hypot(dx,dy)),pull=(d-150)*0.12;forces.get(edge.from).x+=dx/d*pull;forces.get(edge.from).y+=dy/d*pull;forces.get(edge.to).x-=dx/d*pull;forces.get(edge.to).y-=dy/d*pull;}
-    for(const node of nodes) {const point=positions.get(node.id),f=forces.get(node.id);point.x=Math.max(30,Math.min(1270,point.x+Math.max(-12,Math.min(12,f.x))));point.y=Math.max(40,Math.min(740,point.y+Math.max(-12,Math.min(12,f.y))));}
-  }
+  const ids = new Set(nodes.map(node => node.id));
+  const edges = (graph.edges || []).filter(edge => ids.has(edge.from) && ids.has(edge.to)).slice(0, 500);
+  const positions = layoutNetwork(nodes, edges);
   const imported = graph.source === 'graphify-export';
   const label = imported ? 'Imported Graphify topology' : 'Derived artifact topology';
   return `<p class="font-mono">${imported ? 'Imported' : 'Derived'} topology: ${nodes.length}/${graph.nodes.length} nodes and ${edges.length} internal edges shown. Full node and provenance lists are below. Relationships do not require live activity and do not certify completion.</p>
     <div class="imported-graph-scroller"><svg class="imported-graph" viewBox="0 0 1460 820" role="img" aria-label="${label}">
-      ${edges.map(edge => {const a=positions.get(edge.from),b=positions.get(edge.to);return `<line class="trace-edge" data-from="${edge.from}" data-to="${edge.to}" tabindex="0" role="button" aria-label="${edge.from} → ${edge.to}" x1="${a.x+75}" y1="${a.y+12}" x2="${b.x+75}" y2="${b.y+12}" stroke="#777" stroke-opacity="0.35"><title>${edge.from} → ${edge.to}: ${edge.label}: ${edge.provenance || 'UNSPECIFIED'}</title></line>`;}).join('')}
-      ${nodes.map(node => {const point=positions.get(node.id);return `<g class="trace-node" data-id="${node.id}" tabindex="0" role="button" aria-label="${node.label}"><title>${node.label} (${node.type})</title><circle cx="${point.x+75}" cy="${point.y+12}" r="${node.type==='phase'?12:7}" fill="${({phase:'#10b981',requirement:'#3b82f6',task:'#f59e0b',artifact:'#a78bfa'})[node.type] || '#888'}" stroke="#ccc"/><text x="${point.x+90}" y="${point.y+16}" fill="#ddd" class="network-node-label ${nodes.length>25 && node.type!=='phase'?'network-label-secondary':''}" font-size="10">${node.label.slice(0,36)}</text></g>`;}).join('')}
+      ${edges.map(edge => {const a=positions.get(edge.from),b=positions.get(edge.to);return `<line class="trace-edge" data-from="${edge.from}" data-to="${edge.to}" tabindex="0" role="button" aria-label="${edge.from} → ${edge.to}" x1="${a.x}" y1="${a.y}" x2="${b.x}" y2="${b.y}" stroke="#94a3b8" stroke-opacity="0.55"><title>${edge.from} → ${edge.to}: ${edge.label}: ${edge.provenance || 'UNSPECIFIED'}</title></line>`;}).join('')}
+      ${nodes.map(node => {const point=positions.get(node.id);return `<g class="trace-node" data-id="${node.id}" tabindex="0" role="button" aria-label="${node.label}"><title>${node.label} (${node.type})</title><circle cx="${point.x}" cy="${point.y}" r="${node.type==='phase'?12:7}" fill="${({phase:'#10b981',requirement:'#3b82f6',task:'#f59e0b',artifact:'#a78bfa'})[node.type] || '#888'}" stroke="#ccc"/><text x="${point.x+15}" y="${point.y+4}" fill="#ddd" class="network-node-label ${nodes.length>25 && node.type!=='phase'?'network-label-secondary':''}" font-size="10">${node.label.slice(0,36)}</text></g>`;}).join('')}
     </svg></div>
     <details><summary>All graph nodes (${graph.nodes.length})</summary>${graph.nodes.map(node => `<p>${node.label} — ${node.type}</p>`).join('')}</details>`;
 }
