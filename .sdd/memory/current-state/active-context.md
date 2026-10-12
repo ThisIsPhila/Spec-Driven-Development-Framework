@@ -51,3 +51,7 @@ Latest / Phase order / A–Z buttons now apply across overview progress chart an
 ## Local adoption trial readiness
 
 Added installed visual-workspace agent rule and onboarding pointer, optional phase-finish graph refresh with explicit skip/failure reporting, extracted graph cache and live graph refresh metadata, and network-style Resources nodes/labels. Cache does not replace live extraction or external Graphify runs. Local framework graph refreshed without closing the active phase. 32 unit tests, five Chromium journeys and nine core Bash test files pass. Ready for an owner-supervised local trial on this feature branch; no official release or hosted readiness claimed. See reports/phase-005/local-adoption-readiness.md.
+
+## Version 2.0.0 closeout — 2026-10-12
+
+Owner authorized version closeout and categorized GitHub commits. Phase 005 finish hook passed and regenerated 89 graph nodes / 83 links. Version 2.0.0 closes this local iteration; 39 unit tests, 5 browser journeys, 9 core Bash files and build pass. Fixed-scale selected-node highlighting supersedes the rejected auto-zoom. Hosted deployment, recovery, Windows certification and full-network exploration remain limitations. No main merge or spec archive performed.

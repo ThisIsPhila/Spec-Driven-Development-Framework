@@ -1,6 +1,6 @@
 {
   "name": "@sdd/visual",
-  "version": "0.1.0",
+  "version": "2.0.0",
   "description": "Visual workspace and public landing interface for Spec-Driven Development",
   "private": true,
   "type": "module",

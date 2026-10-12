@@ -1,0 +1,40 @@
+🔍 Validating SDD Framework profiles...
+
+📦 Base Profiles:
+  ✓ api/README.md
+  ✓ cli/README.md
+  ✓ full-stack/README.md
+  ✓ general/README.md
+  ✓ mobile/README.md
+  ✓ monorepo/README.md
+  ✓ web/README.md
+
+🔧 Modifiers:
+  ✓ devops/README.md
+    ⚠️  devops: No constitutional-amendment.md (recommended)
+  ✓ devsecops/README.md
+  ✓ mlops/README.md
+
+📝 Templates (checking for approval checkpoints):
+  ✓ All 17 templates have approval checkpoints
+
+🧭 Monorepo Coordination Scaffolding:
+  ✓ monorepo/coordination/README.md
+  ✓ monorepo/coordination/apps/README.md
+  ✓ monorepo/coordination/apps/component-coordination-template.md
+  ✓ monorepo/coordination/services/README.md
+  ✓ monorepo/coordination/progress/current-phase-status.md
+  ✓ monorepo/coordination/progress/weekly-updates.md
+  ✓ monorepo/coordination/progress/sdd-compliance-latest.md
+  ✓ monorepo/coordination/progress/sdd-compliance-history.md
+  ✓ monorepo/coordination/blockers.md
+  ✓ monorepo/coordination/breaking-changes.md
+  ✓ monorepo/coordination/phase-start-template.md
+  ✓ monorepo/coordination/phase-complete-template.md
+  ✓ monorepo/memory/rules/monorepo-governance.md
+  ✓ monorepo/workflows/automations/sdd-compliance-audit.md
+  ✓ monorepo/workflows/automations/weekly-coordination-rollup.md
+  ✓ scripts/audit-monorepo.sh
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+✅ Validation passed!

@@ -2,7 +2,14 @@
 
 All notable changes to the SDD Framework are documented here.
 
-## [2.0.0] - Unreleased
+## [2.0.0] - 2026-10-12
+
+### Closeout
+- Consistent global navigation, horizontal project sections, compact skill details and shared latest-first phase sorting.
+- Centred artifact networks with fixed-scale connection highlighting and overview reset.
+- Parse canonical evidence check tables and report declared outcomes conservatively.
+- Installed agent operating guidance and optional phase-closeout graph refresh.
+- Local release; hosted deployment, password recovery, native Windows lifecycle certification and full-network graph exploration remain limitations.
 
 ### Corrected and extended
 - Replace invented verification, acceptance, hook telemetry and adoption claims with explicit source declarations, unknown states and observed records.

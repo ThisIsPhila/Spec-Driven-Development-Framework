@@ -1,0 +1,14 @@
+
+> @sdd/visual@0.1.0 test:browser
+> playwright test
+
+
+Running 5 tests using 1 worker
+
+  ✓  1 tests/browser/workspace.spec.js:25:1 › public page stays contained at mobile, tablet and desktop widths (2.1s)
+  ✓  2 tests/browser/workspace.spec.js:56:1 › real 60-phase workspace filters tasks and follows requirement/source links (5.7s)
+  ✓  3 tests/browser/workspace.spec.js:103:1 › account sign-up is functional and an empty account has no invented projects (2.3s)
+  ✓  4 tests/browser/workspace.spec.js:120:1 › account access explains validation, connection failure, success and duplicate signup (2.1s)
+  ✓  5 tests/browser/workspace.spec.js:151:1 › signed-in navigation separates projects, examples, account settings and profile details (2.7s)
+
+  5 passed (16.5s)
