@@ -1,3 +1,4 @@
+import { parseEvidenceMetadata } from './evidence.js';
 import { fs, extractionScope } from './read-boundary.js';
 import path from 'node:path';
 import crypto from 'node:crypto';
@@ -296,22 +297,6 @@ function extractPhase(phaseDir, phaseId, category, sddDir, hash, gitHeadCommit) 
   return phase;
 }
 
-function parseEvidenceMetadata(content) {
-  const resultMatch = content.match(/\*\*Result:\*\*\s*([^\n\r]+)/i) || content.match(/Result:\s*([^\n\r]+)/i);
-  const treeMatch = content.match(/\*\*(?:Assessed Tree(?:\s*\/\s*Revision)?|Revision|Commit):\*\*\s*([^\n\r]+)/i) ||
-                     content.match(/(?:Assessed Tree|Revision):\s*([^\n\r]+)/i);
-  const envMatch = content.match(/\*\*Environment:\*\*\s*([^\n\r]+)/i) || content.match(/Environment:\s*([^\n\r]+)/i);
-  const timeMatch = content.match(/\*\*Timestamp:\*\*\s*([^\n\r]+)/i) || content.match(/Timestamp:\s*([^\n\r]+)/i);
-  const limitMatch = content.match(/##\s+Limitations\s*([\s\S]*?)(?=\n##|\n---|$)/i);
-
-  return {
-    result: (resultMatch ? resultMatch[1].trim() : 'UNKNOWN'),
-    assessedTree: (treeMatch ? treeMatch[1].trim() : ''),
-    environment: (envMatch ? envMatch[1].trim() : ''),
-    timestamp: (timeMatch ? timeMatch[1].trim() : ''),
-    limitations: (limitMatch ? limitMatch[1].trim() : 'Not recorded'),
-  };
-}
 
 function computePhaseMetrics(phase, gitHeadCommit) {
   const reqs = phase.requirements || [];

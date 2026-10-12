@@ -36,7 +36,7 @@ export function renderEvidenceView(phase) {
 
 function renderEvidenceCard(record, phase) {
   const p = record.parsed || {};
-  const isPass = (p.result || '').toUpperCase().includes('PASS');
+  const isPass = p.result === 'PASS';
   const resultClass = isPass ? 'badge-pass' : 'badge-fail';
 
   return `
@@ -71,6 +71,7 @@ function renderEvidenceCard(record, phase) {
         </div>
       </div>
 
+      ${(p.checks || []).length ? `<div class="telemetry-gates-table-wrapper"><table class="telemetry-gates-table"><thead><tr><th>Check</th><th>Procedure</th><th>Observed</th><th>Result</th></tr></thead><tbody>${p.checks.map(check => `<tr><td>${escapeHtml(check.name)}</td><td><code>${escapeHtml(check.procedure)}</code></td><td>${escapeHtml(check.observed)}</td><td>${escapeHtml(check.result)}</td></tr>`).join('')}</tbody></table></div>` : ''}
       <details class="evidence-body-details">
         <summary>View Complete Evidence Report</summary>
         <div class="markdown-body" data-source-path="${escapeHtml(record.path || '')}" style="margin-top: 1rem;">
