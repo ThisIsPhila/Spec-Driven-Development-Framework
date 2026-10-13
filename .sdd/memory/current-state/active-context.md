@@ -59,3 +59,7 @@ Owner authorized version closeout and categorized GitHub commits. Phase 005 fini
 ## Version correction — 2.1.0
 
 Owner clarified 2.0.0 predates the latest additions. Framework/default and visual package metadata now use 2.1.0. Existing v2.0.0 tag retained; publish v2.1.0 for the additive workspace iteration. Earlier 2.0.0 closeout evidence remains historical.
+
+## Version release — 2.2.0 — 2026-10-13
+
+Owner authorized release of version 2.2.0 consolidating visual framework metrics, quality pillar drill-downs, active task banners on Project Overview, per-phase health grading, composite SHA freshness extraction, and hook telemetry date sparklines. Metadata aligned across framework.json, defaults, and visual package.

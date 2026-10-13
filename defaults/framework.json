@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "frameworkVersion": "2.1.0",
+  "frameworkVersion": "2.2.0",
   "profile": "general",
   "forwardThreshold": 0,
   "validator": ".sdd/scripts/validate-spec.cjs",

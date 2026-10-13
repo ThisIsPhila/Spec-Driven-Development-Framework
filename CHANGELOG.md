@@ -2,6 +2,25 @@
 
 All notable changes to the SDD Framework are documented here.
 
+## [2.2.0] - 2026-10-13
+
+### Added
+- **Visual Framework Quality & Test Assurance**:
+  - Framework Quality Pillars on Phase Overview decomposing readiness into Spec Definition, Governance, Execution, and Verification bars (/25 each).
+  - Clickable "needs attention" pillar drill-downs providing inline root-cause diagnostic feedback with direct tab links.
+  - Active task banner on Project Overview surfacing in-progress task ID, title, phase link, and contract definition above KPI tiles.
+  - Per-phase health score status pills on the progress list with healthy (>=75), attention (>=50), and critical (<50) color grading.
+  - Test & Verification Assurance card on Phase Overview with pass/fail counts, success rates, and freshness classification.
+  - Dedicated "Quality & gate health" KPI tile and Verification assurance summary on Project Overview.
+  - Date axis on Automation hook telemetry sparkline with session timestamps, boundary dates, and midpoint markers.
+
+### Changed & Fixed
+- **Extraction & Freshness Accuracy**:
+  - Active phase inference fallback: automatically resolves active phase from in-progress task and first active category phase when `.sdd/state` lacks an explicit declaration.
+  - Lenient multi-SHA evidence freshness matching: parses composite tree fields (e.g. `sha1 / sha2`) against HEAD without false stale warnings.
+  - PASS/FAIL color coding on interactive SVG traceability evidence nodes.
+  - Strict emoji-free typography and Geist/Inter monochrome design alignment across all newly added components.
+
 ## [2.1.0] - 2026-10-12
 
 ### Closeout
