@@ -72,7 +72,7 @@ export function renderOverviewView(phase) {
         </div>
       </section>
 
-      <!-- Progress Metric Card -->
+      <!-- Metrics Grid -->
       <section class="metrics-grid">
         <div class="metric-card progress-card">
           <div class="metric-header">
@@ -119,6 +119,67 @@ export function renderOverviewView(phase) {
             <div class="count-box">
               <span class="count-value">${phase.relationships?.length || 0}</span>
               <span class="count-label">Trace Links</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Verification & Test Assurance Card -->
+        <div class="metric-card verification-metric-card">
+          <div class="metric-header">
+            <h4>Test &amp; Verification Assurance</h4>
+            <span class="freshness-badge freshness-${String(phase.metrics?.verificationAssurance?.freshness || 'UNLINKED').toLowerCase()}">
+              ${phase.metrics?.verificationAssurance?.freshness === 'HEAD_MATCH_ONLY' ? 'Matches HEAD' : phase.metrics?.verificationAssurance?.freshness === 'FRESH' ? 'Fresh' : phase.metrics?.verificationAssurance?.freshness === 'STALE' ? 'Stale' : 'Unlinked'}
+            </span>
+          </div>
+          <div class="verification-stats-row font-mono">
+            <div class="vstat-item">
+              <span class="vstat-val">${evCount}</span>
+              <span class="vstat-lbl">Runs</span>
+            </div>
+            <div class="vstat-item text-success">
+              <span class="vstat-val">${phase.metrics?.verificationAssurance?.passCount || 0}</span>
+              <span class="vstat-lbl">Pass</span>
+            </div>
+            <div class="vstat-item ${phase.metrics?.verificationAssurance?.failCount ? 'text-destructive' : 'text-muted'}">
+              <span class="vstat-val">${phase.metrics?.verificationAssurance?.failCount || 0}</span>
+              <span class="vstat-lbl">Fail</span>
+            </div>
+            <div class="vstat-item">
+              <span class="vstat-val text-accent">${phase.metrics?.verificationAssurance?.passRate !== null && phase.metrics?.verificationAssurance?.passRate !== undefined ? `${phase.metrics.verificationAssurance.passRate}%` : evCount ? '100%' : 'N/A'}</span>
+              <span class="vstat-lbl">Rate</span>
+            </div>
+          </div>
+          <div class="progress-bar-bg" style="margin-top:0.6rem;">
+            <div class="progress-bar-fill progress-fill-emerald" style="width: ${phase.metrics?.verificationAssurance?.passRate ?? (evCount ? 100 : 0)}%;"></div>
+          </div>
+        </div>
+
+        <!-- Quality & Health Score Pillars Card -->
+        <div class="metric-card pillars-metric-card">
+          <div class="metric-header">
+            <h4>Framework Quality Pillars</h4>
+            <span class="health-score-badge font-mono">${phase.metrics?.healthScore || 0}/100</span>
+          </div>
+          <div class="pillars-mini-grid font-mono">
+            <div class="pillar-row">
+              <span class="pillar-label">Spec Definition</span>
+              <div class="pillar-bar-bg"><div class="pillar-bar-fill" style="width:${Math.round(((phase.metrics?.pillars?.definition || 0)/25)*100)}%;"></div></div>
+              <span class="pillar-score">${phase.metrics?.pillars?.definition || 0}/25</span>
+            </div>
+            <div class="pillar-row">
+              <span class="pillar-label">Governance</span>
+              <div class="pillar-bar-bg"><div class="pillar-bar-fill" style="width:${Math.round(((phase.metrics?.pillars?.governance || 0)/25)*100)}%;"></div></div>
+              <span class="pillar-score">${phase.metrics?.pillars?.governance || 0}/25</span>
+            </div>
+            <div class="pillar-row">
+              <span class="pillar-label">Execution</span>
+              <div class="pillar-bar-bg"><div class="pillar-bar-fill" style="width:${Math.round(((phase.metrics?.pillars?.execution || 0)/25)*100)}%;"></div></div>
+              <span class="pillar-score">${phase.metrics?.pillars?.execution || 0}/25</span>
+            </div>
+            <div class="pillar-row">
+              <span class="pillar-label">Verification</span>
+              <div class="pillar-bar-bg"><div class="pillar-bar-fill" style="width:${Math.round(((phase.metrics?.pillars?.verification || 0)/25)*100)}%;"></div></div>
+              <span class="pillar-score">${phase.metrics?.pillars?.verification || 0}/25</span>
             </div>
           </div>
         </div>

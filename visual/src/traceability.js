@@ -23,6 +23,7 @@ export function buildTraceabilityModel(phase) {
   const evidence = (phase.artifacts?.evidence || []).map(e => ({
     id: e.id || e.filename,
     title: e.filename,
+    result: e.parsed?.result || 'UNKNOWN',
     type: 'evidence',
   }));
 
@@ -133,12 +134,14 @@ export function generateTraceabilitySvg(phase) {
     if (item.type === 'task') {
       badgeColor = item.status === 'done' ? '#10b981' : item.status === 'doing' ? '#f59e0b' : '#64748b';
     } else if (item.type === 'evidence') {
-      badgeColor = '#8b5cf6';
+      badgeColor = item.result === 'PASS' ? '#10b981' : item.result === 'FAIL' ? '#ef4444' : '#8b5cf6';
     }
+
+    const resultTag = item.type === 'evidence' && item.result && item.result !== 'UNKNOWN' ? ` [${item.result}]` : '';
 
     nodesSvg += `
       <g class="trace-node" data-id="${id}" tabindex="0" role="button" aria-label="${item.type}: ${label}">
-        <title>${item.type}: ${label} — ${title}</title>
+        <title>${item.type}: ${label}${resultTag} — ${title}</title>
         <rect
           x="${x}"
           y="${y}"
@@ -151,7 +154,7 @@ export function generateTraceabilitySvg(phase) {
           class="node-rect"
         />
         <text x="${x + 12}" y="${y + 24}" fill="${badgeColor}" font-family="var(--font-mono)" font-size="12" font-weight="600">
-          ${label}
+          ${truncate(label, 20)}${resultTag}
         </text>
         <text x="${x + 12}" y="${y + 44}" fill="#94a3b8" font-size="11" font-family="sans-serif">
           ${truncate(title, 32)}

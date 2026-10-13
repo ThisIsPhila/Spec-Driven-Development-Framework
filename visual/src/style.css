@@ -4677,3 +4677,298 @@ dialog::backdrop {
 .graph-explorer-toolbar span { font-size:12px; color:var(--text-muted, #aaa); }
 .graph-selected-node circle, .graph-selected-node rect { stroke:#fff; stroke-width:3; }
 .graph-selected-node .network-label-secondary { opacity:1; }
+
+/* Telemetry Sparkline Timeline & Per-Gate Breakdown */
+.telemetry-timeline-section {
+  padding-top: 1rem;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.telemetry-timeline-legend {
+  display: flex;
+  align-items: center;
+  font-size: 0.72rem;
+  color: var(--muted-foreground);
+  margin-bottom: 0.6rem;
+}
+
+.tel-legend-dot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  margin-right: 0.35rem;
+  vertical-align: middle;
+}
+
+.telemetry-timeline-scroll {
+  overflow-x: auto;
+  padding: 0.5rem 0;
+  max-width: 100%;
+}
+
+.tel-sparkline-svg {
+  display: block;
+}
+
+.tel-gate-label {
+  fill: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: 10px;
+}
+
+.tel-timeline-note {
+  font-size: 0.7rem;
+  color: var(--muted-foreground);
+  margin: 0.4rem 0 0;
+}
+
+.telemetry-gate-breakdown-section {
+  padding-top: 1rem;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.gate-breakdown-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.gate-breakdown-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.78rem;
+}
+
+.gate-breakdown-name {
+  width: 110px;
+  flex-shrink: 0;
+  color: var(--foreground);
+}
+
+.gate-breakdown-bar {
+  flex: 1;
+  height: 8px;
+  background: var(--ds-gray-200);
+  border-radius: 4px;
+  overflow: hidden;
+  display: flex;
+}
+
+.gdb-pass {
+  background: #10b981;
+  height: 100%;
+}
+
+.gdb-fail {
+  background: #ef4444;
+  height: 100%;
+}
+
+.gdb-skip {
+  background: #f59e0b;
+  height: 100%;
+}
+
+.gate-breakdown-count {
+  width: 50px;
+  text-align: right;
+  color: var(--muted-foreground);
+  font-size: 0.72rem;
+}
+
+/* Phase Overview - Verification Assurance & Health Pillars */
+.verification-metric-card,
+.pillars-metric-card {
+  min-width: 0;
+}
+
+.freshness-badge {
+  font-size: 0.68rem;
+  padding: 0.15rem 0.5rem;
+  border-radius: 4px;
+  font-family: var(--font-mono);
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.freshness-badge.freshness-head_match_only,
+.freshness-badge.freshness-fresh {
+  background: rgba(16, 185, 129, 0.12);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  color: #34d399;
+}
+
+.freshness-badge.freshness-stale {
+  background: rgba(245, 158, 11, 0.12);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  color: #fbbf24;
+}
+
+.freshness-badge.freshness-unlinked {
+  background: var(--ds-gray-200);
+  border: 1px solid var(--border);
+  color: var(--muted-foreground);
+}
+
+.verification-stats-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-top: 0.6rem;
+}
+
+.vstat-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.1rem;
+}
+
+.vstat-val {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--foreground);
+}
+
+.vstat-lbl {
+  font-size: 0.65rem;
+  color: var(--muted-foreground);
+  text-transform: uppercase;
+}
+
+.progress-fill-emerald {
+  background: #10b981;
+}
+
+.health-score-badge {
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  background: var(--ds-gray-200);
+  border: 1px solid var(--border);
+  color: var(--foreground);
+}
+
+.pillars-mini-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin-top: 0.5rem;
+}
+
+.pillar-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.72rem;
+}
+
+.pillar-label {
+  width: 90px;
+  flex-shrink: 0;
+  color: var(--muted-foreground);
+}
+
+.pillar-bar-bg {
+  flex: 1;
+  height: 6px;
+  background: var(--ds-gray-200);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.pillar-bar-fill {
+  height: 100%;
+  background: var(--blue-glow);
+  border-radius: 3px;
+}
+
+.pillar-score {
+  width: 36px;
+  text-align: right;
+  color: var(--foreground);
+  font-weight: 600;
+  font-size: 0.68rem;
+}
+
+/* Project Overview - Phase Test Pills & Verification Panel */
+.phase-test-pill {
+  font-size: 0.65rem;
+  font-family: var(--font-mono);
+  padding: 0.15rem 0.45rem;
+  border-radius: 3px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.phase-test-pill.pill-pass {
+  background: rgba(16, 185, 129, 0.12);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  color: #34d399;
+}
+
+.phase-test-pill.pill-warn {
+  background: rgba(245, 158, 11, 0.12);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  color: #fbbf24;
+}
+
+.phase-test-pill.pill-muted {
+  background: var(--ds-gray-100);
+  border: 1px solid var(--border-subtle);
+  color: var(--ds-gray-500);
+}
+
+.test-verification-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.test-assurance-summary {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.6rem;
+}
+
+.test-stat-box {
+  background: var(--ds-gray-100);
+  border: 1px solid var(--border-subtle);
+  border-radius: 6px;
+  padding: 0.6rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.stat-number {
+  font-size: 1.15rem;
+  font-weight: 700;
+}
+
+.stat-label {
+  font-size: 0.68rem;
+  color: var(--muted-foreground);
+  text-transform: uppercase;
+}
+
+.gate-quick-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  border-top: 1px solid var(--border-subtle);
+  padding-top: 0.6rem;
+}
+
+.gate-quick-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.75rem;
+  color: var(--muted-foreground);
+}
+
