@@ -52,7 +52,9 @@ function extractSnapshot(projectRoot) {
   if (fs.existsSync(statePath)) {
     const state = fs.readFileSync(statePath, 'utf8');
     hash.update(state);
-    snapshot.activePhaseId = state.match(/^active_phase=(.+)$/m)?.[1]?.trim() || null;
+    const declared = state.match(/^active_phase=(.+)$/m)?.[1]?.trim();
+    if (declared) snapshot.activePhaseId = declared;
+    // If state file exists but active_phase is empty, keep any value read from active-context.md above
   }
 
   // Scan specs across scopes
@@ -72,6 +74,13 @@ function extractSnapshot(projectRoot) {
       const phase = extractPhase(phaseDir, phaseId, scope, sddDir, hash, snapshot.account.headCommit);
       snapshot.phases.push(phase);
     }
+  }
+
+  // Infer active phase if nothing was explicitly declared
+  if (!snapshot.activePhaseId) {
+    const activePhases = snapshot.phases.filter(p => p.category === 'active');
+    const inProgress = activePhases.find(p => (p.tasks || []).some(t => t.status === 'doing'));
+    snapshot.activePhaseId = (inProgress || activePhases[0])?.id || null;
   }
 
   // Extract Framework Core, Memories, Rules, Reports, Scripts, Templates, Hooks, Docs, Graphify
@@ -380,8 +389,13 @@ function computePhaseMetrics(phase, gitHeadCommit) {
     if (ev.parsed?.assessedTree) {
       anyCommitRecorded = true;
       lastAssessedTree = ev.parsed.assessedTree;
-      if (gitHeadCommit && (gitHeadCommit.startsWith(ev.parsed.assessedTree) || ev.parsed.assessedTree.startsWith(gitHeadCommit))) {
-        matchesHead = true;
+      if (gitHeadCommit) {
+        // assessedTree may contain multiple SHAs (e.g. "sha1 / sha2") or short/full forms
+        const treeShas = ev.parsed.assessedTree.split(/[\s/,;]+/).map(s => s.trim()).filter(s => /^[0-9a-f]{6,}/i.test(s));
+        const headShort = gitHeadCommit.slice(0, 7);
+        if (treeShas.some(sha => sha.startsWith(headShort) || gitHeadCommit.startsWith(sha) || sha.startsWith(gitHeadCommit))) {
+          matchesHead = true;
+        }
       }
     }
   }

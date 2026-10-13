@@ -198,8 +198,19 @@ function renderHookRunTimeline(telemetry) {
   }).join('');
 
   const n = visible.length;
-  const oldest = n ? `<text x="54" y="${svgH - 2}" class="tel-gate-label" text-anchor="middle">oldest</text>` : '';
-  const latest = n ? `<text x="${54 + (n - 1) * colWidth}" y="${svgH - 2}" class="tel-gate-label" text-anchor="middle">latest</text>` : '';
+  const fmtDate = ts => ts ? new Date(ts).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : '';
+  const oldestDate = n ? fmtDate(visible[0].timestamp) : '';
+  const latestDate = n ? fmtDate(visible[n - 1].timestamp) : '';
+  const midIdx = Math.floor(n / 2);
+  const midDate = n > 2 ? fmtDate(visible[midIdx].timestamp) : '';
+  const midX = 54 + midIdx * colWidth;
+
+  const dateAxisY = svgH - 2;
+  const oldest = n ? `<text x="54" y="${dateAxisY}" class="tel-gate-label" text-anchor="middle">${oldestDate}</text>` : '';
+  const latest = n ? `<text x="${54 + (n - 1) * colWidth}" y="${dateAxisY}" class="tel-gate-label" text-anchor="middle">${latestDate}</text>` : '';
+  const midMarker = midDate && midDate !== oldestDate && midDate !== latestDate
+    ? `<text x="${midX}" y="${dateAxisY}" class="tel-gate-label tel-date-mid" text-anchor="middle">${midDate}</text>`
+    : '';
 
   return `
     <div class="telemetry-timeline-section">
@@ -218,6 +229,7 @@ function renderHookRunTimeline(telemetry) {
           ${gateLabels}
           ${cols}
           ${oldest}
+          ${midMarker}
           ${latest}
         </svg>
       </div>

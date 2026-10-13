@@ -161,26 +161,63 @@ export function renderOverviewView(phase) {
             <span class="health-score-badge font-mono">${phase.metrics?.healthScore || 0}/100</span>
           </div>
           <div class="pillars-mini-grid font-mono">
+            ${[
+              {
+                key: 'definition',
+                label: 'Spec Definition',
+                hint: (() => {
+                  const s = phase.metrics?.pillars?.definition || 0;
+                  if (s >= 25) return null;
+                  if (!phase.artifacts?.requirements) return { text: 'Requirements not found', tab: 'requirements' };
+                  if (!phase.artifacts?.design) return { text: 'Design document missing', tab: 'design' };
+                  return { text: 'Spec partially defined', tab: 'requirements' };
+                })(),
+              },
+              {
+                key: 'governance',
+                label: 'Governance',
+                hint: (() => {
+                  const s = phase.metrics?.pillars?.governance || 0;
+                  if (s >= 25) return null;
+                  const reqApproved = String(phase.artifacts?.requirements?.status || '').toUpperCase().includes('APPROVED');
+                  const desApproved = String(phase.artifacts?.design?.status || '').toUpperCase().includes('APPROVED');
+                  if (!reqApproved && !desApproved) return { text: 'No approved artifacts — add APPROVED status', tab: 'requirements' };
+                  if (!reqApproved) return { text: 'Requirements not approved', tab: 'requirements' };
+                  return { text: 'Design not approved', tab: 'design' };
+                })(),
+              },
+              {
+                key: 'execution',
+                label: 'Execution',
+                hint: (() => {
+                  const s = phase.metrics?.pillars?.execution || 0;
+                  if (s >= 25) return null;
+                  const remaining = (taskCounts?.total || 0) - (taskCounts?.completed || 0);
+                  if (!artifacts?.tasks) return { text: 'No task plan found', tab: 'tasks' };
+                  if (remaining > 0) return { text: `${remaining} task${remaining > 1 ? 's' : ''} remaining`, tab: 'tasks' };
+                  return { text: 'Execution incomplete', tab: 'tasks' };
+                })(),
+              },
+              {
+                key: 'verification',
+                label: 'Verification',
+                hint: (() => {
+                  const s = phase.metrics?.pillars?.verification || 0;
+                  if (s >= 25) return null;
+                  const evCount2 = artifacts?.evidence?.length || 0;
+                  if (!evCount2) return { text: 'No evidence files recorded', tab: 'evidence' };
+                  const freshness = phase.metrics?.verificationAssurance?.freshness;
+                  if (freshness === 'STALE') return { text: 'Evidence is stale — re-run tests', tab: 'evidence' };
+                  return { text: 'Evidence freshness unlinked', tab: 'evidence' };
+                })(),
+              },
+            ].map(p => `
             <div class="pillar-row">
-              <span class="pillar-label">Spec Definition</span>
-              <div class="pillar-bar-bg"><div class="pillar-bar-fill" style="width:${Math.round(((phase.metrics?.pillars?.definition || 0)/25)*100)}%;"></div></div>
-              <span class="pillar-score">${phase.metrics?.pillars?.definition || 0}/25</span>
-            </div>
-            <div class="pillar-row">
-              <span class="pillar-label">Governance</span>
-              <div class="pillar-bar-bg"><div class="pillar-bar-fill" style="width:${Math.round(((phase.metrics?.pillars?.governance || 0)/25)*100)}%;"></div></div>
-              <span class="pillar-score">${phase.metrics?.pillars?.governance || 0}/25</span>
-            </div>
-            <div class="pillar-row">
-              <span class="pillar-label">Execution</span>
-              <div class="pillar-bar-bg"><div class="pillar-bar-fill" style="width:${Math.round(((phase.metrics?.pillars?.execution || 0)/25)*100)}%;"></div></div>
-              <span class="pillar-score">${phase.metrics?.pillars?.execution || 0}/25</span>
-            </div>
-            <div class="pillar-row">
-              <span class="pillar-label">Verification</span>
-              <div class="pillar-bar-bg"><div class="pillar-bar-fill" style="width:${Math.round(((phase.metrics?.pillars?.verification || 0)/25)*100)}%;"></div></div>
-              <span class="pillar-score">${phase.metrics?.pillars?.verification || 0}/25</span>
-            </div>
+              <span class="pillar-label">${p.label}</span>
+              <div class="pillar-bar-bg"><div class="pillar-bar-fill" style="width:${Math.round(((phase.metrics?.pillars?.[p.key] || 0)/25)*100)}%;"></div></div>
+              <span class="pillar-score">${phase.metrics?.pillars?.[p.key] || 0}/25</span>
+              ${p.hint ? `<button class="pillar-hint-btn" data-phase-tab="${p.hint.tab}">${p.hint.text}</button>` : ''}
+            </div>`).join('')}
           </div>
         </div>
       </section>

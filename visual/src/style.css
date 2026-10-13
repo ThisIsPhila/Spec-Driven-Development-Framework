@@ -4972,3 +4972,101 @@ dialog::backdrop {
   color: var(--muted-foreground);
 }
 
+/* ── Change 3: Project-level active task banner ─────────────────────────── */
+.project-active-task-banner {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-left: 3px solid var(--foreground);
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 6px;
+  padding: 0.75rem 1rem;
+  margin: 0.75rem 0 1.25rem;
+  flex-wrap: wrap;
+}
+.project-active-task-left {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+.project-active-task-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+.project-active-task-title {
+  font-size: 0.9rem;
+  overflow-wrap: anywhere;
+}
+.project-active-task-contract {
+  font-size: 0.75rem;
+  color: var(--ds-gray-500);
+  overflow-wrap: anywhere;
+}
+.project-active-task-cta {
+  flex-shrink: 0;
+}
+@media (max-width: 640px) {
+  .project-active-task-banner { gap: 0.6rem; }
+  .project-active-task-cta { width: 100%; }
+}
+
+/* ── Change 4: Phase health score pill ──────────────────────────────────── */
+.phase-health-pill {
+  font-size: 0.62rem;
+  font-family: var(--font-mono);
+  padding: 0.12rem 0.38rem;
+  border-radius: 3px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.phase-health-pill.health-healthy {
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  color: #34d399;
+}
+.phase-health-pill.health-attention {
+  background: rgba(245, 158, 11, 0.1);
+  border: 1px solid rgba(245, 158, 11, 0.25);
+  color: #fbbf24;
+}
+.phase-health-pill.health-critical {
+  background: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  color: #f87171;
+}
+
+/* ── Change 5: Pillar drill-down hint button ────────────────────────────── */
+.pillar-row {
+  flex-wrap: wrap;
+}
+.pillar-hint-btn {
+  grid-column: 1 / -1;
+  width: 100%;
+  margin-top: 0.2rem;
+  padding: 0.15rem 0;
+  background: transparent;
+  border: 0;
+  border-top: 1px dashed var(--border-subtle);
+  color: var(--ds-gray-500);
+  font: inherit;
+  font-size: 0.67rem;
+  font-family: var(--font-mono);
+  text-align: left;
+  cursor: pointer;
+  transition: color 0.15s;
+  overflow-wrap: anywhere;
+}
+.pillar-hint-btn:hover {
+  color: var(--foreground);
+}
+
+/* ── Change 6: Sparkline midpoint date marker ───────────────────────────── */
+.tel-date-mid {
+  opacity: 0.45;
+}
+
