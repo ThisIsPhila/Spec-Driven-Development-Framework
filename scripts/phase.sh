@@ -799,6 +799,17 @@ cmd_archive() {
         exit 1
     fi
 
+    # Remove .kiro/specs/ symlink if Kiro adapter is active
+    if [[ -f .sdd/adapters.json ]] && command -v jq >/dev/null 2>&1; then
+        if jq -e '.adapters[] | select(.name == "kiro")' .sdd/adapters.json >/dev/null 2>&1; then
+            SYMLINK_PATH=".kiro/specs/$phase_name"
+            if [[ -L "$SYMLINK_PATH" ]]; then
+                rm "$SYMLINK_PATH"
+                say "  Removed symlink: $SYMLINK_PATH"
+            fi
+        fi
+    fi
+
     say "📦 Archiving spec folder '$phase_name'..."
     mkdir -p "$(dirname "$archive_dir")"
     mv "$active_dir" "$archive_dir"
