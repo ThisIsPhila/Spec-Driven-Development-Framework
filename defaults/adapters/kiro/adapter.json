@@ -1,0 +1,73 @@
+{
+  "name": "kiro",
+  "version": "1.0.0",
+  "description": "Kiro native platform integration adapter for SDD Framework",
+  "author": "SDD Framework Contributors",
+  "requires": {
+    "framework": ">=2.0.0",
+    "platform": {
+      "name": "kiro",
+      "version": "*"
+    }
+  },
+  "detection": {
+    "environment_variables": [
+      "KIRO_SESSION",
+      "KIRO_WORKSPACE_ROOT",
+      "ORCA_CLI_COMMAND"
+    ],
+    "directories": [
+      ".kiro",
+      ".kiro/steering",
+      ".kiro/hooks"
+    ],
+    "executables": [
+      "kiro",
+      "orca"
+    ]
+  },
+  "features": {
+    "steering": {
+      "enabled": true,
+      "source": "defaults/adapters/kiro/steering/sdd-framework.md",
+      "destination": ".kiro/steering/sdd-framework.md"
+    },
+    "hooks": {
+      "enabled": true,
+      "scripts": [
+        {
+          "name": "pre-task-exec",
+          "source": "defaults/adapters/kiro/hooks/pre-task-exec.sh",
+          "trigger": "PreTaskExec",
+          "destination": ".kiro/hooks/pre-task-exec.sh"
+        },
+        {
+          "name": "post-task-exec",
+          "source": "defaults/adapters/kiro/hooks/post-task-exec.sh",
+          "trigger": "PostTaskExec",
+          "destination": ".kiro/hooks/post-task-exec.sh"
+        },
+        {
+          "name": "session-stop",
+          "source": "defaults/adapters/kiro/hooks/session-stop.sh",
+          "trigger": "Stop",
+          "destination": ".kiro/hooks/session-stop.sh"
+        }
+      ]
+    },
+    "symlinks": {
+      "enabled": true,
+      "source_pattern": ".sdd/specs/active/*",
+      "destination_pattern": ".kiro/specs/{phase}",
+      "relative_path": "../../.sdd/specs/active/{phase}"
+    }
+  },
+  "installation": {
+    "command": "bash scripts/setup.sh --profile base+kiro",
+    "requires_confirmation": false
+  },
+  "compatibility": {
+    "os": ["darwin", "linux"],
+    "os_notes": "Windows support requires Developer Mode or administrator privileges for symlink creation"
+  }
+}
