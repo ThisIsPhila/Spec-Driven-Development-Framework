@@ -22,6 +22,7 @@ To keep this project clean and maintainable, deep technical details are organize
 *   **[CLI Tool Reference Guide](docs/cli-reference.md)** — Subcommands, arguments, and options for all script tools (`setup.sh`, `doctor.sh`, `skills.sh`, `phase.sh`, `validate-spec.cjs`, etc.).
 *   **[Visual Framework Workspace & Cockpit](docs/visual-workspace.md)** — Optional read-only web cockpit, live auto-updates, traceability graphs, and synthetic demonstration.
 *   **[Governance Constitution & rules](docs/governance.md)** — Repository constitution articles and operational rules checklists.
+*   **[Kiro Native Integration Guide](docs/kiro-integration.md)** — Conditional steering, lifecycle hooks, symlink bridge, detection logic, and troubleshooting for Kiro platform integration.
 *   **[Critical Assessment & Improvement Roadmap](docs/assessment.md)** — Evidence-based critique of the framework as a tool, with a sequenced roadmap and open decisions.
 
 ---
@@ -78,6 +79,41 @@ bash .sdd-framework/scripts/setup.sh --profile api+mlops
 ## 🤖 AI Agent Integration
 
 Setup automatically installs root-level instruction files (`AGENTS.md`, `CLAUDE.md`, `GEMINI.md`, `.github/copilot-instructions.md`) which direct agents to read the onboarding protocol. 
+
+---
+
+## 🔗 Kiro Native Integration
+
+The SDD Framework integrates seamlessly with [Kiro](https://kiro.dev)'s native features through a thin adapter layer that preserves universal agent neutrality while providing Kiro-specific acceleration when available.
+
+### Quick Install with Kiro Support
+
+```bash
+# Install framework with Kiro native integration
+bash scripts/setup.sh --profile general+kiro --yes
+```
+
+**What This Enables:**
+- **Conditional Steering:** Kiro agents automatically load SDD instructions when working with specs (no manual skill activation)
+- **Lifecycle Hooks:** Pre/post-task execution hooks validate approvals and record evidence automatically
+- **Bidirectional Symlinks:** `.kiro/specs/` symlinks provide native UI access to `.sdd/specs/active/` content
+- **Graceful Degradation:** All CLI tools work without Kiro; hooks add enforcement but don't block portability
+
+### Integration Architecture
+
+```
+Layer 1 (Universal)        Layer 2 (Kiro Native)       Layer 3 (Enforcement)
+-------------------        ----------------------      ------------------
+.sdd/constitution.md  →    .kiro/steering/            CLI validation
+.sdd/specs/active/    ←→   .kiro/specs/ (symlinks)    + Kiro hooks
+.sdd/memory/          →    .kiro/hooks/               = Dual enforcement
+phase.sh lifecycle    →    pre/post-task-exec         Graceful degradation
+```
+
+**Core Principle:** `.sdd/` remains canonical and agent-neutral. Kiro features accelerate but never own the workflow.
+
+**Detailed Guide:** [docs/kiro-integration.md](docs/kiro-integration.md)
+
 
 During active development, agents use the **Phase Sprint Hook** to run task sprints programmatically:
 ```bash
