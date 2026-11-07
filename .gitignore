@@ -20,6 +20,8 @@ dist/
 .gemini/
 .github/skills/
 .gemini/skills/
+# Kiro adapter symlinks into .sdd/specs/active/ (per-checkout, would dangle for others).
+.kiro/specs/
 graphify-out/
 
 # ==============================================================================

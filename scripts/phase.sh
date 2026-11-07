@@ -257,6 +257,32 @@ set_artifact_status() {
 }
 
 # ------------------------------------------------------------------------------
+# KIRO ADAPTER: .kiro/specs/<phase> symlink bridge (no-op unless installed)
+# ------------------------------------------------------------------------------
+kiro_adapter_installed() {
+    [[ -f "$TARGET_DIR/adapters.json" ]] && grep -q '"name": "kiro"' "$TARGET_DIR/adapters.json"
+}
+
+kiro_link_phase() {
+    kiro_adapter_installed || return 0
+    local phase_name="$1" link="$REPO_ROOT/.kiro/specs/$1"
+    mkdir -p "$REPO_ROOT/.kiro/specs"
+    [[ -L "$link" && ! -e "$link" ]] && rm -f "$link"
+    [[ -e "$link" || -L "$link" ]] && return 0
+    ln -s "../../.sdd/specs/active/$phase_name" "$link" 2>/dev/null \
+        && say "  Linked .kiro/specs/$phase_name" || true
+}
+
+kiro_unlink_phase() {
+    kiro_adapter_installed || return 0
+    local link="$REPO_ROOT/.kiro/specs/$1"
+    if [[ -L "$link" ]]; then
+        rm -f "$link"
+        say "  Removed symlink: .kiro/specs/$1"
+    fi
+}
+
+# ------------------------------------------------------------------------------
 # COMMAND: NEW
 # ------------------------------------------------------------------------------
 cmd_new() {
@@ -274,6 +300,7 @@ cmd_new() {
     fi
 
     mkdir -p "$spec_dir"
+    kiro_link_phase "$phase_name"
     state_init || exit 1
     state_set current_spec "$phase_name" || exit 1
     state_set requirements_approved "" || exit 1
@@ -366,6 +393,7 @@ cmd_start() {
     if [[ ! -d "$spec_dir" && -d "$backlog_dir" ]]; then
         say "🚚 Moving '$phase_name' from backlog to active specs..."
         mv "$backlog_dir" "$spec_dir"
+        kiro_link_phase "$phase_name"
     fi
 
     if [[ ! -d "$spec_dir" ]]; then
@@ -799,16 +827,7 @@ cmd_archive() {
         exit 1
     fi
 
-    # Remove .kiro/specs/ symlink if Kiro adapter is active
-    if [[ -f .sdd/adapters.json ]] && command -v jq >/dev/null 2>&1; then
-        if jq -e '.adapters[] | select(.name == "kiro")' .sdd/adapters.json >/dev/null 2>&1; then
-            SYMLINK_PATH=".kiro/specs/$phase_name"
-            if [[ -L "$SYMLINK_PATH" ]]; then
-                rm "$SYMLINK_PATH"
-                say "  Removed symlink: $SYMLINK_PATH"
-            fi
-        fi
-    fi
+    kiro_unlink_phase "$phase_name"
 
     say "📦 Archiving spec folder '$phase_name'..."
     mkdir -p "$(dirname "$archive_dir")"
