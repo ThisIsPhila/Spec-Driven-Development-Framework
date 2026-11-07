@@ -8,6 +8,7 @@ All notable changes to the SDD Framework are documented here.
   - Steering with `inclusion: fileMatch` on `.sdd/specs/active/**`; it points at the onboarding and constitution instead of copying them.
   - Hook registrations (`.kiro/hooks/sdd-*.json`) and scripts for `PreTaskExec`, `PostTaskExec` and `Stop`. The pre-task hook blocks a task in an unapproved or unstarted phase with the exact fix command and allows everything it cannot identify. The post-task hook reminds the agent to record evidence and never marks a task done. The stop hook is silent unless a task is in progress and `active-context.md` is stale.
   - `.kiro/specs/<phase>` symlinks created by `setup.sh` and `phase.sh new` (and `start` from backlog), removed by `phase.sh archive`; git-ignored.
+  - The pre-task hook only marks an unstarted task as doing; it never downgrades a completed or in-progress task.
   - `.sdd/adapters.json` records the installed adapter; `setup.sh --upgrade` refreshes it when present.
   - `kiro` appears in `setup.sh --list`, the interactive menus, and the documentation. Installation is opt-in: detecting Kiro only prints a hint.
 - `tests/test_kiro_adapter.sh`: installs into sandbox repositories and drives the installed hooks with real stdin, covering opt-in behavior, idempotence, registrations, steering, links, and the allow, block and fail-open paths.

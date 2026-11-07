@@ -22,6 +22,7 @@
 | Skills | `bash scripts/skills.sh validate` | Valid | Validation passed | Pass |
 | Documentation | Manual review against code | Commands and paths exist; unverified behavior labeled | `docs/kiro-integration.md` has a "Verified and not verified" section | Pass |
 | Release checks | Version fields | `.sdd/framework.json`, `defaults/framework.json`, `visual/package.json`, `visual/package-lock.json` (lines 3 and 9), `CHANGELOG.md` agree on 2.3.0 | Agree | Pass |
+| Workspace install | Adapter install functions from `setup.sh` run in this repository (specs and state backed up first); installed hooks driven with stdin against the real phases | Registrations resolve; links read the canonical files; T007.12 blocked with the start command; non-SDD and unknown tasks allowed; no tracked file changed | As expected, after one defect: the pre-task hook set an already-completed task (T005.1) back to doing and overwrote the Current Task line. Both files were restored from the backup, the hook now touches only unstarted tasks, a regression test covers it (68 checks), and the scenario was re-run clean | Pass (after fix) |
 | Visual tests | `npm --prefix visual test` | n/a | Not run: `visual/node_modules` is not installed. The package changed only in its version string and no source reads it. | Blocked |
 
 ## Limitations
@@ -30,4 +31,5 @@
 - Hook behavior was tested with payloads written by the test author. The only payload fields in the cited Kiro documentation are for tool events, not task events.
 - The 56-composition matrix does not include `kiro`; adapter installs were tested on `general+kiro` and `general` only.
 - Windows was not tested.
+- The workspace run exercised the hooks by hand with payloads written by the tester; it did not run them from inside Kiro.
 - The earlier `tests/test-kiro-integration.sh` and the report `.sdd/reports/phase-007/final-summary.md` claimed production readiness on evidence that did not support it and are withdrawn.
