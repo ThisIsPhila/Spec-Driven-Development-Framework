@@ -63,3 +63,5 @@ Owner clarified 2.0.0 predates the latest additions. Framework/default and visua
 ## Version release — 2.2.0 — 2026-10-13
 
 Owner authorized release of version 2.2.0 consolidating visual framework metrics, quality pillar drill-downs, active task banners on Project Overview, per-phase health grading, composite SHA freshness extraction, and hook telemetry date sparklines. Metadata aligned across framework.json, defaults, and visual package.
+## Version prepared — 2.3.0 — 2026-11-07
+Phase 007 (Kiro adapter, opt-in `+kiro`) corrected after review and prepared as 2.3.0: hooks now registered with Kiro, steering uses `fileMatch`, detection and Orca references removed, post-task hook reminds instead of marking done, symlink bridge follows `new`/`start`/`archive`, and a sandbox test suite replaces the earlier string-matching script. Full suite (10 files), `doctor` and skills validation pass. Not tagged and not pushed; owner publishes. Open: T007.12 live Kiro session check, T007.11 `doctor` adapter drift (deferred), visual tests not run (no `node_modules`). Evidence: `.sdd/evidence/phase-007/kiro-adapter.md`.
