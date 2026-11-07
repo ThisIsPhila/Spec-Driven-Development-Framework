@@ -91,6 +91,7 @@ The SDD Framework supports composable profiles representing different project ty
 *   `devsecops`: Adds security checklists, threat modeling designs, and threat surface requirements.
 *   `mlops`: Adds machine learning model cards, dataset descriptions, and experiment tracking templates.
 *   `devops`: Adds advanced CI/CD designs and infrastructure-as-code templates.
+*   `kiro`: Installs the optional [Kiro adapter](kiro-integration.md) (steering, hooks, `.kiro/specs` links). It adds no `.sdd/` overlay files.
 
 ### 3. File Overlay Mechanism
 During `setup.sh`:
