@@ -21,79 +21,56 @@ VALID_MODIFIERS=("devsecops" "mlops" "devops" "kiro")
 # ==============================================================================
 
 
-# Detect if Kiro platform is available
+# Detect Kiro from files on disk. The only signals are a .kiro/ directory or a
+# kiro executable; no environment variable is documented for this.
 detect_kiro() {
-    # Check environment variables
-    [[ -n "${KIRO_SESSION:-}" ]] && return 0
-    [[ -n "${KIRO_WORKSPACE_ROOT:-}" ]] && return 0
-    
-    # Check directory structure
     [[ -d ".kiro" ]] && return 0
-    
-    # Check executables
     command -v kiro >/dev/null 2>&1 && return 0
-    
     return 1
 }
 
-# Detect if Orca CLI is available
-detect_orca() {
-    # Use resolved command from environment
-    [[ -n "${ORCA_CLI_COMMAND:-}" ]] && return 0
-    
-    # Fallback to PATH search
-    command -v orca >/dev/null 2>&1 && return 0
-    
-    return 1
+# Link one active phase into .kiro/specs/ so Kiro's spec view shows the same
+# files as .sdd/. The link is relative so the project stays relocatable.
+kiro_link_phase() {
+    local phase_name=$1
+    local link=".kiro/specs/$phase_name"
+    [[ -L "$link" && ! -e "$link" ]] && rm -f "$link"
+    [[ -e "$link" || -L "$link" ]] && return 0
+    ln -s "../../$TARGET_DIR/specs/active/$phase_name" "$link" 2>/dev/null
 }
 
-# Install Kiro adapter files
+# Install the Kiro adapter (opt-in via the +kiro modifier).
 install_kiro_adapter() {
-    echo "  Setting up Kiro adapter..."
-    
-    # Create directories
-    mkdir -p .kiro/steering
-    mkdir -p .kiro/hooks
-    mkdir -p .kiro/specs
-    
-    # Copy steering file
-    if [[ -f "$FRAMEWORK_SOURCE/defaults/adapters/kiro/steering/sdd-framework.md" ]]; then
-        cp "$FRAMEWORK_SOURCE/defaults/adapters/kiro/steering/sdd-framework.md" .kiro/steering/
-        echo "    ✓ Installed steering file"
+    local src="$FRAMEWORK_SOURCE/defaults/adapters/kiro"
+    echo "  Installing Kiro adapter..."
+
+    if [[ ! -d "$src" ]]; then
+        echo "    Adapter source not found: $src"
+        return 1
     fi
-    
-    # Copy and make hooks executable
-    if [[ -d "$FRAMEWORK_SOURCE/defaults/adapters/kiro/hooks" ]]; then
-        cp "$FRAMEWORK_SOURCE/defaults/adapters/kiro/hooks"/*.sh .kiro/hooks/ 2>/dev/null || true
-        chmod +x .kiro/hooks/*.sh 2>/dev/null || true
-        echo "    ✓ Installed hooks"
-    fi
-    
-    # Create symlinks for active phases (if any exist)
-    if [[ -d "$TARGET_DIR/specs/active" ]] && command -v ln >/dev/null 2>&1; then
-        # Test symlink support
-        if ln -s /dev/null /tmp/sdd-symlink-test-$$ 2>/dev/null; then
-            rm /tmp/sdd-symlink-test-$$
-            
-            # Link each active phase
-            for phase_dir in "$TARGET_DIR/specs/active"/*; do
-                [[ -d "$phase_dir" ]] || continue
-                phase_name=$(basename "$phase_dir")
-                
-                # Create symlink if it doesn't exist
-                if [[ ! -e ".kiro/specs/$phase_name" ]]; then
-                    ln -s "../../$TARGET_DIR/specs/active/$phase_name" ".kiro/specs/$phase_name" 2>/dev/null && \
-                        echo "    ✓ Linked .kiro/specs/$phase_name"
-                fi
-            done
+
+    mkdir -p .kiro/steering .kiro/hooks .kiro/specs
+    cp "$src/steering/sdd-framework.md" .kiro/steering/sdd-framework.md
+    cp "$src"/hooks/sdd-* .kiro/hooks/
+    chmod +x .kiro/hooks/sdd-*.sh
+    echo "    Installed steering and hooks (restart the Kiro session to load them)"
+
+    local linked=0 failed=0 phase_dir
+    for phase_dir in "$TARGET_DIR"/specs/active/*; do
+        [[ -d "$phase_dir" ]] || continue
+        if kiro_link_phase "$(basename "$phase_dir")"; then
+            linked=$((linked + 1))
         else
-            echo "    ⚠️  Symlinks not supported on this system"
-            echo "       $TARGET_DIR/ remains the canonical location"
+            failed=$((failed + 1))
         fi
+    done
+    echo "    Linked $linked active phase(s) into .kiro/specs/"
+    if [[ "$failed" -gt 0 ]]; then
+        echo "    $failed symlink(s) could not be created; $TARGET_DIR/ remains canonical"
     fi
-    
-    # Record adapter installation
-    local timestamp=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+
+    local timestamp
+    timestamp=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
     cat > "$TARGET_DIR/adapters.json" << ADAPTER_JSON
 {
   "adapters": [
@@ -101,23 +78,22 @@ install_kiro_adapter() {
       "name": "kiro",
       "version": "1.0.0",
       "installed": "$timestamp",
-      "features": {
-        "steering": true,
-        "hooks": true,
-        "symlinks": true
-      },
       "files": [
         ".kiro/steering/sdd-framework.md",
-        ".kiro/hooks/pre-task-exec.sh",
-        ".kiro/hooks/post-task-exec.sh",
-        ".kiro/hooks/session-stop.sh"
+        ".kiro/hooks/sdd-hook-lib.sh",
+        ".kiro/hooks/sdd-pre-task.sh",
+        ".kiro/hooks/sdd-pre-task.json",
+        ".kiro/hooks/sdd-post-task.sh",
+        ".kiro/hooks/sdd-post-task.json",
+        ".kiro/hooks/sdd-stop.sh",
+        ".kiro/hooks/sdd-stop.json"
       ]
     }
   ],
   "last_updated": "$timestamp"
 }
 ADAPTER_JSON
-    echo "    ✓ Recorded adapter installation"
+    echo "    Recorded adapter in $TARGET_DIR/adapters.json"
 }
 
 # Parse profile composition string (e.g., "web+devsecops+mlops")
@@ -168,6 +144,8 @@ list_profiles() {
         if [ -f "$FRAMEWORK_SOURCE/defaults/profiles/modifiers/$modifier/README.md" ]; then
             desc=$(grep "^description:" "$FRAMEWORK_SOURCE/defaults/profiles/modifiers/$modifier/README.md" | cut -d: -f2- | xargs)
             printf "  +%-11s %s\n" "$modifier" "$desc"
+        elif [ "$modifier" = "kiro" ]; then
+            printf "  +%-11s %s\n" "$modifier" "Optional Kiro adapter (steering, hooks, .kiro/specs links)"
         fi
     done
     
@@ -199,10 +177,11 @@ interactive_menu() {
         
         # Select modifiers (checkbox)
         MODIFIERS_STR=$(whiptail --title "Select Modifiers (Optional)" --checklist \
-            "Choose methodologies to add:" 15 70 3 \
+            "Choose methodologies to add:" 16 70 4 \
             "devsecops" "Security-first workflows (threat modeling, security checklists)" OFF \
             "mlops" "ML model governance (experiment tracking, data versioning)" OFF \
             "devops" "Advanced CI/CD (pipeline design, infrastructure as code)" OFF \
+            "kiro" "Kiro adapter (steering, hooks, .kiro/specs links)" OFF \
             3>&1 1>&2 2>&3)
         
         # Parse checkbox output (whiptail returns quoted strings)
@@ -235,7 +214,7 @@ interactive_menu() {
         
         echo ""
         echo "🔧 Modifiers (optional, comma-separated):"
-        echo "  devsecops, mlops, devops"
+        echo "  devsecops, mlops, devops, kiro"
         read -p "Enter modifiers (or press Enter to skip): " mod_input
         
         if [ -n "$mod_input" ]; then
@@ -609,19 +588,21 @@ if [[ "$UPGRADE_MODE" != true ]]; then
     apply_modifiers
 fi
 
-# Check if kiro modifier is present and install adapter
+# Kiro adapter: installed only when requested with +kiro, or refreshed on
+# --upgrade when it was installed before. Detection alone just prints a hint.
+KIRO_REQUESTED=false
 for modifier in "${MODIFIERS[@]}"; do
-    if [[ "$modifier" == "kiro" ]]; then
-        if detect_kiro || [[ "$modifier" == "kiro" ]]; then
-            install_kiro_adapter
-        else
-            echo "  ℹ️  Kiro modifier specified but platform not detected"
-            echo "     Adapter will be available when Kiro is present"
-            install_kiro_adapter  # Install anyway so it's ready
-        fi
-        break
-    fi
+    [[ "$modifier" == "kiro" ]] && KIRO_REQUESTED=true
 done
+if [[ "$UPGRADE_MODE" == true && -f "$TARGET_DIR/adapters.json" ]] && \
+   grep -q '"name": "kiro"' "$TARGET_DIR/adapters.json"; then
+    KIRO_REQUESTED=true
+fi
+if [[ "$KIRO_REQUESTED" == true ]]; then
+    install_kiro_adapter
+elif detect_kiro; then
+    echo "  Kiro detected. To add the optional Kiro adapter, rerun with +kiro (for example --profile general+kiro)."
+fi
 
 if [ "$WITH_EXAMPLES" = true ]; then
     echo "📄 Copying example specs..."
