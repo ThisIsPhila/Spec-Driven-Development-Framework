@@ -35,6 +35,12 @@ fi
     block "Phase $PHASE has not been started." \
           "bash .sdd/scripts/phase.sh start $PHASE"
 
-# Best effort: mirror the start in the checklist and active context.
-bash .sdd/scripts/phase.sh task "$TASK_ID" doing >/dev/null 2>&1 || true
+# Mirror the start in the checklist and active context, but only for a task that
+# has not been started. A task already marked done or doing is left untouched so
+# a re-run can never downgrade recorded progress.
+LINE=$(grep -F "[$TASK_ID]" ".sdd/specs/active/$PHASE/tasks.md" \
+    | grep -E '^[[:space:]]*-[[:space:]]*\[[ xX/]\]' | head -n 1)
+if [[ "$LINE" =~ ^[[:space:]]*-[[:space:]]*\[[[:space:]]\] ]]; then
+    bash .sdd/scripts/phase.sh task "$TASK_ID" doing >/dev/null 2>&1 || true
+fi
 exit 0

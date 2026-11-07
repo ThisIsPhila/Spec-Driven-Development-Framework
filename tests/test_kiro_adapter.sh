@@ -101,6 +101,16 @@ assert_eq "0" "$?" "phase start succeeds"
 run_hook "$sb" sdd-pre-task '{"taskId":"T007.1"}'
 assert_eq "0" "$HOOK_RC" "approved and started phase is allowed"
 assert_contains "$sb/.sdd/specs/active/$name/tasks.md" '^\s*-\s*\[/\]\s*\*\*\[T007\.1\]' "allowed task is marked doing in tasks.md"
+# Regression: a re-run must never downgrade recorded progress or rewrite context.
+( cd "$sb" && bash "$phase" task T007.1 done ) >"$sb/done.out" 2>&1
+ctx_before=$(cat "$sb/.sdd/memory/current-state/active-context.md")
+run_hook "$sb" sdd-pre-task '{"taskId":"T007.1"}'
+assert_eq "0" "$HOOK_RC" "re-running a completed task is allowed"
+assert_contains "$sb/.sdd/specs/active/$name/tasks.md" '^\s*-\s*\[[xX]\]\s*\*\*\[T007\.1\]' "completed task stays done"
+assert_eq "$ctx_before" "$(cat "$sb/.sdd/memory/current-state/active-context.md")" "active context is not rewritten"
+( cd "$sb" && bash "$phase" task T007.1 todo ) >"$sb/todo.out" 2>&1
+run_hook "$sb" sdd-pre-task '{"taskId":"T007.1"}'
+assert_contains "$sb/.sdd/specs/active/$name/tasks.md" '^\s*-\s*\[/\]\s*\*\*\[T007\.1\]' "an unstarted task is still marked doing"
 run_hook "$sb" sdd-pre-task '{"cwd":"'"$sb"'","payload":{"task":{"label":"run T007.1 now"}}}' "$(dirname "$sb")"
 assert_eq "0" "$HOOK_RC" "task ID is found by pattern in a differently shaped payload"
 
