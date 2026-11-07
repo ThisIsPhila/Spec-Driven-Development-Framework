@@ -1,0 +1,20 @@
+{
+  "adapters": [
+    {
+      "name": "kiro",
+      "version": "1.0.0",
+      "installed": "2026-11-07T09:19:23Z",
+      "files": [
+        ".kiro/steering/sdd-framework.md",
+        ".kiro/hooks/sdd-hook-lib.sh",
+        ".kiro/hooks/sdd-pre-task.sh",
+        ".kiro/hooks/sdd-pre-task.json",
+        ".kiro/hooks/sdd-post-task.sh",
+        ".kiro/hooks/sdd-post-task.json",
+        ".kiro/hooks/sdd-stop.sh",
+        ".kiro/hooks/sdd-stop.json"
+      ]
+    }
+  ],
+  "last_updated": "2026-11-07T09:19:23Z"
+}

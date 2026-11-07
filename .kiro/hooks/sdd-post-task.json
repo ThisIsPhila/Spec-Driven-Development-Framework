@@ -1,0 +1,10 @@
+{
+  "version": "v1",
+  "hooks": [
+    {
+      "name": "SDD: remind to record evidence after a task",
+      "trigger": "PostTaskExec",
+      "action": { "type": "command", "command": "bash .kiro/hooks/sdd-post-task.sh" }
+    }
+  ]
+}
