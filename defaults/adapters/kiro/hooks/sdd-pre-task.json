@@ -1,0 +1,10 @@
+{
+  "version": "v1",
+  "hooks": [
+    {
+      "name": "SDD: gate task on approved, started phase",
+      "trigger": "PreTaskExec",
+      "action": { "type": "command", "command": "bash .kiro/hooks/sdd-pre-task.sh" }
+    }
+  ]
+}

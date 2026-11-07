@@ -1,109 +1,42 @@
-# Kiro Adapter for SDD Framework
+# Kiro Adapter
 
-This adapter integrates the SDD Framework with Kiro's native platform capabilities, providing conditional steering, automated hooks, and bidirectional spec access.
+Optional Kiro integration for the SDD Framework. `.sdd/` stays canonical; this adapter only adds earlier, native reminders and a Kiro-visible view of the same specs. Nothing here is required to use the framework.
 
-## Features
+## Install
 
-### 1. Conditional Steering
-- Auto-loads SDD governance when working on active phase files
-- File pattern: `.sdd/specs/active/**`
-- References canonical documents without duplication
-
-### 2. Lifecycle Hooks
-- **PreTaskExec**: Validates task approval before execution (blocks with exit 2)
-- **PostTaskExec**: Records completion timestamp and context
-- **Stop**: Offers session summary recording
-
-### 3. Symlink Bridge
-- Creates `.kiro/specs/<phase>` → `.sdd/specs/active/<phase>` symlinks
-- Enables Kiro's native spec UI to access canonical SDD files
-- Bidirectional read/write support
-
-## Detection Logic
-
-The adapter activates when any of these signals are present:
-
-**Environment Variables:**
-- `KIRO_SESSION`
-- `KIRO_WORKSPACE_ROOT`
-- `ORCA_CLI_COMMAND`
-
-**Directories:**
-- `.kiro/`
-- `.kiro/steering/`
-- `.kiro/hooks/`
-
-**Executables:**
-- `kiro` command in PATH
-- `orca` command in PATH
-
-## Installation
-
-### Automatic (during setup)
 ```bash
-bash scripts/setup.sh --profile base+kiro
+bash scripts/setup.sh --profile general+kiro --yes   # any base works: web+kiro, api+devsecops+kiro, ...
 ```
 
-### Manual
-```bash
-# Copy steering file
-mkdir -p .kiro/steering
-cp defaults/adapters/kiro/steering/sdd-framework.md .kiro/steering/
+Installation is opt-in. If setup runs without `+kiro` and finds a `.kiro/` directory or a `kiro` executable, it prints a hint and installs nothing.
 
-# Copy and make hooks executable
-mkdir -p .kiro/hooks
-cp defaults/adapters/kiro/hooks/*.sh .kiro/hooks/
-chmod +x .kiro/hooks/*.sh
+Restart the Kiro session afterwards. Hook files are read when a session starts.
 
-# Create symlinks for active phases
-mkdir -p .kiro/specs
-for phase in .sdd/specs/active/*; do
-  phase_name=$(basename "$phase")
-  ln -s "../../.sdd/specs/active/$phase_name" ".kiro/specs/$phase_name"
-done
+## What gets installed
 
-# Record installation
-echo '{"adapters":[{"name":"kiro","version":"1.0.0","installed":"'$(date -u +"%Y-%m-%dT%H:%M:%SZ")'","features":{"steering":true,"hooks":true,"symlinks":true}}]}' > .sdd/adapters.json
-```
+| Path | Purpose |
+| :--- | :--- |
+| `.kiro/steering/sdd-framework.md` | Steering with `inclusion: fileMatch` for `.sdd/specs/active/**`. Points at `.sdd/` instead of copying it. |
+| `.kiro/hooks/sdd-*.json` | Kiro hook registrations (`PreTaskExec`, `PostTaskExec`, `Stop`). Without these, Kiro does not run the scripts. |
+| `.kiro/hooks/sdd-*.sh`, `sdd-hook-lib.sh` | The hook scripts the JSON files call. |
+| `.kiro/specs/<phase>` | Symlink to `.sdd/specs/active/<phase>`, so Kiro's spec view shows the same files. Created by `setup.sh` and `phase.sh new`, removed by `phase.sh archive`. |
+| `.sdd/adapters.json` | Records what was installed. |
 
-## Installed Files
+## Hook behavior
 
-- `.kiro/steering/sdd-framework.md` - Conditional steering with auto-inclusion
-- `.kiro/hooks/pre-task-exec.sh` - PreTaskExec validation hook
-- `.kiro/hooks/post-task-exec.sh` - PostTaskExec recording hook
-- `.kiro/hooks/session-stop.sh` - Stop summary hook
-- `.kiro/specs/<phase>/` - Symlinks to active phases
+| Hook | Behavior |
+| :--- | :--- |
+| `PreTaskExec` | For a task whose stable ID (`T007.3`) is in an active phase's `tasks.md`: exit 2 with the fix command if the phase has unapproved artifacts or has not been started. Otherwise runs `phase.sh task <id> doing`. Allows everything else. |
+| `PostTaskExec` | Prints a reminder to record evidence and run `phase.sh task <id> done`. It never marks a task done, because completion needs acceptance evidence. |
+| `Stop` | Silent unless a task is in progress and `active-context.md` is older than 30 minutes. |
+
+Every hook exits 0 when it cannot tell what is going on (no `.sdd/`, no task ID, unreadable input). The task is found by matching the stable-ID pattern in the event payload, not by a named field.
 
 ## Troubleshooting
 
-### Hooks not firing
-**Cause**: Hooks only activate at next session start (Kiro platform limitation)  
-**Solution**: Restart your Kiro session after installation
+- **Hooks do not run:** check that `.kiro/hooks/sdd-*.json` exist and restart the session.
+- **A task is blocked:** run the command the hook prints. It is the same gate `phase.sh start` enforces.
+- **Broken or missing symlinks:** run `bash scripts/setup.sh --profile <base>+kiro --yes` again, or use `.sdd/specs/active/` directly.
+- **Remove the adapter:** delete `.kiro/hooks/sdd-*`, `.kiro/steering/sdd-framework.md`, the `.kiro/specs/` symlinks and the kiro entry in `.sdd/adapters.json`.
 
-### Symlinks not created
-**Cause**: System doesn't support symlinks (Windows without Developer Mode)  
-**Solution**: Use `.sdd/` directly; symlinks are an optimization, not required
-
-### Detection false positive
-**Cause**: `.kiro/` directory exists but Kiro isn't actually running  
-**Solution**: Features gracefully degrade; CLI commands work normally
-
-### Hook validation errors
-**Cause**: Phase not approved or `.sdd/` structure missing  
-**Solution**: Run `bash .sdd/scripts/phase.sh approve <artifact>` or verify `.sdd/` exists
-
-## Compatibility
-
-- **macOS**: Full support
-- **Linux**: Full support  
-- **Windows**: Steering and hooks work; symlinks require Developer Mode or admin privileges
-
-## Architecture
-
-The adapter is a thin translation layer:
-- `.sdd/` remains the canonical enforcement substrate
-- Kiro events → Adapter hooks → `phase.sh` CLI commands
-- No logic duplication; hooks call existing framework commands
-- Graceful degradation in non-Kiro environments
-
-For detailed design decisions, see the Phase 007 design document.
+Windows needs Developer Mode or administrator rights for symlinks. Hooks and steering do not depend on them.

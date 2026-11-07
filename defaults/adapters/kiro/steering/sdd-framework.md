@@ -1,11 +1,11 @@
 ---
-inclusion: auto
+inclusion: fileMatch
 fileMatchPattern: ".sdd/specs/active/**"
 ---
 
 # SDD Framework Guidance
 
-You are working in an SDD (Spec-Driven Development) Framework project. This guidance activates when you're editing files within active phases.
+You are working in an SDD (Spec-Driven Development) Framework project. This guidance loads when you read or edit files under `.sdd/specs/active/`.
 
 ## Core Workflow
 
@@ -85,7 +85,7 @@ bash .sdd/scripts/doctor.sh
 ## Cross-Platform Portability
 
 The SDD Framework is agent-neutral:
-- Works in Kiro, Claude, Cursor, Copilot, VS Code, and plain terminals
+- Works in any agent or a plain terminal
 - `.sdd/` is the canonical source of truth
 - Kiro features enhance but never replace universal CLI enforcement
 
