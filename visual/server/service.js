@@ -2,7 +2,7 @@ import http from 'node:http';
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
-import { extractProject } from './extract.js';
+import { extractProject, listSiblingWorktrees } from './extract.js';
 
 export class LocalProjectService {
   constructor(options = {}) {
@@ -246,7 +246,10 @@ export class LocalProjectService {
       try {
         const requested = path.resolve(project.root, filePathParam);
         const safePath = fs.realpathSync(requested);
-        const relative = path.relative(project.root, safePath);
+        // The project root, or a git worktree of the same repository (phase artifacts that are live there).
+        const roots = [project.root, ...listSiblingWorktrees(project.root).map(w => w.path)];
+        const base = roots.find(r => { const rel = path.relative(r, safePath); return rel && !rel.startsWith('..' + path.sep) && rel !== '..' && !path.isAbsolute(rel); }) || project.root;
+        const relative = path.relative(base, safePath);
         const contained = relative && !relative.startsWith('..' + path.sep) && relative !== '..' && !path.isAbsolute(relative);
         const allowed = /^(?:\.sdd|docs|scripts|skills|\.sdd-framework)[\/\\]/.test(relative);
         const mime = { '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.webp': 'image/webp', '.gif': 'image/gif' };
