@@ -12,6 +12,7 @@ import { renderGovernanceView } from './views/governanceView.js';
 import { renderReportsView } from './views/reportsView.js';
 import { renderAutomationView } from './views/automationView.js';
 import { renderKnowledgeView } from './views/knowledgeView.js';
+import { renderDeliveryView } from './views/deliveryView.js';
 import { ICONS } from './icons.js';
 import demoSnapshot from '../demo/demo-project.json';
 
@@ -50,6 +51,7 @@ export class SDDWorkspaceApp {
     this.activeScriptName = 'doctor.sh';
     this.activeKnowledgeSection = 'templates';
     this.selectedKnowledgeItemId = null;
+    this.deliveryState = null; // { projectId, status: 'loading' | 'ready', report } for the Delivery view
 
     const route = new URLSearchParams(location.search);
     this.selectedProfileId = route.get('profile');
@@ -279,7 +281,7 @@ export class SDDWorkspaceApp {
         <!-- Main Page Container -->
         <main class="page-container">
           ${this.snapshot?.readStatus === 'stale' ? `<div class="domain-content-card" role="status">${escapeHtml(this.snapshot.readError)}</div>` : ''}
-          ${this.currentView==='project'?`<p class="workspace-location">Projects / ${escapeHtml(this.snapshot?.projectId || 'Project')} / ${escapeHtml(({overview:'Overview',phases:'Phases',governance:'Decisions & context',reports:'Reviews',automation:'Checks & automation',knowledge:'Resources & graphs'})[this.projectSection] || 'Overview')}</p><div class="project-shell">${this._renderProjectRail()}<div class="project-content">${this._renderCurrentView()}</div></div>`:this._renderCurrentView()}
+          ${this.currentView==='project'?`<p class="workspace-location">Projects / ${escapeHtml(this.snapshot?.projectId || 'Project')} / ${escapeHtml(({overview:'Overview',phases:'Phases',governance:'Decisions & context',reports:'Reviews',delivery:'Delivery',automation:'Checks & automation',knowledge:'Resources & graphs'})[this.projectSection] || 'Overview')}</p><div class="project-shell">${this._renderProjectRail()}<div class="project-content">${this._renderCurrentView()}</div></div>`:this._renderCurrentView()}
           ${this.currentView==='landing'?this._renderFooter():''}
         </main>
       </div>
@@ -406,7 +408,7 @@ npm --prefix visual run workspace -- --project /path/to/project --project /path/
   }
 
   _renderProjectRail() {
-    const sections=[['overview','Project overview','chart'],['phases','Phases','layers'],['governance','Decisions & context','bookOpen'],['reports','Reviews','shieldCheck'],['automation','Checks & automation','terminal'],['knowledge','Resources & graphs','fileText']];
+    const sections=[['overview','Project overview','chart'],['phases','Phases','layers'],['governance','Decisions & context','bookOpen'],['reports','Reviews','shieldCheck'],['delivery','Delivery','clock'],['automation','Checks & automation','terminal'],['knowledge','Resources & graphs','fileText']];
     return `<nav class="project-section-rail" aria-label="Project sections"><p class="eyebrow">${escapeHtml(this.snapshot?.projectId || 'Project')}</p>${sections.map(([id,label,icon])=>`<button class="nav-domain-btn ${this.projectSection===id?'active':''}" data-domain="${id}">${ICONS[icon] || ICONS.circle}<span>${label}</span></button>`).join('')}<p class="rail-status">${this.connectionStatus==='demo'?'Synthetic demo':this.accountSession?'Private account project':'Connected locally'}</p></nav>`;
   }
 
@@ -454,6 +456,8 @@ npm --prefix visual run workspace -- --project /path/to/project --project /path/
       return renderProjectOverview(this.snapshot, this.phaseSort);
     }
 
+    if (this.projectSection === 'delivery') return this._renderDeliveryView();
+
     // Default: 'phases' section with On-Screen Phase Explorer
     return renderPhaseExplorerView(this.snapshot, this);
   }
@@ -472,6 +476,40 @@ npm --prefix visual run workspace -- --project /path/to/project --project /path/
         <details class="project-source-details"><summary>Source details</summary><p>${escapeHtml(project.root || 'Private account snapshot')}</p><p>Revision: ${escapeHtml(project.contentRevision || 'Not recorded')}</p><p>Updated: ${escapeHtml(project.updated ? new Date(project.updated).toLocaleString() : 'Local snapshot')}</p></details>
         <div class="project-dash-footer"><button class="btn btn-secondary">View project</button></div>
       </div>`).join('')}</div></div>`;
+  }
+
+  // Delivery view: reads .sdd/metrics/report.json through the same artifact endpoint and auth as other reads.
+  // A missing file, a 4xx/5xx response or invalid JSON all show the empty state.
+  _renderDeliveryView() {
+    if (this.connectionStatus === 'demo' || this.connectionStatus === 'public' || !(this.token || this.accountSession)) {
+      return renderDeliveryView(null);
+    }
+    const state = this.deliveryState;
+    if (!state || state.projectId !== this.currentProjectId) {
+      this._loadDelivery();
+      return '<div class="empty-state">Loading delivery report…</div>';
+    }
+    if (state.status === 'loading') return '<div class="empty-state">Loading delivery report…</div>';
+    return renderDeliveryView(state.report);
+  }
+
+  async _loadDelivery() {
+    const projectId = this.currentProjectId;
+    this.deliveryState = { projectId, status: 'loading', report: null };
+    let report = null;
+    try {
+      const path = encodeURIComponent('.sdd/metrics/report.json');
+      const response = await fetch(`/api/project/${encodeURIComponent(projectId)}/artifact?path=${path}`, this._requestOptions());
+      if (response.ok) {
+        const parsed = await response.json();
+        report = parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : null;
+      }
+    } catch {
+      report = null;
+    }
+    if (this.currentProjectId !== projectId || this.deliveryState?.projectId !== projectId) return;
+    this.deliveryState = { projectId, status: 'ready', report };
+    this.render();
   }
 
   _renderProjectMetricsView() {
@@ -710,6 +748,7 @@ npm --prefix visual run workspace -- --project /path/to/project --project /path/
         this.projectSection = btn.getAttribute('data-domain');
         if (this.projectSection === 'knowledge') this.activeKnowledgeSection = 'graphify';
         if (this.projectSection === 'governance') this.activeGovTab = 'summary';
+        if (this.projectSection === 'delivery') this.deliveryState = null; // re-read the report on each visit
         this.currentView = 'project';
         this._syncRoute(true); this.render();
       });

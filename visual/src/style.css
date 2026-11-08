@@ -5070,3 +5070,27 @@ dialog::backdrop {
   opacity: 0.45;
 }
 
+
+/* ── Delivery view ─────────────────────────────────────────────────────── */
+.delivery-caption {
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  color: var(--muted-foreground);
+  margin: 0.5rem 0 1.5rem;
+  max-width: 72ch;
+}
+
+.delivery-phase-title {
+  font-size: 1rem;
+  margin: 2rem 0 0;
+}
+
+.delivery-task-title {
+  color: var(--ds-gray-600);
+  font-size: 0.8rem;
+}
+
+.delivery-over-budget {
+  margin-left: 0.4rem;
+  white-space: nowrap;
+}
