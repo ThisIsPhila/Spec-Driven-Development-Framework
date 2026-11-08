@@ -122,6 +122,9 @@ show_usage() {
     say "  status                      Check completion status of the active phase sprint"
     say "  task <task_id> <status>     Update a task status (done, doing, todo) in tasks.md"
     say "  finish                      Verify codebase and complete the active sprint"
+    say "  usage [phase] [task]        Attribute Kiro session usage to task time windows"
+    say "  report [phase] [--write]    Delivery report: human estimate vs used model vs comparison model"
+    say "  metrics-check [phase]       Warn about tasks missing Risk, Human estimate or Time budget"
     say "  archive <phase-name>        Archive the completed phase folder (explicit action)"
     say ""
     say "Examples:"
@@ -714,6 +717,16 @@ cmd_task() {
 
     say "✅ Updated task checkbox status to '$status_arg'."
     say "📝 Synced active context."
+
+    # Delivery metrics: timestamp every status change. Never blocks the task update.
+    if [[ -f "$SCRIPT_DIR/metrics.cjs" ]] && command -v node >/dev/null 2>&1; then
+        local task_key="$task_id"
+        local id_regex='\[(T[0-9]+\.[0-9]+)\]'
+        if [[ "$matched_line" =~ $id_regex ]]; then task_key="${BASH_REMATCH[1]}"; fi
+        node "$SCRIPT_DIR/metrics.cjs" record "$active_phase" "$task_key" "$status_arg" \
+            "$(git -C "$REPO_ROOT" rev-parse --short HEAD 2>/dev/null || true)" \
+            || say "⚠️  Could not record delivery metrics (task update is unaffected)."
+    fi
 }
 
 # ------------------------------------------------------------------------------
@@ -849,7 +862,7 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
             cmd_new "$2"
             ;;
         approve)
-            cmd_approve "$2"
+            cmd_approve "$2" "$3"
             ;;
         start)
             cmd_start "$2"
@@ -862,6 +875,16 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
             ;;
         finish)
             cmd_finish
+            ;;
+        usage)
+            node "$SCRIPT_DIR/metrics.cjs" usage "${2:-$(get_active_phase)}" "$3"
+            ;;
+        report)
+            shift
+            node "$SCRIPT_DIR/metrics.cjs" report "$@"
+            ;;
+        metrics-check)
+            node "$SCRIPT_DIR/metrics.cjs" check "${2:-}"
             ;;
         archive)
             cmd_archive "$2"

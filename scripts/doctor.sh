@@ -402,6 +402,17 @@ else
     WARNINGS=$((WARNINGS+1))
 fi
 
+# Delivery fields (Risk, Human estimate, Time budget). Warns only, and only for
+# phases at or after delivery.required_from_phase in .sdd/metrics/profile.json.
+if command -v node >/dev/null 2>&1 && [[ -f "$SCRIPT_DIR/metrics.cjs" ]]; then
+    say ""
+    say "Delivery Fields"
+    delivery_out=$(node "$SCRIPT_DIR/metrics.cjs" check 2>&1 || true)
+    say "$delivery_out"
+    delivery_warns=$(printf '%s\n' "$delivery_out" | grep -c '^WARN' || true)
+    WARNINGS=$((WARNINGS + delivery_warns))
+fi
+
 if [[ $ERRORS -eq 0 ]]; then
     say "Result: OK"
 else

@@ -1,0 +1,31 @@
+{
+  "_comment": "Project-owned assumptions for delivery reports. Every number here is an assumption, not a measurement. Edit them; reports print them next to the results.",
+  "human": {
+    "hourly_rate_usd": 75,
+    "hours_per_working_day": 6,
+    "note": "Senior developer, includes tests and documentation. Replace with your own rate."
+  },
+  "tokens": {
+    "chars_per_token": 4,
+    "tokenizer_factor": 1.3,
+    "context_cap_tokens": 200000,
+    "note": "Tokens are ESTIMATED from Kiro session logs (characters / chars_per_token * tokenizer_factor). Models from Claude 4.7 on produce about 30% more tokens for the same text. Context is capped because the harness compacts long sessions."
+  },
+  "caching": {
+    "assume_prompt_caching": true,
+    "note": "With caching, each call re-reads the previous context at the cache-read rate and writes only the new part. Without it, the whole context is billed as input on every call (upper bound)."
+  },
+  "comparison": {
+    "model": "claude-opus-5.5",
+    "agent_time_factor": 0.7,
+    "note": "Time for the comparison model = measured agent time x agent_time_factor. This is an ASSUMPTION (fewer rejections and retries, similar speed per call). Calibrate it after a phase has been run with both models."
+  },
+  "credits": {
+    "usd_per_credit": null,
+    "note": "Kiro credits are recorded as measured. Set usd_per_credit from your Kiro plan to show a dollar figure."
+  },
+  "delivery": {
+    "required_from_phase": null,
+    "note": "Set to a phase number (for example 2) to make doctor warn when a task in that phase or later lacks Risk, Human estimate or Time budget."
+  }
+}

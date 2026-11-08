@@ -78,4 +78,4 @@ Send a completion message to the user that includes:
 **Prevention:** Step 1 requires ALL test categories.
 
 ### ❌ VIOLATION 3: Automatic Next Task
-**Prevention:** Always wait for user approval before starting the next task.
+**Prevention:** In supervised mode, wait for user approval before starting the next task. When the owner has granted execution authority and asked for continuous progress, start the next task after acceptance (see `delivery-process.md`, sections 5 and 7).
