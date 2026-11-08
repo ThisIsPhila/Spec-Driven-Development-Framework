@@ -32,17 +32,27 @@ Add these bullets to each task (see `templates/tasks-template.md`):
 - State the observable result and acceptance, not the internal layout. Name files only when a path is a hard constraint.
 - Before dispatching a phase, check its tasks against the code: file paths, dependencies, scripts that already exist, fixtures that moved. Correct the task text in the brief and record the correction.
 
-## 5. Continuous execution
+## 5. Owner involvement and continuous execution
 
-When the owner grants execution authority for a phase and asks for continuous progress, the planner starts the next task after acceptance without waiting for a further message. The "wait for approval before the next task" rule in `after-task.md` applies only when execution is supervised. Stop and ask only for: credits or cost the owner has not approved, destructive or external actions, and decisions not yet determined.
+- The owner approves a phase once, at its start (requirements, design, tasks). That approval is execution authority for the whole phase, including spend the owner has said is allowed (for example agent credits).
+- Inside an approved phase the planner does not wait for further messages. After accepting a task it starts the next one. Milestones and "review with the owner" points inside a phase are planner checkpoints: capture the evidence (screenshots, outputs) and continue.
+- The planner stops and asks only for: a critical decision the specs do not settle, a blocker it cannot clear (access, a failed external dependency, a defect that invalidates the design), or an action outside the authority the owner granted (cost not approved, destructive or external actions not covered).
+- Owner feedback comes at the end of the phase, from the phase report. Changes the owner asks for after review become a follow-up change request, not a mid-phase stop.
+- The "wait for approval before the next task" rule in `after-task.md` applies only when the owner has chosen supervised execution.
 
 ## 6. Parallel work
 
 Run tasks in parallel only when their owned paths are disjoint. Use one worktree per executor, pre-register shared stubs and dependencies first, then merge by cherry-pick and run the combined checks. Dependency installs are done by the planner before parallel dispatch to avoid lockfile conflicts.
 
-## 7. Recording
+## 7. Commits and publication
+
+- Every accepted task is committed locally on the phase branch, one commit (or a small set) per task, with the task ID in the message, for example `feat(core): ... [T002.4]`. Bookkeeping (`tasks.md`, `active-context.md`, evidence) is committed with the task or in a `chore(sdd)` commit right after it.
+- Nothing is pushed during the phase.
+- At the end of the phase, after the gate passes and `phase.sh finish` runs, push the phase branch and open one pull request whose body has a table with one row per task: task ID, commits, one-line summary, evidence file. Merge with a merge commit (not squash) so the per-task history survives, then sync local `main`.
+
+## 8. Recording
 
 - `phase.sh task Tn doing|done|todo` timestamps each change in `.sdd/metrics/tasks.tsv`.
 - `phase.sh usage` attributes Kiro session credits and estimated tokens to task windows.
-- `phase.sh report [phase] --write` produces `.sdd/reports/<phase>/delivery-report.md`: human estimate, the model used, and the same tokens priced on the comparison model.
+- `phase.sh report [phase] --write` produces `.sdd/reports/<phase>/delivery-report.md`: human estimate, the model used, and the same tokens priced on the comparison model. Attach it to the end-of-phase pull request.
 - Rates and assumptions live in `.sdd/metrics/rates.json` and `profile.json`. Update rates when the provider changes prices.
