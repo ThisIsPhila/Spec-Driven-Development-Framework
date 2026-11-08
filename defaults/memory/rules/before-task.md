@@ -20,6 +20,7 @@ Before opening the editor, you **must**:
     - `memory/current-state/active-context.md` (Current focus)
 - [ ] **Review Technical Decisions:**
     - `memory/technical-decisions.md` (Ensure no ADRs are violated)
+- [ ] **Delivery rules (delegated work):** `memory/rules/delivery-process.md` (budgets, risk tiers, brief template)
 - [ ] **Confirm spec naming convention:**
     - `memory/rules/spec-naming.md`
 - [ ] **If monorepo coordination is used, review:**

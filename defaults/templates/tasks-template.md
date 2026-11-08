@@ -10,6 +10,11 @@ Only top-level task lines carry lifecycle checkboxes.
 ## Task plan
 
 - [ ] **[T[N].1]** [Outcome-oriented task name]
+  - **Executor:** [Lead | Haiku | person | tool]
+  - **Risk:** [low | high] (see `memory/rules/delivery-process.md`)
+  - **Human estimate:** [best/likely/worst, for example 2/4/8 h] (senior developer, includes tests and docs, written before work starts)
+  - **Time budget:** [for example 45 min] (the executor stops and reports when it is passed)
+  - **Token budget:** [optional, for example 400k]
   - **Objective and requirements:** Observable result and REQ-[N].x links.
   - **Design references:** Decisions and sections implemented.
   - **Implementation and owned outputs:** Concrete behavior, boundaries, state transitions, and outputs.
@@ -20,6 +25,11 @@ Only top-level task lines carry lifecycle checkboxes.
   - **No-go conditions and handoff:** What blocks completion and the exact downstream contract.
 
 - [ ] **[T[N].2]** [Second outcome-oriented task name]
+  - **Executor:** [Lead | Haiku | person | tool]
+  - **Risk:** [low | high] (see `memory/rules/delivery-process.md`)
+  - **Human estimate:** [best/likely/worst, for example 2/4/8 h] (senior developer, includes tests and docs, written before work starts)
+  - **Time budget:** [for example 45 min] (the executor stops and reports when it is passed)
+  - **Token budget:** [optional, for example 400k]
   - **Objective and requirements:** Observable result and REQ-[N].y links.
   - **Design references:** Decisions and sections implemented.
   - **Implementation and owned outputs:** Concrete behavior, boundaries, state transitions, and outputs.

@@ -287,6 +287,9 @@ install_base_files() {
         --exclude "glossary.md" \
         "$FRAMEWORK_SOURCE/defaults/memory/" "$TARGET_DIR/memory/" 2>/dev/null || true
     rsync -a $copy_mode "$FRAMEWORK_SOURCE/defaults/skills/" "$PROJECT_ROOT/skills/" 2>/dev/null || true
+    # Delivery metrics: rates and assumptions are project-owned, so never overwrite them.
+    mkdir -p "$TARGET_DIR/metrics"
+    rsync -a --ignore-existing "$FRAMEWORK_SOURCE/defaults/metrics/" "$TARGET_DIR/metrics/" 2>/dev/null || true
     
     # Copy scripts to .sdd/scripts for self-containment
     echo "      Copying framework scripts to .sdd/scripts..."
