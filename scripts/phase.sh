@@ -504,6 +504,13 @@ EOF
         report_tracker_result 1 "$phase_name" "In Progress"
     fi
 
+    # Record structured phase-start attribution (non-blocking).
+    if [[ -f "$SCRIPT_DIR/metrics.cjs" ]] && command -v node >/dev/null 2>&1; then
+        local start_rev
+        start_rev=$(git rev-parse --short HEAD 2>/dev/null || true)
+        node "$SCRIPT_DIR/metrics.cjs" event phase_start "$phase_name" "" "started" "$start_rev" >/dev/null 2>&1 || true
+    fi
+
     say ""
     say "🚀 Phase Sprint '$phase_name' started successfully!"
     say ""
@@ -823,6 +830,20 @@ EOF
 }
 
 # ------------------------------------------------------------------------------
+# COMMAND: ONBOARD
+# ------------------------------------------------------------------------------
+cmd_onboard() {
+    if [[ -f "$SCRIPT_DIR/metrics.cjs" ]] && command -v node >/dev/null 2>&1; then
+        local rev active_phase
+        rev=$(git rev-parse --short HEAD 2>/dev/null || true)
+        active_phase=$(get_active_phase 2>/dev/null || true)
+        node "$SCRIPT_DIR/metrics.cjs" event onboard "${active_phase:-}" "" "onboarded" "$rev" "$@"
+    else
+        say "ℹ️  Onboarding attribution skipped (Node or metrics.cjs unavailable)."
+    fi
+}
+
+# ------------------------------------------------------------------------------
 # COMMAND: ARCHIVE
 # ------------------------------------------------------------------------------
 cmd_archive() {
@@ -866,6 +887,10 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
             ;;
         start)
             cmd_start "$2"
+            ;;
+        onboard)
+            shift
+            cmd_onboard "$@"
             ;;
         status|progress)
             cmd_status

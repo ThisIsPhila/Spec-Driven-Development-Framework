@@ -38,8 +38,14 @@ const ROOT = (() => {
 })();
 const SDD = process.env.SDD_DIR || path.join(ROOT, '.sdd');
 const METRICS = path.join(SDD, 'metrics');
-const FRAMEWORK_DEFAULTS = path.resolve(__dirname, '..', 'defaults', 'metrics');
+const FRAMEWORK_DEFAULTS = path.resolve(fs.realpathSync(__dirname), '..', 'defaults', 'metrics');
 const KIRO_SESSIONS = process.env.KIRO_SESSIONS_DIR || path.join(os.homedir(), '.kiro', 'sessions');
+let ADAPTER_REGISTRY = { loadExternalSessions: () => [], priceTokens: () => 0 };
+try {
+  ADAPTER_REGISTRY = require(path.resolve(fs.realpathSync(__dirname), 'metrics-adapters', 'index.cjs'));
+} catch {
+  // fallback if consumer copied only metrics.cjs without metrics-adapters/
+}
 
 function readJson(file, fallback) {
   try {
@@ -140,15 +146,96 @@ function phaseDirs(filter) {
     .map((d) => ({ name: d, dir: path.join(active, d), number: Number(/^phase-0*(\d+)/.exec(d)[1]) }));
 }
 
+function inferProvider(model) {
+  const m = String(model || '').toLowerCase();
+  if (!m || m === 'unknown') return 'unknown';
+  if (m.includes('claude') || m.includes('haiku') || m.includes('sonnet') || m.includes('opus')) return 'anthropic';
+  if (m.includes('gemini') || m.includes('gemma')) return 'google';
+  if (m.includes('gpt') || m.includes('codex') || /^o[134]\b/.test(m)) return 'openai';
+  return 'unknown';
+}
+
+function parseFlagValue(args, name) {
+  const idx = args.indexOf(name);
+  return idx >= 0 && idx + 1 < args.length ? args[idx + 1] : null;
+}
+
+function appendAttributionEvent(entry) {
+  const file = path.join(METRICS, 'events.jsonl');
+  fs.mkdirSync(METRICS, { recursive: true });
+  const model = entry.model || process.env.SDD_MODEL || 'unknown';
+  const record = {
+    ts: entry.ts || new Date().toISOString(),
+    event: entry.event,
+    phase: entry.phase || null,
+    task: entry.task || null,
+    status: entry.status || null,
+    agent: entry.agent || process.env.SDD_AGENT || 'unknown',
+    harness: entry.harness || process.env.SDD_HARNESS || 'unknown',
+    model,
+    provider: entry.provider || process.env.SDD_PROVIDER || inferProvider(model),
+    session_id: entry.session_id || process.env.SDD_SESSION_ID || '',
+    rev: entry.rev || '',
+  };
+  fs.appendFileSync(file, JSON.stringify(record) + '\n');
+  return record;
+}
+
+function readAttributionEvents() {
+  const file = path.join(METRICS, 'events.jsonl');
+  if (!fs.existsSync(file)) return [];
+  const out = [];
+  for (const line of fs.readFileSync(file, 'utf8').split('\n')) {
+    if (!line.trim()) continue;
+    try {
+      out.push(JSON.parse(line));
+    } catch {
+      // skip malformed line
+    }
+  }
+  return out;
+}
+
 // ---------------------------------------------------------------------------
-// record
+// record & event
 // ---------------------------------------------------------------------------
 function cmdRecord([phase, task, status, rev]) {
   if (!phase || !task || !['todo', 'doing', 'done'].includes(status)) {
     console.error('usage: metrics.cjs record <phase> <task> <todo|doing|done> [rev]');
     process.exit(2);
   }
-  appendTsv(path.join(METRICS, 'tasks.tsv'), TASK_COLS, { ts: new Date().toISOString(), phase, task, status, rev: rev || '' });
+  const ts = new Date().toISOString();
+  appendTsv(path.join(METRICS, 'tasks.tsv'), TASK_COLS, { ts, phase, task, status, rev: rev || '' });
+  appendAttributionEvent({ ts, event: `task_${status}`, phase, task, status, rev: rev || '' });
+}
+
+function cmdEvent(args) {
+  const positional = [];
+  for (let i = 0; i < args.length; i++) {
+    if (args[i].startsWith('--')) {
+      i++;
+      continue;
+    }
+    positional.push(args[i]);
+  }
+  const [event, phase, task, status, rev] = positional;
+  if (!event) {
+    console.error('usage: metrics.cjs event <onboard|phase_start|task_doing|task_done> [phase] [task] [status] [rev] [--agent ...] [--model ...] [--harness ...] [--provider ...] [--session ...]');
+    process.exit(2);
+  }
+  const rec = appendAttributionEvent({
+    event,
+    phase: phase || null,
+    task: task || null,
+    status: status || null,
+    rev: rev || '',
+    agent: parseFlagValue(args, '--agent'),
+    harness: parseFlagValue(args, '--harness'),
+    model: parseFlagValue(args, '--model'),
+    provider: parseFlagValue(args, '--provider'),
+    session_id: parseFlagValue(args, '--session'),
+  });
+  console.log(`event: recorded ${rec.event} (agent=${rec.agent}, harness=${rec.harness}, model=${rec.model})`);
 }
 
 // ---------------------------------------------------------------------------
@@ -317,8 +404,10 @@ function cmdUsage([phase, task]) {
   const name = pd ? pd.name : phase;
   const windows = taskWindows(name);
   const sessions = loadSessions(cfg);
+  const externalSessions = ADAPTER_REGISTRY.loadExternalSessions({ root: ROOT });
+  const extSources = new Set(['claude-session', 'codex-session', 'gemini-session', 'opencode-session']);
   const file = path.join(METRICS, 'usage.tsv');
-  const kept = readTsv(file).filter((r) => !(r.phase === name && (!task || r.task === task) && r.source === 'kiro-session'));
+  const kept = readTsv(file).filter((r) => !(r.phase === name && (!task || r.task === task) && (r.source === 'kiro-session' || extSources.has(r.source))));
   fs.rmSync(file, { force: true });
   for (const r of kept) appendTsv(file, USAGE_COLS, r);
   let written = 0;
@@ -346,6 +435,37 @@ function cmdUsage([phase, task]) {
         tokens_cache_write: price.tokens_cache_write,
         tokens_out: price.tokens_out,
         source: 'kiro-session',
+      });
+      written++;
+    }
+    for (const s of externalSessions) {
+      const inWin = (s.turns || []).filter((t) => t.t >= w.start && t.t <= to);
+      if (!inWin.length) continue;
+      const role = s.createdAt >= w.start - 120000 ? 'child' : 'lead';
+      const sum = inWin.reduce(
+        (acc, t) => ({
+          tokens_in: acc.tokens_in + (t.tokens_in || 0),
+          tokens_out: acc.tokens_out + (t.tokens_out || 0),
+          tokens_cache_read: acc.tokens_cache_read + (t.tokens_cache_read || 0),
+          tokens_cache_write: acc.tokens_cache_write + (t.tokens_cache_write || 0),
+        }),
+        { tokens_in: 0, tokens_out: 0, tokens_cache_read: 0, tokens_cache_write: 0 },
+      );
+      appendTsv(file, USAGE_COLS, {
+        ts: new Date().toISOString(),
+        phase: name,
+        task: id,
+        role,
+        session: s.id,
+        model: inWin[inWin.length - 1].model || s.model,
+        credits: '0.000',
+        elapsed_s: Math.max(0, Math.round((inWin[inWin.length - 1].t - inWin[0].t) / 1000)),
+        calls: inWin.length,
+        tokens_in: Math.round(sum.tokens_in),
+        tokens_cache_read: Math.round(sum.tokens_cache_read),
+        tokens_cache_write: Math.round(sum.tokens_cache_write),
+        tokens_out: Math.round(sum.tokens_out),
+        source: s.source,
       });
       written++;
     }
@@ -486,14 +606,79 @@ function renderReport(rep) {
   return L.join('\n') + '\n';
 }
 
+function buildTelemetryRollups(cfg) {
+  const usageRows = readTsv(path.join(METRICS, 'usage.tsv'));
+  const byModel = {};
+  const byHarness = {};
+  let totalUsd = 0;
+  const totalTokens = { input: 0, output: 0, cache_read: 0, cache_write: 0 };
+  for (const r of usageRows) {
+    const model = r.model || 'unknown';
+    const harness = (r.source || 'unknown').replace(/-session$/, '');
+    const provenance = r.source === 'kiro-session' ? 'estimated' : 'measured';
+    const toks = {
+      tokens_in: Number(r.tokens_in || 0),
+      tokens_out: Number(r.tokens_out || 0),
+      tokens_cache_read: Number(r.tokens_cache_read || 0),
+      tokens_cache_write: Number(r.tokens_cache_write || 0),
+    };
+    const usd = ADAPTER_REGISTRY.priceTokens(toks, model, cfg.rates);
+    totalUsd += usd;
+    totalTokens.input += toks.tokens_in;
+    totalTokens.output += toks.tokens_out;
+    totalTokens.cache_read += toks.tokens_cache_read;
+    totalTokens.cache_write += toks.tokens_cache_write;
+
+    const m = (byModel[model] ||= {
+      model,
+      provider: inferProvider(model),
+      calls: 0,
+      tokens_in: 0,
+      tokens_out: 0,
+      tokens_cache_read: 0,
+      tokens_cache_write: 0,
+      usd: 0,
+      provenance,
+    });
+    m.calls += Number(r.calls || 0);
+    m.tokens_in += toks.tokens_in;
+    m.tokens_out += toks.tokens_out;
+    m.tokens_cache_read += toks.tokens_cache_read;
+    m.tokens_cache_write += toks.tokens_cache_write;
+    m.usd += usd;
+    if (provenance === 'estimated') m.provenance = 'estimated';
+
+    const h = (byHarness[harness] ||= { harness, calls: 0, tokens_total: 0, usd: 0, provenance });
+    h.calls += Number(r.calls || 0);
+    h.tokens_total += toks.tokens_in + toks.tokens_out + toks.tokens_cache_read + toks.tokens_cache_write;
+    h.usd += usd;
+    if (provenance === 'estimated') h.provenance = 'estimated';
+  }
+  return {
+    totalUsd: Number(totalUsd.toFixed(6)),
+    totalTokens,
+    byModel: Object.values(byModel),
+    byHarness: Object.values(byHarness),
+  };
+}
+
 function cmdReport(args) {
   const phase = args.find((a) => !a.startsWith('--'));
   const rep = buildReport(phase);
+  const attribution = readAttributionEvents();
+  const rollups = buildTelemetryRollups(rep.cfg);
   if (args.includes('--json')) {
     const plain = JSON.parse(
       JSON.stringify(rep.phases, (k, v) => (v instanceof Set ? [...v] : v)),
     );
-    const payload = { generated: new Date().toISOString(), rates_as_of: rep.cfg.rates.as_of, comparison_model: rep.cmpModel, phases: plain };
+    const payload = {
+      generated: new Date().toISOString(),
+      rates_as_of: rep.cfg.rates.as_of,
+      comparison_model: rep.cmpModel,
+      attribution,
+      rollups,
+      phases: plain,
+    };
     if (args.includes('--write')) {
       fs.mkdirSync(METRICS, { recursive: true });
       fs.writeFileSync(path.join(METRICS, 'report.json'), JSON.stringify(payload, null, 2) + '\n');
@@ -509,7 +694,18 @@ function cmdReport(args) {
     fs.mkdirSync(METRICS, { recursive: true });
     fs.writeFileSync(
       path.join(METRICS, 'report.json'),
-      JSON.stringify({ generated: new Date().toISOString(), rates_as_of: rep.cfg.rates.as_of, comparison_model: rep.cmpModel, phases: JSON.parse(JSON.stringify(rep.phases, (k, v) => (v instanceof Set ? [...v] : v))) }, null, 2) + '\n',
+      JSON.stringify(
+        {
+          generated: new Date().toISOString(),
+          rates_as_of: rep.cfg.rates.as_of,
+          comparison_model: rep.cmpModel,
+          attribution,
+          rollups,
+          phases: JSON.parse(JSON.stringify(rep.phases, (k, v) => (v instanceof Set ? [...v] : v))),
+        },
+        null,
+        2,
+      ) + '\n',
     );
     console.error(`wrote ${path.relative(ROOT, path.join(target, 'delivery-report.md'))} and .sdd/metrics/report.json`);
   }
@@ -549,6 +745,9 @@ switch (cmd) {
   case 'record':
     cmdRecord(rest);
     break;
+  case 'event':
+    cmdEvent(rest);
+    break;
   case 'usage':
     cmdUsage(rest);
     break;
@@ -559,6 +758,6 @@ switch (cmd) {
     cmdCheck(rest);
     break;
   default:
-    console.error('usage: metrics.cjs <record|usage|report|check> ...');
+    console.error('usage: metrics.cjs <record|event|usage|report|check> ...');
     process.exit(2);
 }
