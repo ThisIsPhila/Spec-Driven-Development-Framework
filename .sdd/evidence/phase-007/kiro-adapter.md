@@ -33,3 +33,20 @@
 - Windows was not tested.
 - The workspace run exercised the hooks by hand with payloads written by the tester; it did not run them from inside Kiro.
 - The earlier `tests/test-kiro-integration.sh` and the report `.sdd/reports/phase-007/final-summary.md` claimed production readiness on evidence that did not support it and are withdrawn.
+
+## Live Kiro session (T007.12, partial)
+
+**Observed:** 2026-11-07, after Kiro restart, same workspace as the Workspace install section.
+**Authority:** Owner request to run the live check rather than hand it off.
+
+| Check | Procedure | Expected | Observed | Result |
+|---|---|---|---|---|
+| PreTaskExec fires from Kiro | Task tool set `T007.12` to in_progress (PreTaskExec path) | Registered `sdd-pre-task` runs, names `T007.12`, blocks with the start command | Blocked: "SDD: task T007.12 is blocked. Phase phase-007-kiro-native-integration has not been started. Resolve with: bash .sdd/scripts/phase.sh start phase-007-kiro-native-integration" | Pass |
+| Failed attempt leaves no residue | grep of tasks.md after the block | Checkboxes unchanged | T007.11 and T007.12 still `[ ]` | Pass |
+| Steering loads | Steering content was injected into the agent context in this session | Phase guidance present | Present as a workspace rule. Not shown whether `fileMatch` or always-on triggered it: no spec file was open | Partial |
+| PostTaskExec | Needs a started phase and a finished task | Reminder printed | Not run: would require `phase.sh start`, which creates a branch and changes state | Not run |
+| Stop | Needs a task in progress and a stale active context | Reminder printed | Not run | Not run |
+
+**Limitations:** The block proves that Kiro runs the registered PreTaskExec hook and that the payload contains the stable task ID. It does not test the allow path inside Kiro, PostTaskExec, Stop, or steering trigger mode. The allow path was tested only by hand (tests/test_kiro_adapter.sh).
+
+**Defect found in the task tool:** `task_list` reports the deferred `T007.11` as the only ready task. The `(DEFERRED)` suffix in its line does not remove it from the queue, so a queue-all would dispatch deferred work.

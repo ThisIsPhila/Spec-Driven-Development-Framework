@@ -6,8 +6,13 @@ function validate(file, reading = false) {
   const scope = extractionScope.getStore();
   if (!scope) return;
   const canonical = nativeFs.realpathSync(file);
-  const relative = path.relative(scope.root, canonical);
-  if (relative === '..' || relative.startsWith('..' + path.sep) || path.isAbsolute(relative)) throw new Error('Source escapes registered project');
+  // The registered project root plus the git worktrees of the same repository (scope.roots).
+  const roots = scope.roots || [scope.root];
+  const inside = roots.some(root => {
+    const relative = path.relative(root, canonical);
+    return !(relative === '..' || relative.startsWith('..' + path.sep) || path.isAbsolute(relative));
+  });
+  if (!inside) throw new Error('Source escapes registered project');
   if (reading) {
     const stat = nativeFs.statSync(canonical);
     if (!stat.isFile() || stat.size > (path.basename(canonical) === 'graph.json' ? 16 : 4) * 1024 * 1024) throw new Error('Source is not a supported bounded file');

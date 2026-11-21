@@ -1,16 +1,56 @@
 import { parseEvidenceMetadata } from './evidence.js';
 import { fs, extractionScope } from './read-boundary.js';
 import path from 'node:path';
+import nodeFs from 'node:fs';
 import crypto from 'node:crypto';
 import { execSync, execFileSync } from 'node:child_process';
 import { createProjectSnapshot, createPhaseModel } from './model.js';
 
-export function extractProject(projectRoot) {
+/**
+ * Git worktrees of the same repository as `projectRoot` (other than the root itself),
+ * with the branch each one has checked out. A worktree of the repository is as trusted as
+ * the project itself: `git worktree list` only names directories the repository created.
+ */
+export function listSiblingWorktrees(projectRoot) {
+  let out;
+  try {
+    out = execFileSync('git', ['worktree', 'list', '--porcelain'], { cwd: projectRoot, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] });
+  } catch {
+    return [];
+  }
   const root = fs.realpathSync(projectRoot);
-  return extractionScope.run({ root, bytes: 0, files: 0 }, () => extractSnapshot(root));
+  const found = [];
+  let current = null;
+  for (const line of out.split('\n')) {
+    if (line.startsWith('worktree ')) {
+      current = { path: line.slice('worktree '.length).trim(), branch: null };
+      found.push(current);
+    } else if (current && line.startsWith('branch ')) {
+      current.branch = line.slice('branch '.length).trim().replace(/^refs\/heads\//, '');
+    }
+  }
+  const result = [];
+  for (const w of found) {
+    let real;
+    try { real = nativeFsRealpath(w.path); } catch { continue; }
+    if (real === root) continue;
+    if (!nativeFsExists(path.join(real, '.sdd'))) continue;
+    result.push({ path: real, branch: w.branch });
+  }
+  return result;
 }
 
-function extractSnapshot(projectRoot) {
+function nativeFsRealpath(p) { return nodeFs.realpathSync(p); }
+function nativeFsExists(p) { return nodeFs.existsSync(p); }
+
+export function extractProject(projectRoot) {
+  const root = fs.realpathSync(projectRoot);
+  const worktrees = listSiblingWorktrees(root);
+  const roots = [root, ...worktrees.map(w => w.path)];
+  return extractionScope.run({ root, roots, bytes: 0, files: 0 }, () => extractSnapshot(root, worktrees));
+}
+
+function extractSnapshot(projectRoot, worktrees = []) {
   const resolvedRoot = path.resolve(projectRoot);
   const sddDir = path.join(resolvedRoot, '.sdd');
 
@@ -69,9 +109,26 @@ function extractSnapshot(projectRoot) {
     for (const entry of entries) {
       if (!entry.isDirectory()) continue;
       const phaseId = entry.name;
-      const phaseDir = path.join(scopeDir, phaseId);
+      let phaseDir = path.join(scopeDir, phaseId);
+      let phaseSddDir = sddDir;
 
-      const phase = extractPhase(phaseDir, phaseId, scope, sddDir, hash, snapshot.account.headCommit);
+      // An active phase is built on its own branch `feat/<phase>`. When another worktree of
+      // this repository has that branch checked out, that worktree is the live source of the
+      // phase (its checkboxes and evidence), not this checkout's older copy.
+      let live = null;
+      if (scope === 'active') {
+        live = worktrees.find(w => w.branch === `feat/${phaseId}` && fs.existsSync(path.join(w.path, '.sdd', 'specs', 'active', phaseId)));
+        if (live) {
+          phaseDir = path.join(live.path, '.sdd', 'specs', 'active', phaseId);
+          phaseSddDir = path.join(live.path, '.sdd');
+        }
+      }
+
+      const phase = extractPhase(phaseDir, phaseId, scope, phaseSddDir, hash, snapshot.account.headCommit);
+      if (live) {
+        phase.liveSource = { worktree: live.path, branch: live.branch };
+        snapshot.diagnostics.push({ type: 'info', message: `${phaseId} is read from the worktree on branch ${live.branch} (${live.path}); this checkout's copy is older.` });
+      }
       snapshot.phases.push(phase);
     }
   }
