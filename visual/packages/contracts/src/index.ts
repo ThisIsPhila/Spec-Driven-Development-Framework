@@ -116,7 +116,8 @@ export interface PhaseRecord {
 }
 
 export interface ProjectSnapshot {
-  projectName: string;
+  projectId?: string;
+  projectName?: string;
   projectRoot?: string;
   activePhaseId: string | null;
   contentRevision: string;

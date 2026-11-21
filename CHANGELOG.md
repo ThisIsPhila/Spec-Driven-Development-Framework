@@ -2,6 +2,14 @@
 
 All notable changes to the SDD Framework are documented here.
 
+## [2.4.0] - 2026-11-22
+
+### Added
+- **Standalone TypeScript + React SDD Platform (`@sdd/web-app`):** Modular, responsive (`375px`–`1440px`) React 19 + TypeScript + Vite + Tailwind CSS application with KHÔRA-inspired Swiss-editorial design system, 4 WCAG 2.2 AA themes (`lavender-press`, `night-edition`, `newsprint`, `swiss-poster`), accessible `"Show data table"` toggles, Task Execution Unit Matrix, Phase/Spec Traceability Explorer, and Agent & Cost Telemetry dashboard.
+- **One-Click Local Launcher & SSE Daemon (`@sdd/local-daemon`):** `npm --prefix visual run launch -- --project .` starts on loopback (`127.0.0.1:3456`), auto-opens a clean URL with no manual `#token=` assembly, streams live `.sdd/` + git worktree updates via SSE, and enforces `403` on foreign origins.
+- **Shared Contracts (`@sdd/contracts`) & Cloud Sync (`@sdd/cloud-api` + `supabase/`):** Vercel serverless sync API (`POST /api/cloud/sync`) + Supabase Postgres schema (`supabase/migrations/001_sdd_cloud.sql`) with strict Row-Level Security (`auth.uid() = user_id`), keeping local-first usage 100% offline when signed out.
+- **First-Class Agent Attribution & Multi-Harness Telemetry:** `phase.sh onboard`, `phase.sh start`, and `phase.sh task` record structured JSONL attribution (`.sdd/metrics/events.jsonl`), plus pluggable harness adapters (`scripts/metrics-adapters/{claude,codex,gemini,opencode}.cjs`) and multi-provider USD pricing (`defaults/metrics/rates.json`) with explicit `measured` vs `estimated` provenance.
+
 ## [2.3.0] - 2026-11-07
 ### Added
 - **Kiro adapter (optional, `+kiro` profile modifier)**: `setup.sh --profile <base>+kiro` installs Kiro steering, hooks, and a `.kiro/specs/<phase>` view of the same specs. `.sdd/` stays canonical and every `phase.sh` rule behaves the same without Kiro.

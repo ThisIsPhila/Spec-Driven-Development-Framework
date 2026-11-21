@@ -62,7 +62,7 @@ export class LocalDaemon {
   registerProject(projectRoot) {
     const resolved = fs.realpathSync(path.resolve(projectRoot));
     const snapshot = extractProject(resolved);
-    const id = slugify(snapshot.projectName || path.basename(resolved));
+    const id = slugify(snapshot.projectName || snapshot.projectId || path.basename(resolved));
     const entry = {
       id,
       root: resolved,
@@ -109,7 +109,7 @@ export class LocalDaemon {
   listSummaries() {
     return [...this.projects.values()].map((p) => ({
       id: p.id,
-      name: p.snapshot.projectName || p.id,
+      name: p.snapshot.projectName || p.snapshot.projectId || p.id,
       source: 'local',
       activePhaseId: p.snapshot.activePhaseId || null,
       overallProgressPct: p.snapshot.metrics?.overallProgressPct ?? 0,

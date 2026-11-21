@@ -1,15 +1,18 @@
 {
   "name": "@sdd/visual",
-  "version": "2.3.0",
+  "version": "2.4.0",
   "description": "Visual workspace and public landing interface for Spec-Driven Development",
   "private": true,
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:app": "npm --prefix packages/web-app run dev",
     "build": "vite build",
+    "build:app": "npm --prefix packages/web-app run build",
     "preview": "vite preview",
     "test": "node --import ./tests/setup-dom.js --test tests/*.test.js",
     "workspace": "node server/cli.js",
+    "launch": "node packages/local-daemon/src/launcher.js",
     "accounts": "node server/account-cli.js",
     "test:browser": "playwright test",
     "review": "node scripts/review-workspace.js"

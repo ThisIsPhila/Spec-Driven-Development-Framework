@@ -1,0 +1,9 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "buildCommand": "npm --prefix packages/web-app install && npm --prefix packages/web-app run build",
+  "outputDirectory": "packages/web-app/dist",
+  "rewrites": [
+    { "source": "/api/cloud/(.*)", "destination": "/packages/cloud-api/api/cloud/$1" },
+    { "source": "/((?!api/).*)", "destination": "/index.html" }
+  ]
+}
