@@ -200,7 +200,7 @@ test('signed-in navigation separates projects, examples, account settings and pr
     await page.locator('.graph-dialog .trace-edge').first().focus();
     await expect(page.locator('.graph-connection-detail')).toContainText('→');
     await page.getByRole('button',{name:'Close graph',exact:true}).click();
-    await expect(page.locator('.project-section-rail button svg')).toHaveCount(6);
+    await expect(page.locator('.project-section-rail button svg')).toHaveCount(7);
     expect(await page.locator('.project-section-rail').evaluate(el=>el.getBoundingClientRect().bottom)).toBeLessThanOrEqual(await page.locator('.project-content').evaluate(el=>el.getBoundingClientRect().top));
     expect(await page.locator('.skills-header').innerText()).toBe(globalHeader);
     if(process.env.SDD_REVIEW_SCREENSHOTS) await page.screenshot({path:path.join(os.tmpdir(),'sdd-phase-insights.png')});

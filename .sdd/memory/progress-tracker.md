@@ -1,83 +1,35 @@
 # Progress Tracker - SDD Framework
 
-### Phase 005 — Visual Framework Workspace
+**Last Updated:** 2026-11-21
+**Framework Version:** 2.3.0
+**Current Status:** v2.3.0 baseline aligned on `main`; preparing Phase 008 (Standalone Visual Platform & Agent Telemetry).
+
+---
+
+## Completed / Delivered Phases
+
+### Phase 007 — Kiro Native Integration (v2.3.0)
+- **Status:** Prepared (`2.3.0`, opt-in `+kiro` adapter, sandbox suite passing)
+- **Scope:** Kiro hooks (`PreTaskExec`, `PostTaskExec`, `Stop`), `fileMatch` steering, symlink bridge synced with `phase.sh`.
+
+### Delivery Metrics & Worktree Dashboard (v2.3.0)
 - **Status:** Complete
-- **Scope:** Visual HTML project/phase workspace, connected specification reading, live progress updates, and public introduction/demo site.
+- **Scope:** Task timing (`tasks.tsv`), Kiro usage attribution (`metrics.cjs`), three-way delivery report, Delivery dashboard view, and reading active phases from sibling git worktrees.
+
+### Phase 005 — Visual Framework Workspace (v2.0.0 – v2.2.0)
+- **Status:** Complete
+- **Scope:** Visual HTML project/phase workspace, connected specification reading, live progress updates, optional SQLite accounts, and public introduction/demo site.
 
 ### Phase 004 — Intent, Evidence, and Learning Loop
-- **Status:** Complete
+- **Status:** Complete (archived at `.sdd/specs/archive/phase-004-intent-evidence-learning-loop/`)
 - **Scope:** Canonical governance, evidence topology, detailed tasks, safe upgrades, runtime-neutral validation, and explicit learning feedback.
-- **Authority:** `SDD-EXC-2026-09-07-01`; local commit allowed, push/release excluded.
 
-**Last Updated:** December 9, 2025  
-**Current Phase:** Phase 1 - Template Profiles & Methodology
+### Phase 003 — Framework Hardening
+- **Status:** Complete (archived at `.sdd/specs/archive/phase-003-framework-hardening/`)
+- **Scope:** Machine-readable `.sdd/state`, stable task IDs, typed approval gates, deterministic Bash test suite, and GitHub Actions CI.
 
----
+### Phase 002 — Skills Management (v1.3.0)
+- **Status:** Delivered in v1.3.0
 
-## 🎯 Current Status
-
-**Active Work:** Planning complete for Phase 1
-**Next Step:** Begin Category 1 implementation (Profile Infrastructure)
-
----
-
-## ✅ Completed Milestones
-
-### v1.0 Release (December 8-9, 2025)
-- [x] Open source preparation (LICENSE, CONTRIBUTING, CHANGELOG)
-- [x] Flattened repository structure (`defaults/` for source files)
-- [x] Created example specifications (Phase 0 gold standard)
-- [x] Aligned templates with examples (approval checkpoints, format)
-- [x] Enforced sequential spec creation in `AGENT_ONBOARDING.md`
-- [x] Removed `.sdd/` from `.gitignore` (self-hosting commitment)
-- [x] Sanitized all examples (removed traceable project names)
-
-### Phase 1 Planning (December 9, 2025)
-- [x] Created requirements.md (16 requirements for profile composition)
-- [x] Created design.md (bash script architecture, file overlay, agent detection)
-- [x] Created tasks.md (4 categories aligned with git branches)
-- [x] Tailored `.sdd/memory/` files for framework project
-
----
-
-## 📋 Active Phase: Phase 1
-
-### Category Status
-
-| Category | Status | Branch | Est. Hours | Notes |
-|----------|--------|--------|------------|-------|
-| 1. Profile Infrastructure | ✅ Complete | `feat/profile-infrastructure` | 6h | Merged Dec 9, 2025 |
-| 2. Profile Templates | ✅ Complete | `feat/profile-templates` | 18h | Merged Dec 9, 2025 |
-| 3. Setup Enhancement | ✅ Complete | `feat/setup-enhancement` | 15h | Merged Dec 9, 2025 |
-| 4. Validation & Docs | ✅ Complete | `feat/validation-docs` | 15h | Merged Dec 9, 2025 |
-
-**Phase 1 Status:** ✅ COMPLETE (54 hours total)
-
-**Legend:**  
-🔵 Not Started | 🟡 In Progress | ✅ Complete | ⚠️ Blocked
-
----
-
-## 🚧 Current Blockers
-
-None.
-
----
-
-## 🎯 Phase 1 Success Criteria
-
-Phase 1 complete when:
-1. All 4 categories implemented and merged
-2. Integration tests passing for compositions (`web+devsecops`, api+mlops`, `full-stack+devops`)
-3. Profile validation tests passing in CI
-4. Agent detection heuristics documented
-5. README, AGENT_ONBOARDING, CHANGELOG updated
-6. Smoke test: New developer can select profile and understand preview
-
----
-
-## 📊 Metrics
-
-**Planning Time:** ~4 hours (requirements, design, tasks)  
-**Estimated Implementation:** 51 hours (over 1.5-2 months @ 8h/week)  
-**Estimated v1.1 Release:** February 2026
+### Phase 001 — Template Profiles & Methodology (v1.1.0)
+- **Status:** Complete (archived at `.sdd/specs/archive/phase-001-template-profiles/`)

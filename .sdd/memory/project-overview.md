@@ -1,8 +1,8 @@
 # SDD Framework - Project Overview
 
 **Project Name:** Spec-Driven Development Framework
-**Stable Version:** 1.3.0
-**Current Work:** Phase 004 - Intent, Evidence, and Learning Loop (2.0.0 candidate)
+**Framework Version:** 2.3.0
+**Current Work:** Version 2.3.0 baseline alignment (Visual workspace worktree reading, Delivery metrics, Kiro adapter) — preparing Phase 008 (Standalone Visual Platform & Agent Telemetry)
 **Repository:** https://github.com/ThisIsPhila/Spec-Driven-Development-Framework
 **License:** MIT
 
