@@ -152,6 +152,7 @@ function extractSnapshot(projectRoot, worktrees = []) {
   snapshot.graphify = extractGraphify(resolvedRoot, snapshot);
 
   snapshot.skills = extractInstalledSkills(resolvedRoot, hash);
+  snapshot.telemetry = extractTelemetry(sddDir, hash);
   snapshot.artifactIndex = discoverArtifacts(sddDir, hash, collectSourcePaths(snapshot));
   snapshot.coverage = { markdown: 'Supported: recursive artifact index', state: 'Supported', phaseJson: 'Parsed metadata; no inferred approvals', media: 'Local raster attachments; cloud media not published', legacyTasks: 'Partial; diagnostics when unrecognized', graphify: snapshot.graphify.source };
   // Compute Project-level Aggregated Metrics
@@ -1205,6 +1206,51 @@ function extractInstalledSkills(root, hash) {
     }
   }
   return skills;
+}
+
+function extractTelemetry(sddDir, hash) {
+  const metricsDir = path.join(sddDir, 'metrics');
+  const attribution = [];
+  const eventsPath = path.join(metricsDir, 'events.jsonl');
+  if (fs.existsSync(eventsPath)) {
+    const raw = fs.readFileSync(eventsPath, 'utf8');
+    hash.update(raw);
+    for (const line of raw.split('\n')) {
+      if (!line.trim()) continue;
+      try { attribution.push(JSON.parse(line)); } catch { /* skip malformed */ }
+    }
+  }
+  let report = null;
+  const reportPath = path.join(metricsDir, 'report.json');
+  if (fs.existsSync(reportPath)) {
+    const raw = fs.readFileSync(reportPath, 'utf8');
+    hash.update(raw);
+    try { report = JSON.parse(raw); } catch { /* skip malformed */ }
+  }
+  let rates = null;
+  const ratesPath = path.join(metricsDir, 'rates.json');
+  if (fs.existsSync(ratesPath)) {
+    const raw = fs.readFileSync(ratesPath, 'utf8');
+    hash.update(raw);
+    try { rates = JSON.parse(raw); } catch { /* skip malformed */ }
+  }
+  const onboarding = attribution.filter(e => e.event === 'onboard');
+  const phaseStarts = attribution.filter(e => e.event === 'phase_start');
+  const taskEvents = attribution.filter(e => e.event === 'task_doing' || e.event === 'task_done');
+  return {
+    attribution,
+    onboarding,
+    phaseStarts,
+    taskEvents,
+    rollups: report?.rollups || {
+      totalUsd: 0,
+      totalTokens: { input: 0, output: 0, cache_read: 0, cache_write: 0 },
+      byModel: [],
+      byHarness: [],
+    },
+    deliveryReport: report,
+    ratesAsOf: report?.rates_as_of || rates?.as_of || null,
+  };
 }
 
 function collectSourcePaths(value, found = new Set()) {
