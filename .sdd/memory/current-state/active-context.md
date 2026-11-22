@@ -1,14 +1,15 @@
 # Active Context
 
-**Current Phase:** phase-008-standalone-visual-platform  
-**Current Task:** T008.8 - End-to-end responsive verification, Playwright suite, CI integration, and version alignment
-**Branch:** feat/phase-008-standalone-visual-platform
+**Current Phase:** [Phase N - Name]  
+**Current Task:** [Task ID - Title]  
+**Branch:** [branch-name]
 
 ## Focus
-- Implement specifications for phase-008-standalone-visual-platform
+- [Primary objective]
+- [Secondary objective]
 
 ## Recent Decisions
-- Sprint initialized using phase.sh start command
+- [Decision]
 
 ## Open Questions
-- [None]
+- [Question]

@@ -1,5 +1,14 @@
 import React, { useState } from 'react';
-import { SlidersHorizontal, X, Wifi, Cloud, HardDrive, Copy, Check } from 'lucide-react';
+import {
+  SlidersHorizontal,
+  X,
+  Wifi,
+  Cloud,
+  HardDrive,
+  FolderOpen,
+  Sparkles,
+  Plus,
+} from 'lucide-react';
 import type { ProjectSummary } from '@sdd/contracts';
 import { THEMES, useTheme } from '../theme/ThemeProvider';
 import { isCloudConfigured, signInCloud, signOutCloud, signUpCloud } from '../services/dataSource';
@@ -17,6 +26,11 @@ const SECTIONS: Array<{ id: NavSection; num: string; label: string }> = [
 interface MastheadProps {
   activeSection: NavSection;
   onSelectSection: (s: NavSection) => void;
+  showLanding: boolean;
+  onOpenLanding: () => void;
+  onOpenConnect: () => void;
+  drawerOpen: boolean;
+  onSetDrawerOpen: (open: boolean) => void;
   projects: ProjectSummary[];
   activeProjectId: string | null;
   onSelectProject: (p: ProjectSummary) => void;
@@ -25,9 +39,43 @@ interface MastheadProps {
   onAuthChange: () => void;
 }
 
+function SourceBadge({ source, sseConnected }: { source?: ProjectSummary['source']; sseConnected: boolean }) {
+  if (source === 'cloud') {
+    return (
+      <>
+        <Cloud className="w-3 h-3" /> Cloud
+      </>
+    );
+  }
+  if (source === 'browser') {
+    return (
+      <>
+        <FolderOpen className="w-3 h-3" /> Browser
+      </>
+    );
+  }
+  if (source === 'demo') {
+    return (
+      <>
+        <Sparkles className="w-3 h-3" /> Demo
+      </>
+    );
+  }
+  return (
+    <>
+      <Wifi className="w-3 h-3" /> {sseConnected ? 'Live Local' : 'Local'}
+    </>
+  );
+}
+
 export function Masthead({
   activeSection,
   onSelectSection,
+  showLanding,
+  onOpenLanding,
+  onOpenConnect,
+  drawerOpen,
+  onSetDrawerOpen,
   projects,
   activeProjectId,
   onSelectProject,
@@ -36,8 +84,6 @@ export function Masthead({
   onAuthChange,
 }: MastheadProps) {
   const { theme, setTheme } = useTheme();
-  const [drawerOpen, setDrawerOpen] = useState(false);
-  const [copied, setCopied] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [authMode, setAuthMode] = useState<'signin' | 'signup'>('signin');
@@ -45,17 +91,6 @@ export function Masthead({
   const [authBusy, setAuthBusy] = useState(false);
 
   const activeProject = projects.find((p) => p.id === activeProjectId) || projects[0] || null;
-  const activeMeta = SECTIONS.find((s) => s.id === activeSection) || SECTIONS[0];
-
-  const handleCopyUrl = async () => {
-    try {
-      await navigator.clipboard.writeText(window.location.href);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1800);
-    } catch {
-      // ignore clipboard errors
-    }
-  };
 
   const handleAuthSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -80,68 +115,74 @@ export function Masthead({
         className="sticky top-0 z-40 w-full"
         style={{ backgroundColor: 'var(--band)', color: 'var(--band-ink)' }}
       >
-        <div className="max-w-[1440px] mx-auto px-4 sm:px-8 h-12 flex items-center justify-between gap-3">
-          {/* Left: Folio mark + active project */}
-          <div className="flex items-center gap-3 min-w-0">
-            <span className="font-mono-sdd text-[12px] font-semibold tracking-wider shrink-0">
-              {activeMeta.num}
-            </span>
-            <span className="text-[13px] font-medium truncate">
-              {activeProject ? activeProject.name : 'SDD Platform'}
-            </span>
-            <span
-              className="hidden md:inline-flex items-center gap-1 px-1.5 py-0.5 font-mono-sdd text-[10px] uppercase tracking-wider shrink-0"
-              style={{ border: '1px solid currentColor', opacity: 0.85 }}
+        <div className="max-w-[1440px] mx-auto px-4 sm:px-8 h-12 flex items-center justify-between gap-2">
+          {/* Left: Top-left SDD Brand Home Button + Active Project */}
+          <div className="flex items-center gap-2.5 min-w-0">
+            <button
+              type="button"
+              onClick={onOpenLanding}
+              title="SDD Platform Home"
+              aria-label="SDD Home"
+              className="inline-flex items-center gap-1.5 px-2 py-0.5 font-mono-sdd text-[11px] font-semibold uppercase tracking-wider cursor-pointer shrink-0"
+              style={{
+                backgroundColor: showLanding ? 'var(--band-ink)' : 'transparent',
+                color: showLanding ? 'var(--band)' : 'var(--band-ink)',
+                border: '1px solid currentColor',
+              }}
             >
-              {activeProject?.source === 'cloud' ? (
-                <>
-                  <Cloud className="w-3 h-3" /> Cloud
-                </>
-              ) : (
-                <>
-                  <Wifi className="w-3 h-3" /> {sseConnected ? 'Live Local' : 'Local'}
-                </>
-              )}
+              <span>SDD</span>
+            </button>
+            <span className="text-[13px] font-medium truncate">
+              {showLanding ? 'Spec-Driven Platform' : activeProject ? activeProject.name : 'SDD Platform'}
             </span>
+            {!showLanding && activeProject && (
+              <span
+                className="hidden md:inline-flex items-center gap-1 px-1.5 py-0.5 font-mono-sdd text-[10px] uppercase tracking-wider shrink-0"
+                style={{ border: '1px solid currentColor', opacity: 0.85 }}
+              >
+                <SourceBadge source={activeProject.source} sseConnected={sseConnected} />
+              </span>
+            )}
           </div>
 
-          {/* Center: Numbered editorial jump nav */}
-          <nav aria-label="Primary sections" className="hidden lg:flex items-center gap-1.5">
-            {SECTIONS.map((sec) => {
-              const active = sec.id === activeSection;
-              return (
-                <button
-                  key={sec.id}
-                  type="button"
-                  onClick={() => onSelectSection(sec.id)}
-                  className="px-2.5 py-1 text-[12px] font-mono-sdd transition-colors cursor-pointer flex items-center gap-1.5"
-                  style={{
-                    backgroundColor: active ? 'var(--band-ink)' : 'transparent',
-                    color: active ? 'var(--band)' : 'var(--band-ink)',
-                  }}
-                >
-                  <span>{sec.num}</span>
-                  <span className="font-sans text-[12px]">{sec.label}</span>
-                </button>
-              );
-            })}
-          </nav>
+          {/* Center: Numbered editorial jump nav (shown when inspecting a project) */}
+          {!showLanding && activeProject && (
+            <nav aria-label="Primary sections" className="hidden lg:flex items-center gap-1.5">
+              {SECTIONS.map((sec) => {
+                const active = sec.id === activeSection;
+                return (
+                  <button
+                    key={sec.id}
+                    type="button"
+                    onClick={() => onSelectSection(sec.id)}
+                    className="px-2.5 py-1 text-[12px] font-mono-sdd transition-colors cursor-pointer flex items-center gap-1.5"
+                    style={{
+                      backgroundColor: active ? 'var(--band-ink)' : 'transparent',
+                      color: active ? 'var(--band)' : 'var(--band-ink)',
+                    }}
+                  >
+                    <span>{sec.num}</span>
+                    <span className="font-sans text-[12px]">{sec.label}</span>
+                  </button>
+                );
+              })}
+            </nav>
+          )}
 
-          {/* Right: Copy link + Control panel */}
+          {/* Right: Connect Project + Control panel */}
           <div className="flex items-center gap-2 shrink-0">
             <button
               type="button"
-              onClick={handleCopyUrl}
-              title="Copy workspace link"
-              className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 text-[12px] font-mono-sdd cursor-pointer"
+              onClick={onOpenConnect}
+              className="hidden sm:inline-flex items-center gap-1 px-2.5 py-1 text-[12px] font-mono-sdd cursor-pointer"
               style={{ border: '1px solid currentColor' }}
             >
-              {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
-              <span>{copied ? 'Copied' : 'Copy link'}</span>
+              <Plus className="w-3.5 h-3.5" />
+              <span>Connect</span>
             </button>
             <button
               type="button"
-              onClick={() => setDrawerOpen(true)}
+              onClick={() => onSetDrawerOpen(true)}
               className="inline-flex items-center gap-1.5 px-3 py-1 text-[12px] font-medium cursor-pointer"
               style={{ backgroundColor: 'var(--band-ink)', color: 'var(--band)' }}
             >
@@ -152,28 +193,30 @@ export function Masthead({
         </div>
 
         {/* Mobile/Tablet section rail */}
-        <div
-          className="lg:hidden overflow-x-auto px-4 sm:px-8 py-1.5 flex items-center gap-1.5"
-          style={{ borderTop: '1px solid color-mix(in srgb, var(--band-ink) 25%, transparent)' }}
-        >
-          {SECTIONS.map((sec) => {
-            const active = sec.id === activeSection;
-            return (
-              <button
-                key={sec.id}
-                type="button"
-                onClick={() => onSelectSection(sec.id)}
-                className="px-2.5 py-1 text-[11px] font-mono-sdd whitespace-nowrap cursor-pointer"
-                style={{
-                  backgroundColor: active ? 'var(--band-ink)' : 'transparent',
-                  color: active ? 'var(--band)' : 'var(--band-ink)',
-                }}
-              >
-                {sec.num} {sec.label}
-              </button>
-            );
-          })}
-        </div>
+        {!showLanding && activeProject && (
+          <div
+            className="lg:hidden overflow-x-auto px-4 sm:px-8 py-1.5 flex items-center gap-1.5"
+            style={{ borderTop: '1px solid color-mix(in srgb, var(--band-ink) 25%, transparent)' }}
+          >
+            {SECTIONS.map((sec) => {
+              const active = sec.id === activeSection;
+              return (
+                <button
+                  key={sec.id}
+                  type="button"
+                  onClick={() => onSelectSection(sec.id)}
+                  className="px-2.5 py-1 text-[11px] font-mono-sdd whitespace-nowrap cursor-pointer"
+                  style={{
+                    backgroundColor: active ? 'var(--band-ink)' : 'transparent',
+                    color: active ? 'var(--band)' : 'var(--band-ink)',
+                  }}
+                >
+                  {sec.num} {sec.label}
+                </button>
+              );
+            })}
+          </div>
+        )}
       </header>
 
       {/* Slide-over Control Panel Drawer */}
@@ -192,7 +235,7 @@ export function Masthead({
               </div>
               <button
                 type="button"
-                onClick={() => setDrawerOpen(false)}
+                onClick={() => onSetDrawerOpen(false)}
                 aria-label="Close control panel"
                 className="p-1.5 cursor-pointer sdd-rule-all"
               >
@@ -202,19 +245,31 @@ export function Masthead({
 
             {/* Project Switcher */}
             <section>
-              <div className="font-mono-sdd text-[11px] uppercase tracking-wider mb-2" style={{ color: 'var(--ink-3)' }}>
-                Connected Projects ({projects.length})
+              <div className="flex items-center justify-between gap-2 mb-2">
+                <div className="font-mono-sdd text-[11px] uppercase tracking-wider" style={{ color: 'var(--ink-3)' }}>
+                  Connected Projects ({projects.length})
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    onSetDrawerOpen(false);
+                    onOpenConnect();
+                  }}
+                  className="font-mono-sdd text-[11px] uppercase px-2 py-0.5 sdd-rule-all cursor-pointer inline-flex items-center gap-1"
+                >
+                  <Plus className="w-3 h-3" /> Connect
+                </button>
               </div>
               <div className="flex flex-col gap-1.5">
                 {projects.map((p) => {
-                  const selected = p.id === activeProject?.id;
+                  const selected = !showLanding && p.id === activeProject?.id && p.source === activeProject?.source;
                   return (
                     <button
                       key={`${p.source}:${p.id}`}
                       type="button"
                       onClick={() => {
                         onSelectProject(p);
-                        setDrawerOpen(false);
+                        onSetDrawerOpen(false);
                       }}
                       className="w-full text-left px-3 py-2.5 flex items-center justify-between gap-2 cursor-pointer"
                       style={{
@@ -229,7 +284,15 @@ export function Masthead({
                         </div>
                       </div>
                       <span className="font-mono-sdd text-[10px] uppercase px-1.5 py-0.5 sdd-rule-all shrink-0 flex items-center gap-1">
-                        {p.source === 'cloud' ? <Cloud className="w-3 h-3" /> : <HardDrive className="w-3 h-3" />}
+                        {p.source === 'cloud' ? (
+                          <Cloud className="w-3 h-3" />
+                        ) : p.source === 'browser' ? (
+                          <FolderOpen className="w-3 h-3" />
+                        ) : p.source === 'demo' ? (
+                          <Sparkles className="w-3 h-3" />
+                        ) : (
+                          <HardDrive className="w-3 h-3" />
+                        )}
                         {p.source}
                       </span>
                     </button>
@@ -237,7 +300,7 @@ export function Masthead({
                 })}
                 {projects.length === 0 && (
                   <p className="text-[13px]" style={{ color: 'var(--ink-3)' }}>
-                    No local or cloud projects connected yet.
+                    No projects connected yet. Click <strong>Connect</strong> to load a local <code className="font-mono-sdd">.sdd/</code> folder or GitHub repo.
                   </p>
                 )}
               </div>
@@ -304,9 +367,10 @@ export function Masthead({
                 </div>
               ) : !isCloudConfigured() ? (
                 <div className="p-3 sdd-rule-all text-[12px]" style={{ backgroundColor: 'var(--paper)', color: 'var(--ink-2)' }}>
-                  Running in <strong>100% Local-First Mode</strong>. Set{' '}
+                  Running in <strong>Local &amp; Browser-First Mode</strong>. Configure{' '}
                   <code className="font-mono-sdd">VITE_SUPABASE_URL</code> and{' '}
-                  <code className="font-mono-sdd">VITE_SUPABASE_ANON_KEY</code> to enable cloud account sync across devices.
+                  <code className="font-mono-sdd">VITE_SUPABASE_ANON_KEY</code> (see{' '}
+                  <code className="font-mono-sdd">.env.example</code>) to enable multi-device cloud account sync.
                 </div>
               ) : (
                 <form onSubmit={handleAuthSubmit} className="flex flex-col gap-2.5">

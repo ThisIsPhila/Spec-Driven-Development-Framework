@@ -3,17 +3,22 @@ import { RefreshCw, AlertTriangle } from 'lucide-react';
 import type { ProjectSnapshot, ProjectSummary } from '@sdd/contracts';
 import { ThemeProvider } from './theme/ThemeProvider';
 import { Masthead, type NavSection } from './components/Masthead';
+import { ConnectProjectModal } from './components/ConnectProjectModal';
+import { LandingView } from './views/LandingView';
 import { OverviewView } from './views/OverviewView';
 import { PhaseExplorerView } from './views/PhaseExplorerView';
 import { TelemetryView } from './views/TelemetryView';
 import { GovernanceView } from './views/GovernanceView';
 import { SkillsView } from './views/SkillsView';
+import { DEMO_PROJECT_SNAPSHOT, DEMO_PROJECT_SUMMARY } from './data/demoSnapshot';
 import {
   fetchCloudProjects,
   fetchCloudSnapshot,
   fetchLocalProjects,
   fetchLocalSnapshot,
+  getBrowserSnapshot,
   getSupabaseClient,
+  listBrowserProjects,
 } from './services/dataSource';
 
 function WorkspaceApp() {
@@ -26,6 +31,9 @@ function WorkspaceApp() {
   const [error, setError] = useState<string | null>(null);
   const [sseConnected, setSseConnected] = useState(false);
   const [cloudUserEmail, setCloudUserEmail] = useState<string | null>(null);
+  const [showLanding, setShowLanding] = useState(false);
+  const [connectOpen, setConnectOpen] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
   const loadProjects = useCallback(async () => {
     setError(null);
@@ -37,27 +45,42 @@ function WorkspaceApp() {
     }
     setCloudUserEmail(email);
 
-    const [localList, cloudList] = await Promise.all([
+    const [localList, cloudList, browserList] = await Promise.all([
       fetchLocalProjects(),
       email ? fetchCloudProjects() : Promise.resolve([]),
+      listBrowserProjects(),
     ]);
-    const combined = [...localList, ...cloudList];
+    const combined = [...localList, ...cloudList, ...browserList];
     setProjects(combined);
     setActiveProject((prev) => {
+      if (prev?.source === 'demo') return prev;
       if (prev && combined.some((p) => p.id === prev.id && p.source === prev.source)) return prev;
       return combined[0] || null;
     });
-    if (combined.length === 0) setLoading(false);
+    if (combined.length === 0) {
+      setShowLanding(true);
+      setLoading(false);
+    }
   }, []);
 
   const loadSnapshot = useCallback(async (proj: ProjectSummary | null) => {
     if (!proj) return;
+    if (proj.source === 'demo') {
+      setSnapshot(DEMO_PROJECT_SNAPSHOT);
+      setSelectedPhaseId(DEMO_PROJECT_SNAPSHOT.activePhaseId);
+      setLoading(false);
+      return;
+    }
     try {
       setError(null);
-      const data =
-        proj.source === 'cloud'
-          ? await fetchCloudSnapshot(proj.id)
-          : await fetchLocalSnapshot(proj.id);
+      let data: ProjectSnapshot | null = null;
+      if (proj.source === 'cloud') {
+        data = await fetchCloudSnapshot(proj.id);
+      } else if (proj.source === 'browser') {
+        data = await getBrowserSnapshot(proj.id);
+      } else {
+        data = await fetchLocalSnapshot(proj.id);
+      }
       if (!data) {
         setError(`Could not load snapshot for ${proj.name}.`);
       } else {
@@ -99,17 +122,59 @@ function WorkspaceApp() {
     setSection('phases');
   };
 
+  const handleLaunchDemo = () => {
+    setError(null);
+    setProjects((prev) =>
+      prev.some((p) => p.source === 'demo' && p.id === DEMO_PROJECT_SUMMARY.id)
+        ? prev
+        : [...prev, DEMO_PROJECT_SUMMARY],
+    );
+    setActiveProject(DEMO_PROJECT_SUMMARY);
+    setSnapshot(DEMO_PROJECT_SNAPSHOT);
+    setSelectedPhaseId(DEMO_PROJECT_SNAPSHOT.activePhaseId);
+    setSection('overview');
+    setShowLanding(false);
+    setLoading(false);
+  };
+
+  const handleProjectImported = (
+    summary: ProjectSummary,
+    importedSnapshot: ProjectSnapshot,
+  ) => {
+    setError(null);
+    setProjects((prev) => {
+      const filtered = prev.filter((p) => !(p.id === summary.id && p.source === summary.source));
+      return [summary, ...filtered];
+    });
+    setActiveProject(summary);
+    setSnapshot(importedSnapshot);
+    setSelectedPhaseId(importedSnapshot.activePhaseId || importedSnapshot.phases[0]?.id || null);
+    setSection('overview');
+    setShowLanding(false);
+    setLoading(false);
+  };
+
+  const handleSelectProject = (p: ProjectSummary) => {
+    setActiveProject(p);
+    setSelectedPhaseId(null);
+    setShowLanding(false);
+  };
+
+  const showWorkspace = !showLanding && Boolean(snapshot);
+
   return (
     <div className="min-h-screen flex flex-col">
       <Masthead
         activeSection={section}
         onSelectSection={setSection}
+        showLanding={!showWorkspace}
+        onOpenLanding={() => setShowLanding(true)}
+        onOpenConnect={() => setConnectOpen(true)}
+        drawerOpen={drawerOpen}
+        onSetDrawerOpen={setDrawerOpen}
         projects={projects}
         activeProjectId={activeProject?.id ?? null}
-        onSelectProject={(p) => {
-          setActiveProject(p);
-          setSelectedPhaseId(null);
-        }}
+        onSelectProject={handleSelectProject}
         sseConnected={sseConnected}
         cloudUserEmail={cloudUserEmail}
         onAuthChange={loadProjects}
@@ -135,48 +200,53 @@ function WorkspaceApp() {
           </div>
         )}
 
-        {loading && !snapshot ? (
+        {loading && !snapshot && !showLanding ? (
           <div className="py-20 text-center font-mono-sdd text-[13px]" style={{ color: 'var(--ink-3)' }}>
             Loading SDD workspace snapshot...
           </div>
-        ) : !snapshot ? (
-          <div className="mt-12 p-8 sdd-surface max-w-2xl mx-auto">
-            <div className="font-mono-sdd text-[11px] uppercase tracking-wider mb-2" style={{ color: 'var(--ink-3)' }}>
-              No Project Connected
-            </div>
-            <h1 className="text-[24px] font-semibold mb-3">Launch locally or sign in to Cloud</h1>
-            <p className="text-[14px] mb-4" style={{ color: 'var(--ink-2)' }}>
-              Run the one-click local launcher inside any repository with <code className="font-mono-sdd">.sdd/</code> installed, or open the <strong>Control panel</strong> to sign in with Supabase Cloud.
-            </p>
-            <pre className="p-3 font-mono-sdd text-[12px] overflow-x-auto sdd-rule-all" style={{ backgroundColor: 'var(--paper)' }}>
-              npm --prefix /path/to/framework/visual run launch -- --project .
-            </pre>
-          </div>
+        ) : !showWorkspace ? (
+          <LandingView
+            onLaunchDemo={handleLaunchDemo}
+            onOpenConnect={() => setConnectOpen(true)}
+            onOpenAuth={() => setDrawerOpen(true)}
+            cloudUserEmail={cloudUserEmail}
+            hasProjects={Boolean(snapshot)}
+            onReturnToWorkspace={() => setShowLanding(false)}
+          />
         ) : (
-          <>
-            {section === 'overview' && (
-              <OverviewView snapshot={snapshot} onOpenPhase={handleOpenPhase} onNavigate={setSection} />
-            )}
-            {section === 'phases' && (
-              <PhaseExplorerView
-                snapshot={snapshot}
-                selectedPhaseId={selectedPhaseId}
-                onSelectPhase={setSelectedPhaseId}
-              />
-            )}
-            {section === 'telemetry' && <TelemetryView snapshot={snapshot} />}
-            {section === 'governance' && <GovernanceView snapshot={snapshot} />}
-            {section === 'skills' && (
-              <SkillsView
-                snapshot={snapshot}
-                projects={projects}
-                activeProjectId={activeProject?.id ?? null}
-                onSelectProject={setActiveProject}
-              />
-            )}
-          </>
+          snapshot && (
+            <>
+              {section === 'overview' && (
+                <OverviewView snapshot={snapshot} onOpenPhase={handleOpenPhase} onNavigate={setSection} />
+              )}
+              {section === 'phases' && (
+                <PhaseExplorerView
+                  snapshot={snapshot}
+                  selectedPhaseId={selectedPhaseId}
+                  onSelectPhase={setSelectedPhaseId}
+                />
+              )}
+              {section === 'telemetry' && <TelemetryView snapshot={snapshot} />}
+              {section === 'governance' && <GovernanceView snapshot={snapshot} />}
+              {section === 'skills' && (
+                <SkillsView
+                  snapshot={snapshot}
+                  projects={projects}
+                  activeProjectId={activeProject?.id ?? null}
+                  onSelectProject={handleSelectProject}
+                />
+              )}
+            </>
+          )
         )}
       </main>
+
+      <ConnectProjectModal
+        open={connectOpen}
+        onClose={() => setConnectOpen(false)}
+        onImported={handleProjectImported}
+        cloudUserEmail={cloudUserEmail}
+      />
     </div>
   );
 }
