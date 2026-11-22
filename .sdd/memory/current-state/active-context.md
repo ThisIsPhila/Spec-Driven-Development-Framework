@@ -1,67 +1,14 @@
 # Active Context
 
-**Current Phase:** Phase 005 corrective implementation and authorized product extensions
-**Current Task:** U1–U5 implemented — owner product UX review pending; hosted configuration pending
-**Branch:** feat/phase-005-visual-framework-workspace
+**Current Phase:** phase-008-standalone-visual-platform  
+**Current Task:** T008.8 - End-to-end responsive verification, Playwright suite, CI integration, and version alignment
+**Branch:** feat/phase-008-standalone-visual-platform
 
-## Authority and scope
+## Focus
+- Implement specifications for phase-008-standalone-visual-platform
 
-Owner explicitly directed implementation of the 2026-10-09 critique, community skill interoperability, real optional accounts and cross-machine snapshots. Preserve existing aesthetics and unrelated work. The GitHub checkpoint was explicitly requested and pushed as ce2910a. Corrective scope/design/tasks are recorded in reports/phase-005/corrective-implementation-plan.md. This direction overrides prior procedural waiting language; no release or main merge is authorized.
+## Recent Decisions
+- Sprint initialized using phase.sh start command
 
-## Current implementation
-
-Markdown remains canonical; HTML is derived automatically. Missing outcomes/acceptance remain unassessed. Hook configuration and observed indexed-tree runs are separate. Local isolation, DOM sanitization/metadata escaping, task filtering, source links, deep routes, recursive artifact coverage, repeatable project registration and refresh fallback are implemented. Public landing lists supported profiles and three fictional examples, with no invented adoption metrics. Existing Git hook is preserved and chained through the recorded runner.
-
-Community packs use standard SKILL.md plus an optional SDD composition manifest and content-hash update protection. Profiles keep compatibility as framework configuration. Actual Graphify exports are imported with provenance and bounded display, distinct from the derived artifact map.
-
-Optional accounts use persisted SQLite, scrypt passwords, private owner-scoped snapshots, expiring credentials and automatic machine publication. A private bootstrap link can associate explicitly configured projects only after owner signup/sign-in. Public assets do not contain personal projects.
-
-## Verification and remaining boundaries
-
-Source 3db34d0 is locally and independently verified by green GitHub CI run 37981710676 (Linux/macOS): 28 unit/integration tests, 3 Chromium journeys, 9 core Bash files and production build pass. Exact tree, raw outputs and limits are recorded in .sdd/evidence/phase-005/corrective/verification-manifest.md. No owner acceptance is inferred. Hosted deployment/domain configuration and the owner's chosen login remain user steps. Cloud raster upload, native Windows lifecycle and password recovery are outside this implemented iteration and remain explicit limitations. Confessions was not located in the supplied coding folders; the local preview uses this framework, Smart Trader and Vanguard without changing their source files.
-
-## Owner display follow-up
-
-Reproduced and corrected undefined profile icons, catalog overlap and stripped Mermaid labels; exposed derived graph topology and repaired demo reload/reference lists. Local source 7b58c26 passes 28 unit/integration tests, 3 expanded browser journeys and build. Live synthetic update/reset and diagram inspected. Owner review fixture and 11 manual cases are available in docs/visual-review-walkthrough.md; detailed evidence is in reports/phase-005/display-review.md. Owner acceptance remains pending.
-
-## Account access feedback correction
-
-Owner reported signup/login failures without useful feedback. Live account database still had zero users; no credentials were inspected or entered. Added explicit client validation, loading/retry/error/success feedback, show-password control and separate duplicate/signup/login API errors. Local verification: 28 unit/integration tests, 4 Chromium journeys and production build pass. Restarted the private local service against the same database and project roots; its unclaimed bootstrap link rotated. Owner enters credentials through the fresh link. No owner acceptance inferred.
-
-## Insights-first UX correction
-
-Owner rejected a Markdown-preview-first experience and confusing navigation. Global navigation now separates Projects, Skills & Profiles, About and Account. Project overview derives progress, attention, next tasks and sourced decisions; project sections live in an on-screen rail. Profiles expose real content and installation rather than inert names. Canonical phase IDs are numerically ordered. Authenticated browser journeys cover private project entry, public-page workspace shortcuts, demo-to-real selection isolation, profile details/reload and account settings separation. No consumer source files or owner credentials were changed. See reports/phase-005/insights-ux-plan.md and docs/visual-workspace.md.
-
-## Scoped phase insights follow-up
-
-Actual owner tab was running stale assets; reload confirmed shared main navigation and Projects list. Phase Overview now embeds task distribution and explicit relationship SVG/list; dedicated metrics navigation removed and project location displayed. Header consistency and inline phase visuals covered by browser assertions. See reports/phase-005/phase-insights-flow.md.
-
-## Owner layout direction
-
-Project navigation is now a horizontal icon tab bar below the shared header. Logo always opens About/home; signed-in workspace sits after hero and before profiles. Profile catalog is compact; details stack vertically. Build and five browser journeys pass; owner visual acceptance remains pending. See reports/phase-005/subheader-layout.md.
-
-## Graph inspection and compact phase summary
-
-Phase lifecycle, task progress and scope counts precede the graph; lifecycle labels omit emoji. Graphs expand with endpoint inspection and related-node emphasis. Resources topology now uses connected layout; all-phase dependency view reads explicit phase.json declarations, distinguishing unknown from none declared. Rebuilt live UI preserving other agents' style/index edits. 31 unit tests, five browser journeys and build pass. See reports/phase-005/graph-inspection.md.
-
-## Shared sort controls and page flow
-
-Latest / Phase order / A–Z buttons now apply across overview progress chart and phase listings with a shared session preference. Inline phase graphs and relationship/progress lists have no fixed-height limit. Build, 32 unit tests and five browser journeys pass; owner visual review pending.
-
-## Local adoption trial readiness
-
-Added installed visual-workspace agent rule and onboarding pointer, optional phase-finish graph refresh with explicit skip/failure reporting, extracted graph cache and live graph refresh metadata, and network-style Resources nodes/labels. Cache does not replace live extraction or external Graphify runs. Local framework graph refreshed without closing the active phase. 32 unit tests, five Chromium journeys and nine core Bash test files pass. Ready for an owner-supervised local trial on this feature branch; no official release or hosted readiness claimed. See reports/phase-005/local-adoption-readiness.md.
-
-## Version 2.0.0 closeout — 2026-10-12
-
-Owner authorized version closeout and categorized GitHub commits. Phase 005 finish hook passed and regenerated 89 graph nodes / 83 links. Version 2.0.0 closes this local iteration; 39 unit tests, 5 browser journeys, 9 core Bash files and build pass. Fixed-scale selected-node highlighting supersedes the rejected auto-zoom. Hosted deployment, recovery, Windows certification and full-network exploration remain limitations. No main merge or spec archive performed.
-
-## Version correction — 2.1.0
-
-Owner clarified 2.0.0 predates the latest additions. Framework/default and visual package metadata now use 2.1.0. Existing v2.0.0 tag retained; publish v2.1.0 for the additive workspace iteration. Earlier 2.0.0 closeout evidence remains historical.
-
-## Version release — 2.2.0 — 2026-10-13
-
-Owner authorized release of version 2.2.0 consolidating visual framework metrics, quality pillar drill-downs, active task banners on Project Overview, per-phase health grading, composite SHA freshness extraction, and hook telemetry date sparklines. Metadata aligned across framework.json, defaults, and visual package.
-## Version prepared — 2.3.0 — 2026-11-07
-Phase 007 (Kiro adapter, opt-in `+kiro`) corrected after review and prepared as 2.3.0: hooks now registered with Kiro, steering uses `fileMatch`, detection and Orca references removed, post-task hook reminds instead of marking done, symlink bridge follows `new`/`start`/`archive`, and a sandbox test suite replaces the earlier string-matching script. Full suite (10 files), `doctor` and skills validation pass. Not tagged and not pushed; owner publishes. Open: T007.12 live Kiro session check, T007.11 `doctor` adapter drift (deferred), visual tests not run (no `node_modules`). Evidence: `.sdd/evidence/phase-007/kiro-adapter.md`.
+## Open Questions
+- [None]

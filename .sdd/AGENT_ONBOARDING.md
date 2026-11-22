@@ -37,7 +37,11 @@ If the memory files are empty or sparse, you must fill the gaps yourself:
 3.  **Check Conventions**: Look for existing patterns in the code. How are functions named? Where are tests located?
 
 ### Step 3: Self-Registration
-If you have write access to `.sdd/memory/current-state/active-context.md` (or equivalent), log your session start and what task you are picking up.
+If you have write access to `.sdd/memory/current-state/active-context.md` (or equivalent), log your session start and what task you are picking up, and record structured agent attribution via:
+```bash
+bash .sdd/scripts/phase.sh onboard --agent "<agent-name>" --harness "<harness>" --model "<model-id>"
+```
+(Or export `SDD_AGENT`, `SDD_HARNESS`, and `SDD_MODEL` so `phase.sh start` and `phase.sh task` automatically attribute your work in `.sdd/metrics/events.jsonl`.)
 
 ---
 

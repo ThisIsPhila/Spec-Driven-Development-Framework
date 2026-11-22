@@ -1,0 +1,10 @@
+{
+  "name": "@sdd/local-daemon",
+  "version": "2.4.0",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.js",
+  "bin": {
+    "sdd-visual": "./src/launcher.js"
+  }
+}
