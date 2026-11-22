@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Cloud, HardDrive, Package } from 'lucide-react';
+import { Cloud, FolderOpen, HardDrive, Package, Sparkles } from 'lucide-react';
 import type { ProjectSnapshot, ProjectSummary } from '@sdd/contracts';
 import { MarkdownViewer } from '../components/MarkdownViewer';
 
@@ -43,7 +43,15 @@ export function SkillsView({ snapshot, projects, activeProjectId, onSelectProjec
                 <div className="flex items-center justify-between gap-2">
                   <span className="font-semibold text-[14px] truncate">{p.name}</span>
                   <span className="font-mono-sdd text-[10px] uppercase px-1.5 py-0.5 sdd-rule-all inline-flex items-center gap-1">
-                    {p.source === 'cloud' ? <Cloud className="w-3 h-3" /> : <HardDrive className="w-3 h-3" />}
+                    {p.source === 'cloud' ? (
+                      <Cloud className="w-3 h-3" />
+                    ) : p.source === 'browser' ? (
+                      <FolderOpen className="w-3 h-3" />
+                    ) : p.source === 'demo' ? (
+                      <Sparkles className="w-3 h-3" />
+                    ) : (
+                      <HardDrive className="w-3 h-3" />
+                    )}
                     {p.source}
                   </span>
                 </div>

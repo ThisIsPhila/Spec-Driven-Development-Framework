@@ -160,7 +160,7 @@ export interface ProjectSnapshot {
 export interface ProjectSummary {
   id: string;
   name: string;
-  source: 'local' | 'cloud';
+  source: 'local' | 'cloud' | 'browser' | 'demo';
   activePhaseId: string | null;
   overallProgressPct: number;
   frameworkVersion?: string;

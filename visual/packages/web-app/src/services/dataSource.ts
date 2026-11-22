@@ -1,5 +1,11 @@
 import { createClient, type SupabaseClient, type User } from '@supabase/supabase-js';
 import type { ProjectSnapshot, ProjectSummary } from '@sdd/contracts';
+import {
+  buildProjectSummary,
+  getBrowserSnapshot,
+  listBrowserProjects,
+  saveBrowserProject,
+} from './projectStore';
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || '';
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
@@ -50,7 +56,7 @@ export async function fetchCloudProjects(): Promise<ProjectSummary[]> {
     source: 'cloud' as const,
     activePhaseId: (row.active_phase as string | null) ?? null,
     overallProgressPct: Number((row.summary as Record<string, unknown> | null)?.overallProgressPct ?? 0),
-    frameworkVersion: String(row.framework_version || '2.3.0'),
+    frameworkVersion: String(row.framework_version || '2.4.0'),
     lastSyncedAt: row.last_synced_at ? String(row.last_synced_at) : undefined,
   }));
 }
@@ -69,6 +75,74 @@ export async function fetchCloudSnapshot(slug: string): Promise<ProjectSnapshot 
     .maybeSingle();
   return (snap?.payload as ProjectSnapshot) || null;
 }
+
+export async function syncSnapshotToCloud(snapshot: ProjectSnapshot): Promise<ProjectSummary | null> {
+  const sb = getSupabaseClient();
+  if (!sb) return null;
+  const { data: userRes } = await sb.auth.getUser();
+  const user = userRes.user;
+  if (!user) return null;
+
+  const sanitized: ProjectSnapshot = { ...snapshot };
+  delete sanitized.projectRoot;
+
+  const slug = sanitized.projectId || 'imported-project';
+  const name = sanitized.projectName || slug;
+  const frameworkVersion = sanitized.framework?.version || '2.4.0';
+  const summary = {
+    overallProgressPct: sanitized.metrics?.overallProgressPct ?? 0,
+    totalTasks: sanitized.metrics?.totalTasks ?? 0,
+    completedTasks: sanitized.metrics?.completedTasks ?? 0,
+    totalUsd: sanitized.telemetry?.rollups?.totalUsd ?? 0,
+  };
+
+  const { data: project, error: projErr } = await sb
+    .from('sdd_projects')
+    .upsert(
+      {
+        user_id: user.id,
+        slug,
+        name,
+        framework_version: frameworkVersion,
+        active_phase: sanitized.activePhaseId,
+        summary,
+        last_synced_at: new Date().toISOString(),
+      },
+      { onConflict: 'user_id,slug' },
+    )
+    .select('id, slug')
+    .single();
+
+  if (projErr || !project) {
+    return null;
+  }
+
+  const { error: snapErr } = await sb.from('sdd_snapshots').insert({
+    project_id: project.id,
+    user_id: user.id,
+    revision: sanitized.contentRevision,
+    payload: sanitized,
+  });
+
+  if (snapErr) return null;
+  return buildProjectSummary(sanitized, 'cloud');
+}
+
+export async function saveImportedProject(snapshot: ProjectSnapshot): Promise<{
+  summary: ProjectSummary;
+  persistedTo: 'cloud' | 'browser';
+}> {
+  const cloudSummary = await syncSnapshotToCloud(snapshot);
+  if (cloudSummary) {
+    // Also cache locally in browser for fast offline reload
+    await saveBrowserProject(snapshot, 'browser');
+    return { summary: cloudSummary, persistedTo: 'cloud' };
+  }
+  const browserSummary = await saveBrowserProject(snapshot, 'browser');
+  return { summary: browserSummary, persistedTo: 'browser' };
+}
+
+export { listBrowserProjects, getBrowserSnapshot };
 
 export async function signInCloud(email: string, password: string): Promise<{ user: User | null; error: string | null }> {
   const sb = getSupabaseClient();
