@@ -7,7 +7,7 @@
   "scripts": {
     "dev": "vite",
     "dev:app": "npm --prefix packages/web-app run dev",
-    "build": "vite build",
+    "build": "vite build && npm --prefix packages/web-app run build",
     "build:app": "npm --prefix packages/web-app run build",
     "preview": "vite preview",
     "test": "node --import ./tests/setup-dom.js --test tests/*.test.js",

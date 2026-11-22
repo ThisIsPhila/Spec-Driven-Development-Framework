@@ -88,9 +88,13 @@ jobs:
         with:
           node-version: "22"
           cache: npm
-          cache-dependency-path: visual/package-lock.json
+          cache-dependency-path: |
+            visual/package-lock.json
+            visual/packages/web-app/package-lock.json
       - name: Install optional visual dependencies
-        run: npm --prefix visual ci
+        run: |
+          npm --prefix visual ci
+          npm --prefix visual/packages/web-app ci
       - name: Unit and integration behavior
         run: npm --prefix visual test
       - name: Production bundle
